@@ -1,13 +1,20 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
-generator client {
-  provider = "prisma-client"
-  output   = "../src/generated/prisma"
+datasource db {
+  provider = "postgresql" // ou "sqlite", dependendo do banco que for usar no seu .env
+  url      = env("DATABASE_URL")
 }
 
-datasource db {
-  provider = "postgresql"
+generator client {
+  provider = "prisma-client-js"
+}
+
+// DEFINIÇÃO DA TABELA DE VEREADORES
+model TableVereador {
+  id        String   @id @default(uuid())
+  nome      String
+  partido   String
+  votos     Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("vereadores")
 }
