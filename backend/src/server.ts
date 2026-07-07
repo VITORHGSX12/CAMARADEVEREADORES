@@ -61,7 +61,7 @@ app.post('/api/auth/login', async (req, res) => {
 });
 
 // 4. Inicialização da Porta do Servidor
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
     console.log(`=================================================`);
     console.log(`🚀 SISCAM 1.0 - Backend rodando com sucesso!`);

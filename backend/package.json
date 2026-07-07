@@ -2,28 +2,17 @@
   "name": "siscam-backend",
   "version": "1.0.0",
   "description": "Backend do SISCAM 1.0 - Portal Legislativo",
-  "main": "src/server.ts",
+  "main": "server.js",
   "scripts": {
-    "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
-    "build": "tsc",
-    "start": "node dist/server.js"
+    "start": "node server.js",
+    "build": "echo 'Sem build necessario'"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@prisma/client": "^5.22.0",
-    "cors": "^2.8.6",
-    "express": "^4.22.2",
-    "socket.io": "^4.8.3"
-  },
-  "devDependencies": {
-    "@types/cors": "^2.8.19",
-    "@types/express": "^4.17.25",
-    "@types/node": "^20.19.43",
-    "prisma": "^5.0.0",
-    "ts-node": "^10.9.2",
-    "ts-node-dev": "^2.0.0",
-    "typescript": "^5.9.3"
+    "cors": "^2.8.5",
+    "express": "^4.18.2",
+    "socket.io": "^4.7.2"
   }
 }
