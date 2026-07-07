@@ -306,7 +306,13 @@
         lucide.createIcons();
         document.getElementById('nome-usuario-logado').innerText = localStorage.getItem('siscam_user_nome') || 'Administrador';
         
-        const API_URL = 'http://localhost:3000/api/vereadores';
+        // CONFIGURAÇÃO DA URL INTELIGENTE DO SERVIDOR (CONECTADO AO RAILWAY ONLINE)
+        const BACKEND_RAILWAY = 'https://camaradevereadores-production.up.railway.app';
+        
+        const LOCAL_HOST = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+        const API_URL = LOCAL_HOST ? 'http://localhost:3000/api/vereadores' : `${BACKEND_RAILWAY}/api/vereadores`;
+        const API_SESSAO_URL = LOCAL_HOST ? 'http://localhost:3000/api/sessao' : `${BACKEND_RAILWAY}/api/sessao`;
+
         let sessaoEstaAtivaGlobal = false;
         let projetosMemoriaLocal = [];
 
@@ -350,7 +356,7 @@
                 document.getElementById('card-qtd-vereadores').innerText = dados.length;
                 renderizarTabelaVereadores(dados);
 
-                const resStatus = await fetch('http://localhost:3000/api/sessao/status');
+                const resStatus = await fetch(`${API_SESSAO_URL}/status`);
                 const status = await resStatus.json();
                 sessaoEstaAtivaGlobal = status.sessaoAtiva;
 
@@ -407,7 +413,6 @@
             lucide.createIcons();
         }
 
-        // NOVA FUNÇÃO: PERMITE ALTERAR O USERNAME DIRETAMENTE E SINCRONIZA COM O SERVIDOR
         async function editarUsuarioPrompt(id, usernameAtual) {
             const novoUsername = prompt(`Digite o novo nome de usuário (Login) para este parlamentar:`, usernameAtual);
             if (novoUsername === null) return;
@@ -415,9 +420,9 @@
             
             try {
                 const res = await fetch(`${API_URL}/alterar-usuario`, {
-                    method: 'POST',
+                    method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ id, novoUsername: novoUsername.trim() })
+                    body: JSON.stringify({ id, username: novoUsername.trim() })
                 });
                 if (res.ok) { 
                     alert("Nome de usuário sincronizado e atualizado com sucesso!"); 
@@ -428,15 +433,12 @@
             } catch(e) { alert("Erro de rede ao conectar ao servidor."); }
         }
 
-        // NOVA FUNÇÃO: DISCRETA PARA EXCLUSÃO PARLAMENTAR INTEGRADA AO BACKEND
         async function removerUsuario(id, nome) {
             if (!confirm(`ATENÇÃO: Deseja realmente excluir permanentemente o parlamentar ${nome} do sistema? Esta ação não pode ser desfeita.`)) return;
             
             try {
-                const res = await fetch(`${API_URL}/deletar`, {
-                    method: 'DELETE',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ id })
+                const res = await fetch(`${API_URL}/${id}`, {
+                    method: 'DELETE'
                 });
                 if (res.ok) {
                     alert(`Parlamentar ${nome} removido com sucesso.`);
@@ -465,7 +467,7 @@
                 codigo: document.getElementById('modal-sessao-codigo').value,
                 ementa: document.getElementById('modal-sessao-ementa').value
             };
-            const res = await fetch('http://localhost:3000/api/sessao/controle', {
+            const res = await fetch(`${API_SESSAO_URL}/controle`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
@@ -479,7 +481,7 @@
         }
 
         async function dispararFechamentoSessao() {
-            await fetch('http://localhost:3000/api/sessao/controle', {
+            await fetch(`${API_SESSAO_URL}/controle`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ acao: 'encerrar' })
@@ -522,7 +524,7 @@
             }
 
             try {
-                const res = await fetch('http://localhost:3000/api/sessao/status');
+                const res = await fetch(`${API_SESSAO_URL}/status`);
                 const status = await res.json();
 
                 const container = document.getElementById('container-ata-impressao');
@@ -668,7 +670,7 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ id, novaSenha })
                 });
-                if (res.ok) { alert("Senha atualizada com sucesso!"); sincronizarDadosGerais(); }
+                if (res.ok) { alert("Senha updated com sucesso!"); sincronizarDadosGerais(); }
                 else { alert("Não foi possível alterar a senha."); }
             } catch (e) { alert("Erro de rede."); }
         }

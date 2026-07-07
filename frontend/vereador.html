@@ -175,7 +175,7 @@
                 </div>
                 <div>
                     <h3 class="font-bold text-lg text-white [html.light_&]:text-slate-900">Trabalhos Plenários Iniciados!</h3>
-                    <p class="text-sm text-slate-400 [html.light_&]:text-slate-500 max-w-sm mx-auto mt-1 mb-4">Confirme sua presença eletrônica para liberar suas cédulas de voto e ingressar no sistema de som do telão.</p>
+                    <p class="text-sm text-slate-400 [html.light_&]:text-slate-500 max-w-sm mx-auto mt-1 mb-4">Confirme sua presença eletrônica para liberar suas cédulas de voto e ingressar no system de som do telão.</p>
                     <button onclick="confirmarPresenca()" id="btn-presenca" class="bg-emerald-600 hover:bg-emerald-500 text-white font-black px-6 py-3 rounded-xl transition-all shadow-lg text-sm [html.light_&]:bg-emerald-700">
                         Confirmar Minha Presença na Sessão
                     </button>
@@ -196,17 +196,17 @@
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                             <div>
                                 <label class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Código do Projeto</label>
-                                <input type="text" id="proj-codigo" placeholder="Ex: PL Nº 05/2026" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-2 text-sm text-slate-200 focus:outline-none focus:border-blue-500 [html.light_&]:bg-slate-50 [html.light_&]:border-slate-300 [html.light_&]:text-slate-900">
+                                <input type="text" id="gabinete-proj-codigo" placeholder="Ex: PL Nº 05/2026" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-2 text-sm text-slate-200 focus:outline-none focus:border-blue-500 [html.light_&]:bg-slate-50 [html.light_&]:border-slate-300 [html.light_&]:text-slate-900">
                             </div>
                             <div class="md:col-span-2">
                                 <label class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Ementa do Projeto</label>
-                                <input type="text" id="proj-ementa" placeholder="Ex: Dispõe sobre as diretrizes de arborização urbana..." class="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-2 text-sm text-slate-200 focus:outline-none focus:border-blue-500 [html.light_&]:bg-slate-50 [html.light_&]:border-slate-300 [html.light_&]:text-slate-900">
+                                <input type="text" id="gabinete-proj-ementa" placeholder="Ex: Dispõe sobre as diretrizes de arborização urbana..." class="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-2 text-sm text-slate-200 focus:outline-none focus:border-blue-500 [html.light_&]:bg-slate-50 [html.light_&]:border-slate-300 [html.light_&]:text-slate-900">
                             </div>
                         </div>
 
                         <div class="space-y-1 mb-4">
                             <label class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Corpo e Justificativa do Texto</label>
-                            <textarea id="proj-corpo" rows="8" placeholder="Art. 1º Fica determinado que..." class="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-3 text-sm text-slate-200 focus:outline-none focus:border-blue-500 resize-none [html.light_&]:bg-slate-50 [html.light_&]:border-slate-300 [html.light_&]:text-slate-900"></textarea>
+                            <textarea id="gabinete-proj-corpo" rows="8" placeholder="Art. 1º Fica determinado que..." class="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-3 text-sm text-slate-200 focus:outline-none focus:border-blue-500 resize-none [html.light_&]:bg-slate-50 [html.light_&]:border-slate-300 [html.light_&]:text-slate-900"></textarea>
                         </div>
 
                         <div class="flex items-center justify-end gap-2">
@@ -221,8 +221,7 @@
                         <h3 class="text-sm font-bold text-white [html.light_&]:text-slate-900 mb-3 flex items-center gap-2">
                             <i data-lucide="folder-kanban" class="text-amber-400"></i> Banco de Proposições
                         </h3>
-                        <div id="container-projetos-gabinete" class="space-y-3 overflow-y-auto max-h-[460px] pr-1">
-                            </div>
+                        <div id="container-projetos-gabinete" class="space-y-3 overflow-y-auto max-h-[460px] pr-1"></div>
                     </div>
                 </div>
 
@@ -233,7 +232,19 @@
     <script>
         lucide.createIcons();
 
-        const socket = io('http://localhost:3000');
+        // CONFIGURAÇÃO DA URL INTELIGENTE DO SERVIDOR (INTEGRADO AO RAILWAY ONLINE)
+        const BACKEND_RAILWAY = 'https://camaradevereadores-production.up.railway.app';
+        
+        const LOCAL_HOST = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+        
+        // Inicializa o Socket com o caminho correto baseado no ambiente
+        const socket = LOCAL_HOST ? io('http://localhost:3000') : io(BACKEND_RAILWAY);
+        
+        // Mapeamento das rotas dinâmicas da API
+        const API_URL = LOCAL_HOST ? 'http://localhost:3000/api/vereadores' : `${BACKEND_RAILWAY}/api/vereadores`;
+        const API_SESSAO_URL = LOCAL_HOST ? 'http://localhost:3000/api/sessao' : `${BACKEND_RAILWAY}/api/sessao`;
+        const API_MIC_URL = LOCAL_HOST ? 'http://localhost:3000/api/microfone' : `${BACKEND_RAILWAY}/api/microfone`;
+
         const VEREADOR_ID = localStorage.getItem('siscam_user_id');
 
         // RECEPTOR INTELIGENTE E INTEGRADO DAS CREDENCIAIS LEGISLATIVAS
@@ -247,8 +258,7 @@
             document.getElementById('painel-partido').innerText = siglaPartido;
 
             try {
-                // CONTINGÊNCIA ATIVA: Pede o status em tempo real à API para buscar a mesma foto exata que o Telão lê do banco
-                const res = await fetch('http://localhost:3000/api/sessao/status');
+                const res = await fetch(`${API_SESSAO_URL}/status`);
                 const status = await res.json();
                 
                 const mim = status.vereadores.find(v => v.id === String(VEREADOR_ID));
@@ -257,7 +267,6 @@
                 if (mim && mim.foto) {
                     fotoFinal = mim.foto;
                 } else {
-                    // Fallback para chaves de sessão locais
                     fotoFinal = localStorage.getItem('siscam_user_foto') || 
                                 localStorage.getItem('user_foto') || 
                                 localStorage.getItem('foto_perfil') || 
@@ -265,7 +274,7 @@
                 }
 
                 if (fotoFinal && !fotoFinal.startsWith('http') && !fotoFinal.startsWith('data:')) {
-                    fotoFinal = 'http://localhost:3000/uploads/' + fotoFinal;
+                    fotoFinal = LOCAL_HOST ? 'http://localhost:3000/uploads/' + fotoFinal : `${BACKEND_RAILWAY}/uploads/` + fotoFinal;
                 }
 
                 if (!fotoFinal) {
@@ -275,7 +284,6 @@
                 document.getElementById('painel-foto-vereador').src = fotoFinal;
 
             } catch (e) {
-                // Caso o servidor esteja offline no milissegundo inicial, usa o rascunho local provisório
                 let localFoto = localStorage.getItem('siscam_user_foto') || 'https://images.unsplash.com/photo-1560250097-0b93528c311a?q=80&w=256&auto=format&fit=crop';
                 document.getElementById('painel-foto-vereador').src = localFoto;
             }
@@ -291,7 +299,7 @@
 
         async function sincronizarPainel() {
             try {
-                const res = await fetch('http://localhost:3000/api/sessao/status');
+                const res = await fetch(`${API_SESSAO_URL}/status`);
                 const status = await res.json();
 
                 const sub = document.getElementById('subtitulo-sessao');
@@ -301,7 +309,6 @@
                 const pnlVoto = document.getElementById('painel-votacao-nominal');
                 const pnlInfo = document.getElementById('painel-sessao-informacoes');
 
-                // Sincronização em tempo real da foto caso mude durante a sessão plenária
                 const meuUser = status.vereadores.find(v => v.id === String(VEREADOR_ID));
                 if (meuUser && meuUser.foto) {
                     document.getElementById('painel-foto-vereador').src = meuUser.foto;
@@ -354,9 +361,9 @@
         }
 
         function salvarNovaProposicaoInterna() {
-            const cod = document.getElementById('proj-codigo').value.trim();
-            const emn = document.getElementById('proj-ementa').value.trim();
-            const crp = document.getElementById('proj-corpo').value.trim();
+            const cod = document.getElementById('gabinete-proj-codigo').value.trim();
+            const emn = document.getElementById('gabinete-proj-ementa').value.trim();
+            const crp = document.getElementById('gabinete-proj-corpo').value.trim();
 
             if(!cod || !emn || !crp) {
                 alert("Preencha todos os campos da matéria legislativa antes de salvar.");
@@ -372,9 +379,9 @@
         }
 
         function limparFormularioProposicao() {
-            document.getElementById('proj-codigo').value = '';
-            document.getElementById('proj-ementa').value = '';
-            document.getElementById('proj-corpo').value = '';
+            document.getElementById('gabinete-proj-codigo').value = '';
+            document.getElementById('gabinete-proj-ementa').value = '';
+            document.getElementById('gabinete-proj-corpo').value = '';
         }
 
         function renderizerProjetosGabinete() {
@@ -408,7 +415,7 @@
             if(!confirm(`Deseja projetar a ementa do projeto ${codigo} na TV/Telão principal do Plenário?`)) return;
             
             try {
-                await fetch('http://localhost:3000/api/sessao/controle', {
+                await fetch(`${API_SESSAO_URL}/controle`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ acao: 'iniciar', codigo: codigo, ementa: ementa })
@@ -429,7 +436,7 @@
         }
 
         async function confirmarPresenca() {
-            await fetch('http://localhost:3000/api/sessao/presenca', {
+            await fetch(`${API_SESSAO_URL}/presenca`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ vereadorId: VEREADOR_ID })
@@ -439,7 +446,7 @@
 
         async function registrarVoto(opcao) {
             try {
-                await fetch('http://localhost:3000/api/vereadores/votar', {
+                await fetch(`${API_URL}/votar`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ vereadorId: VEREADOR_ID, voto: opcao })
@@ -450,7 +457,7 @@
         }
 
         async function solicitarPalavra() {
-            await fetch('http://localhost:3000/api/microfone/pedir', {
+            await fetch(`${API_MIC_URL}/pedir`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ vereadorId: VEREADOR_ID })

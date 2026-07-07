@@ -418,14 +418,27 @@
         // Inicialização dos ícones do Lucide
         lucide.createIcons();
 
-        // Conexão com o servidor Socket.io
-        const socket = io('http://localhost:3000');
+        // CONFIGURAÇÃO DA URL INTELIGENTE DO SERVIDOR (CONECTADO AO RAILWAY ONLINE)
+        const BACKEND_RAILWAY = 'https://camaradevereadores-production.up.railway.app';
+        
+        const LOCAL_HOST = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+        
+        // Inicializa o Socket com o caminho correto baseado no ambiente
+        const socket = LOCAL_HOST ? io('http://localhost:3000') : io(BACKEND_RAILWAY);
+        
+        // Mapeamento das rotas dinâmicas da API
+        const API_SESSAO_URL = LOCAL_HOST ? 'http://localhost:3000/api/sessao' : `${BACKEND_RAILWAY}/api/sessao`;
+        const API_MIC_URL = LOCAL_HOST ? 'http://localhost:3000/api/microfone' : `${BACKEND_RAILWAY}/api/microfone`;
+
         const PRESIDENTE_ID = localStorage.getItem('siscam_user_id');
 
-        // VAVRIÁVEIS GLOBAIS DE ÁUDIO STREAM (CAPTURA DO MICROFONE DO PRESIDENTE)
+        // VARIÁVEIS GLOBAIS DE ÁUDIO STREAM (CAPTURA DO MICROFONE DO PRESIDENTE)
         let mediaStream = null;
         let mediaRecorder = null;
         let micEstaAtivoLocal = false;
+
+        // Estado local das atas arquivadas na sessão corrente
+        let materiasVotadasHistorico = [];
 
         // ALTERNADOR INTERNO DE TEMAS (MANTÉM O ESCURO ATUAL OU MUDA PARA O BRANCO + AZUL CLARENCIA)
         function alternarTema() {
@@ -448,7 +461,7 @@
             let foto = localStorage.getItem('siscam_user_foto') || '';
 
             if (foto && !foto.startsWith('http') && !foto.startsWith('data:')) {
-                foto = 'http://localhost:3000/uploads/' + foto;
+                foto = LOCAL_HOST ? 'http://localhost:3000/uploads/' + foto : `${BACKEND_RAILWAY}/uploads/` + foto;
             }
 
             document.getElementById('presidente-nome-urna').innerText = nomeUrna;
@@ -522,7 +535,7 @@
         // PUXAR ESTADO GERAL DO PLENÁRIO DA API E GERENCIAR MICROFONES
         async function atualizarEstadoGeral() {
             try {
-                const res = await fetch('http://localhost:3000/api/sessao/status');
+                const res = await fetch(`${API_SESSAO_URL}/status`);
                 const status = await res.json();
 
                 const txtStatus = document.getElementById('status-sessao-texto');
@@ -550,7 +563,7 @@
                     btnAbrir.classList.remove('hidden');
                     btnFechar.classList.add('hidden');
                     pnlDash.classList.add('hidden');
-                     desligarMicrofoneHardware();
+                    desligarMicrofoneHardware();
                 }
 
                 if (status.materiaAtiva && status.materiaAtiva.codigo) {
@@ -631,7 +644,7 @@
             const acao = abrir ? 'abrir' : 'fechar';
             if (!confirm(`Deseja realmente ${abrir ? 'ABRIR os painéis e a Ordem do Dia' : 'ENCERRAR em definitivo'} a sessão plenária de hoje?`)) return;
 
-            await fetch('http://localhost:3000/api/sessao/controle', {
+            await fetch(`${API_SESSAO_URL}/controle`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ acao: acao })
@@ -650,7 +663,7 @@
                 return;
             }
 
-            await fetch('http://localhost:3000/api/sessao/controle', {
+            await fetch(`${API_SESSAO_URL}/controle`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ acao: 'iniciar', codigo: cod, ementa: emn })
@@ -683,7 +696,7 @@
             document.getElementById('materia-codigo').value = '';
             document.getElementById('materia-ementa').value = '';
 
-            await fetch('http://localhost:3000/api/sessao/controle', {
+            await fetch(`${API_SESSAO_URL}/controle`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ acao: 'limparMateria' })
@@ -748,7 +761,7 @@
 
         // INTERVENÇÃO FORÇADA DE PRESENÇA ADMIN MESA DIRECTA
         async function alternarPresencaForcada(vId) {
-            await fetch('http://localhost:3000/api/sessao/presenca', {
+            await fetch(`${API_SESSAO_URL}/presenca`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ vereadorId: vId })
@@ -838,14 +851,13 @@
             autorizarMicrofoneEspecifico(vId);
         }
 
-        // GERAR BOTÕES DE ATALHO RÁPIDO PARA ABRIR QUALQUE MICROFONE NA MARRA (INCLUI O PRÓPRIO PRESIDENTE NA LISTA SE ELE ESTIVER PRESENTE)
+        // GERAR BOTÕES DE ATALHO RÁPIDO PARA ABRIR QUALQUER MICROFONE NA MARRA
         function gerarBotoesAtalhosMicrofones(vereadores) {
             const container = document.getElementById('oradores-lista-atalhos-mics');
             if(!container) return;
             container.innerHTML = '';
 
             vereadores.forEach(v => {
-                // O presidente e vereadores ativos podem receber o áudio master
                 if(v.status !== 'Presente' && String(v.id) !== String(PRESIDENTE_ID)) return;
 
                 const div = document.createElement('div');
@@ -862,7 +874,7 @@
 
         // REQUISIÇÕES DE ACIONAMENTO DE ÁUDIO NO SERVIDOR
         async function autorizarMicrofoneEspecifico(vId) {
-            await fetch('http://localhost:3000/api/microfone/autorizar', {
+            await fetch(`${API_MIC_URL}/autorizar`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ vereadorId: vId })
@@ -872,7 +884,7 @@
         }
 
         async function revogarMicrofoneGeral() {
-            await fetch('http://localhost:3000/api/microfone/autorizar', {
+            await fetch(`${API_MIC_URL}/autorizar`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ vereadorId: null })
@@ -933,8 +945,7 @@
             link.click();
         }
 
-        // COLETOR DO FLUXO DE ÁUDIO REAL TIME DAS CÉDULAS PARLAMENTARES (CONECTA NO AUTO-SPEAKER)
-        let queue = [];
+        // COLETOR DO FLUXO DE ÁUDIO REAL TIME DAS CÉDULAS PARLAMENTARES
         let audioCtx = null;
         let scheduledTime = 0;
 
