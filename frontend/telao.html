@@ -60,8 +60,110 @@
         </div>
     </div>
 
-    <!-- GRID DOS VEREADORES ESTILO MEET -->
-    <main id="meet-grid" class="flex-1 grid grid-cols-2 md:grid-cols-4 gap-4 overflow-hidden"></main>
+    <!-- PAINEL DE RESULTADO DA VOTAÇÃO -->
+<section id="painel-votacao"
+         class="bg-slate-900/70 border border-slate-800 rounded-2xl p-4 flex items-center justify-center gap-8 shrink-0">
+
+    <div id="total-sim" class="text-center">
+        <div class="text-emerald-400 text-xs uppercase font-bold">SIM</div>
+        <div class="text-3xl font-black">0</div>
+    </div>
+
+    <div id="total-nao" class="text-center">
+        <div class="text-rose-400 text-xs uppercase font-bold">NÃO</div>
+        <div class="text-3xl font-black">0</div>
+    </div>
+
+    <div id="total-abstencao" class="text-center">
+        <div class="text-amber-400 text-xs uppercase font-bold">ABSTENÇÃO</div>
+        <div class="text-3xl font-black">0</div>
+    </div>
+
+</section>
+
+
+<!-- LAYOUT PRINCIPAL -->
+<main class="flex-1 flex gap-4 overflow-hidden">
+
+    <!-- ÁREA CENTRAL -->
+    <section class="flex-1 flex flex-col gap-4 overflow-hidden">
+
+        <!-- PRESIDENTE -->
+        <div id="card-presidente"
+             class="hidden min-h-[180px] rounded-2xl border border-amber-500/30 bg-gradient-to-r from-amber-950/20 to-slate-900 overflow-hidden">
+        </div>
+
+        <!-- GRID DINÂMICO DOS VEREADORES -->
+        <div id="meet-grid"
+             class="flex-1 grid grid-cols-2 md:grid-cols-4 gap-4 overflow-auto">
+        </div>
+
+    </section>
+
+    <!-- FILA DE ORADORES -->
+    <aside id="fila-oradores"
+           class="w-80 shrink-0 bg-slate-900/80 border border-slate-800 rounded-2xl p-4 flex flex-col">
+
+        <div class="flex items-center justify-between mb-4">
+
+            <h3 class="font-black text-white uppercase tracking-wider">
+                Fila de Oradores
+            </h3>
+
+            <span id="total-pedidos-fala"
+                  class="text-xs text-blue-400 font-bold">
+                0 pedidos
+            </span>
+
+        </div>
+
+        <div id="lista-pedidos-fala"
+             class="flex-1 overflow-auto flex flex-col gap-2">
+
+            <div class="text-slate-500 text-sm">
+                Nenhuma solicitação de fala.
+            </div>
+
+        </div>
+
+    </aside>
+
+</main>
+
+
+<!-- MODO APRESENTAÇÃO -->
+<section id="modo-apresentacao"
+         class="hidden fixed inset-0 bg-black z-50 flex flex-col">
+
+    <div class="h-16 border-b border-slate-800 bg-slate-950 flex items-center justify-between px-6">
+
+        <div>
+            <div class="text-white font-black">
+                Apresentação de Projeto
+            </div>
+
+            <div id="apresentador-atual"
+                 class="text-slate-400 text-xs">
+                Vereador
+            </div>
+        </div>
+
+        <div id="contador-slides"
+             class="font-mono text-white">
+            Slide 1 / 1
+        </div>
+
+    </div>
+
+    <div class="flex-1 flex items-center justify-center">
+
+        <img id="slide-atual"
+             src=""
+             class="max-w-full max-h-full object-contain">
+
+    </div>
+
+</section>
 
     <!-- FOOTER DA TRANSMISSÃO -->
     <footer class="bg-slate-900/40 border border-slate-800 rounded-xl px-6 py-3 flex items-center justify-between text-xs text-slate-500 shrink-0">
