@@ -62,7 +62,7 @@
                 <div class="w-24 h-1 bg-white border border-black rounded-full"></div>
             </div>
 
-            <!-- Grid de Pilares (Substituído verde/amarelo por Centáurea e Branco com Contorno) -->
+            <!-- Grid de Pilares -->
             <div class="grid grid-cols-2 gap-6 pt-4">
                 <div class="flex gap-3">
                     <div class="w-10 h-10 rounded-xl bg-slate-900 border border-slate-700 flex items-center justify-center shrink-0 text-white"><i data-lucide="users" class="w-5 h-5"></i></div>
@@ -104,10 +104,10 @@
     <!-- LADO DIREITO: FORMULÁRIO DE LOGIN -->
     <section class="flex-1 flex flex-col justify-center items-center p-6 sm:p-12 relative bg-slate-100">
         
-        <!-- Bloco de Alerta de Erros[cite: 7] -->
+        <!-- Bloco de Alerta de Erros -->
         <div id="alerta-erro" class="hidden w-full max-w-md bg-rose-50 border border-rose-200 p-4 rounded-xl flex items-center gap-3 text-rose-700 text-xs font-semibold mb-4 shadow-sm animate-in fade-in slide-in-from-top-2">
             <i data-lucide="alert-triangle" class="w-5 h-5 shrink-0 text-rose-500"></i>
-            <span id="texto-erro">E-mail ou senha incorretos.</span> <!-- Mantido ID original[cite: 7] -->
+            <span id="texto-erro">E-mail ou senha incorretos.</span>
         </div>
 
         <!-- Container do Formulário -->
@@ -120,18 +120,18 @@
 
             <!-- Cabeçalho Textual -->
             <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest block text-center">Let's connect to</span>
-            <h1 class="text-3xl font-black text-slate-900 tracking-wide text-center mt-0.5">SISCAM 1.0</h1> <!--[cite: 7] -->
-            <p class="text-[11px] font-mono font-bold tracking-wider text-slate-400 uppercase text-center mt-1 mb-4">Portal Legislativo Municipal</p> <!--[cite: 7] -->
+            <h1 class="text-3xl font-black text-slate-900 tracking-wide text-center mt-0.5">SISCAM 1.0</h1>
+            <p class="text-[11px] font-mono font-bold tracking-wider text-slate-400 uppercase text-center mt-1 mb-4">Portal Legislativo Municipal</p>
             <div class="w-32 h-0.5 bg-white border-t border-black rounded-full mb-8"></div>
 
-            <!-- Formulário de Entrada[cite: 7] -->
-            <form onsubmit="autenticarUsuario(event)" class="w-full space-y-4"> <!-- Chamada da função original[cite: 7] -->
+            <!-- Formulário de Entrada -->
+            <form onsubmit="autenticarUsuario(event)" class="w-full space-y-4">
                 <!-- Input Usuário -->
                 <div class="space-y-1">
                     <label class="text-[11px] font-bold uppercase tracking-wider text-slate-500 block">Usuário ou E-mail</label>
                     <div class="relative flex items-center">
                         <i data-lucide="user" class="w-4 h-4 text-slate-400 absolute left-4"></i>
-                        <input type="text" id="login-usuario" placeholder="admin ou e-mail do parlamentar" required class="w-full bg-slate-50 border border-slate-200 rounded-xl pl-11 pr-4 py-3 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:border-centaurea focus:bg-white transition-all"> <!-- Mantido ID original[cite: 7] -->
+                        <input type="text" id="login-usuario" placeholder="admin ou e-mail do parlamentar" required class="w-full bg-slate-50 border border-slate-200 rounded-xl pl-11 pr-4 py-3 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:border-centaurea focus:bg-white transition-all">
                     </div>
                 </div>
 
@@ -140,7 +140,7 @@
                     <label class="text-[11px] font-bold uppercase tracking-wider text-slate-500 block">Senha Secreta</label>
                     <div class="relative flex items-center">
                         <i data-lucide="lock" class="w-4 h-4 text-slate-400 absolute left-4"></i>
-                        <input type="password" id="login-senha" placeholder="••••••••" required class="w-full bg-slate-50 border border-slate-200 rounded-xl pl-11 pr-12 py-3 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:border-centaurea focus:bg-white transition-all"> <!-- Mantido ID original[cite: 7] -->
+                        <input type="password" id="login-senha" placeholder="••••••••" required class="w-full bg-slate-50 border border-slate-200 rounded-xl pl-11 pr-12 py-3 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:border-centaurea focus:bg-white transition-all">
                         <button type="button" onclick="alternarVisibilidadeSenha()" class="absolute right-4 text-slate-400 hover:text-slate-600 focus:outline-none">
                             <i id="icone-olho" data-lucide="eye" class="w-4 h-4"></i>
                         </button>
@@ -170,12 +170,12 @@
             </div>
         </div>
 
-        <!-- Bloco de Acessos Rápidos Estilizado de Acordo com as Novas Cores -->
+        <!-- Bloco de Acessos Rápidos Estilizado -->
         <div class="w-full max-w-md bg-slate-200/60 border border-slate-300/60 p-4 rounded-xl text-[11px] text-slate-600 space-y-1.5 mt-4">
-            <span class="font-bold text-slate-700 block uppercase tracking-wider">Acessos rápidos de teste:</span> <!--[cite: 7] -->
-            <p>• <strong class="text-centaurea">Super Admin:</strong> user: <span class="text-slate-800 font-mono font-bold">admin</span> | senha: <span class="text-slate-800 font-mono">123456</span></p> <!--[cite: 7] -->
-            <p>• <strong class="text-slate-700">Presidente:</strong> user: <span class="text-slate-800 font-mono font-bold">presidente</span> | senha: <span class="text-slate-800 font-mono">123456</span></p> <!--[cite: 7] -->
-            <p>• <strong class="text-slate-500">Vereador:</strong> user: <span class="text-slate-800 font-mono font-bold">vereador</span> | senha: <span class="text-slate-800 font-mono">123456</span></p> <!--[cite: 7] -->
+            <span class="font-bold text-slate-700 block uppercase tracking-wider">Acessos rápidos de teste:</span>
+            <p>• <strong class="text-centaurea">Super Admin:</strong> user: <span class="text-slate-800 font-mono font-bold">admin</span> | senha: <span class="text-slate-800 font-mono">123456</span></p>
+            <p>• <strong class="text-slate-700">Presidente:</strong> user: <span class="text-slate-800 font-mono font-bold">presidente</span> | senha: <span class="text-slate-800 font-mono">123456</span></p>
+            <p>• <strong class="text-slate-500">Vereador:</strong> user: <span class="text-slate-800 font-mono font-bold">vereador</span> | senha: <span class="text-slate-800 font-mono">123456</span></p>
         </div>
 
         <!-- Assinatura Institucional Inferior Externa -->
@@ -188,11 +188,16 @@
         </div>
     </section>
 
-    <!-- INCLUSÃO INTEGRAL DA SUA LÓGICA DE LOGIN ORIGINAL -->
     <script>
         lucide.createIcons();
 
-        const API_URL = 'http://localhost:3000/api'; //[cite: 7]
+        // CONFIGURAÇÃO DA URL INTELIGENTE DO SERVIDOR (MUDAR PARA O SEU LINK GERADO NO RAILWAY)
+        const BACKEND_RAILWAY = 'https://camaradevereadores-production.up.railway.app'; 
+        
+        // Se o front estiver rodando no seu computador (localhost), ele usa o server local, senão usa o Railway online automaticamente
+        const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
+            ? 'http://localhost:3000/api' 
+            : `${BACKEND_RAILWAY}/api`;
 
         function alternarVisibilidadeSenha() {
             const inputSenha = document.getElementById('login-senha');
@@ -208,18 +213,18 @@
             lucide.createIcons();
         }
 
-        async function autenticarUsuario(event) { //[cite: 7]
+        async function autenticarUsuario(event) {
             event.preventDefault();
 
-            const usuarioInput = document.getElementById('login-usuario').value.trim(); //[cite: 7]
-            const senhaInput = document.getElementById('login-senha').value; //[cite: 7]
-            const alertaErro = document.getElementById('alerta-erro'); //[cite: 7]
-            const textoErro = document.getElementById('texto-erro'); //[cite: 7]
+            const usuarioInput = document.getElementById('login-usuario').value.trim();
+            const senhaInput = document.getElementById('login-senha').value;
+            const alertaErro = document.getElementById('alerta-erro');
+            const textoErro = document.getElementById('texto-erro');
 
-            alertaErro.classList.add('hidden'); //[cite: 7]
+            alertaErro.classList.add('hidden');
 
             try {
-                const resposta = await fetch(`${API_URL}/auth/login`, { //[cite: 7]
+                const resposta = await fetch(`${API_URL}/auth/login`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -230,42 +235,42 @@
                     })
                 });
 
-                const dados = await resposta.json(); //[cite: 7]
+                const dados = await resposta.json();
                 console.log(dados);
 
                 if (!resposta.ok) {
-                    throw new Error(dados.error || 'Erro na autenticação.'); //[cite: 7]
+                    throw new Error(dados.error || 'Erro na autenticação.');
                 }
 
-                // Guarda os dados da sessão no navegador exatamente como a sua função pedia[cite: 7]
-                localStorage.setItem('siscam_user_id', dados.id); //[cite: 7]
-                localStorage.setItem('siscam_user_nome', dados.nome); //[cite: 7]
-                localStorage.setItem('siscam_user_cargo', dados.cargo); //[cite: 7]
+                // Guarda os dados da sessão no navegador
+                localStorage.setItem('siscam_user_id', dados.id);
+                localStorage.setItem('siscam_user_nome', dados.nome);
+                localStorage.setItem('siscam_user_cargo', dados.cargo);
 
-                localStorage.setItem('siscam_user_nome_completo', dados.nomeCompleto || ''); //[cite: 7]
-                localStorage.setItem('siscam_user_nome_urna', dados.nomeEleitoral || ''); //[cite: 7]
-                localStorage.setItem('siscam_user_partido', dados.sigla || dados.partido || ''); //[cite: 7]
-                localStorage.setItem('siscam_user_foto', dados.foto || ''); //[cite: 7]
-                localStorage.setItem('siscam_username', dados.username || ''); //[cite: 7]
+                localStorage.setItem('siscam_user_nome_completo', dados.nomeCompleto || '');
+                localStorage.setItem('siscam_user_nome_urna', dados.nomeEleitoral || '');
+                localStorage.setItem('siscam_user_partido', dados.sigla || dados.partido || '');
+                localStorage.setItem('siscam_user_foto', dados.foto || '');
+                localStorage.setItem('siscam_username', dados.username || '');
 
-                // Redirecionamento original mapeado[cite: 7]
-                switch (dados.cargo.toUpperCase()) { //[cite: 7]
+                // Redirecionamento original mapeado
+                switch (dados.cargo.toUpperCase()) {
                     case 'SUPERADMIN':
-                        window.location.href = './index.html'; //[cite: 7]
+                        window.location.href = './index.html';
                         break;
                     case 'PRESIDENTE':
-                        window.location.href = './presidente.html'; //[cite: 7]
+                        window.location.href = './presidente.html';
                         break;
                     case 'VEREADOR':
-                        window.location.href = './vereador.html'; //[cite: 7]
+                        window.location.href = './vereador.html';
                         break;
                     default:
-                        throw new Error('Cargo não reconhecido.'); //[cite: 7]
+                        throw new Error('Cargo não reconhecido.');
                 }
 
             } catch (error) {
-                textoErro.innerText = error.message; //[cite: 7]
-                alertaErro.classList.remove('hidden'); //[cite: 7]
+                textoErro.innerText = error.message;
+                alertaErro.classList.remove('hidden');
             }
         }
     </script>
