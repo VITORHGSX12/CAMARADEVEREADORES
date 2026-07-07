@@ -1,0 +1,20 @@
+/* Customizações exclusivas da bancada do vereador */
+
+.global-aba {
+    transition: opacity 0.2s ease-in-out;
+}
+
+.hidden {
+    display: none !important;
+}
+
+/* Deixa o botão de pedir palavra com pulsação sutil quando ativo */
+.palavra-solicitada {
+    animation: pulseBorder 2s infinite;
+}
+
+@keyframes pulseBorder {
+    0% { border-color: rgba(245, 158, 11, 0.4); box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.4); }
+    70% { border-color: rgba(245, 158, 11, 1); box-shadow: 0 0 0 6px rgba(245, 158, 11, 0); }
+    100% { border-color: rgba(245, 158, 11, 0.4); box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); }
+}

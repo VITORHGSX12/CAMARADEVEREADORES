@@ -1,0 +1,16 @@
+/* Customizações adicionais para o painel do presidente */
+
+/* Efeito de esconder/mostrar abas de forma elegante */
+.global-aba {
+    transition: opacity 0.2s ease-in-out;
+}
+
+.hidden {
+    display: none !important;
+}
+
+/* Customização para o display digital do cronômetro imitar painel real */
+#display-tempo {
+    text-shadow: 0 0 10px rgba(245, 158, 11, 0.5);
+    box-shadow: inset 0 2px 8px rgba(0,0,0,0.8);
+}

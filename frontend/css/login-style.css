@@ -1,0 +1,27 @@
+/* Customizações da tela de autenticação */
+
+body {
+    background-image: radial-gradient(circle at top right, rgba(16, 185, 129, 0.08), transparent 40%),
+                      radial-gradient(circle at bottom left, rgba(30, 41, 59, 0.4), transparent 50%);
+}
+
+.card-login {
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes slideUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Animação de erro quando erra as credenciais */
+.animate-shake {
+    animation: shake 0.3s ease-in-out;
+}
+
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    20%, 60% { transform: translateX(-6px); }
+    40%, 80% { transform: translateX(6px); }
+}

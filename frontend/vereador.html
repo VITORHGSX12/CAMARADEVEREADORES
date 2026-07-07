@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SISCAM 1.0 - Terminal do Parlamentar</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        legisDark: { bg: '#030712', card: '#0f172a', border: '#1e293b' },
+                        legisLight: { bg: '#f8fafc', card: '#ffffff', text: '#0f172a', primary: '#15803d' }
+                    }
+                }
+            }
+        }
+        if (!localStorage.getItem('siscam_user_id') || localStorage.getItem('siscam_user_cargo') !== 'VEREADOR') {
+            localStorage.clear();
+            window.location.href = './login.html';
+        }
+    </script>
+    <style>
+        .tab-btn.active { border-color: rgb(37 99 235 / 1); color: rgb(37 99 235 / 1); background-color: rgb(37 99 235 / 0.1); font-weight: 600; }
+    </style>
+</head>
+<body class="bg-legisDark-bg dark:bg-legisDark-bg text-slate-100 dark:text-slate-100 font-sans flex h-screen overflow-hidden transition-colors duration-200 [html.light_&]:bg-legisLight-bg [html.light_&]:text-slate-800">
+
+    <aside class="w-64 bg-slate-950 dark:bg-slate-950 border-r border-slate-800 dark:border-slate-800 flex flex-col justify-between shrink-0 [html.light_&]:bg-emerald-950 [html.light_&]:border-emerald-900">
+        <div>
+            <div class="p-6 border-b border-slate-800 dark:border-slate-800 [html.light_&]:border-emerald-900 flex items-center gap-3">
+                <i data-lucide="gavel" class="text-blue-500 w-8 h-8 [html.light_&]:text-emerald-400"></i>
+                <div>
+                    <h1 class="font-bold text-lg leading-none tracking-wide text-white">SISCAM 1.0</h1>
+                    <span class="text-xs text-slate-400 font-medium">Portal Legislativo</span>
+                </div>
+            </div>
+
+            <nav class="p-4 space-y-1">
+                <button onclick="mudarAba('votacao')" id="btn-aba-votacao" class="w-full flex items-center gap-3 px-4 py-3 text-sm font-semibold rounded-xl bg-blue-600/10 text-blue-400 border border-blue-500/10 text-left tab-btn active">
+                    <i data-lucide="vote" class="w-4 h-4"></i> Plenário Virtual
+                </button>
+                <button onclick="mudarAba('gabinete')" id="btn-aba-gabinete" class="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-400 hover:bg-slate-900 hover:text-slate-200 rounded-xl transition-all text-left [html.light_&]:text-emerald-100 tab-btn">
+                    <i data-lucide="briefcase" class="w-4 h-4"></i> Meu Gabinete
+                </button>
+            </nav>
+        </div>
+
+        <div class="p-4 border-t border-slate-800 space-y-2 [html.light_&]:border-emerald-900">
+            <button onclick="alternarTema()" class="w-full flex items-center justify-center gap-2 bg-slate-900 text-slate-300 py-2 rounded-xl text-xs border border-slate-800 [html.light_&]:bg-emerald-900 [html.light_&]:border-emerald-800 [html.light_&]:text-emerald-100">
+                <i data-lucide="sun-moon" class="w-4 h-4"></i> Alternar Tema
+            </button>
+            <button onclick="fazerLogout()" class="w-full flex items-center justify-center gap-2 bg-rose-500/10 hover:bg-rose-500 text-rose-400 hover:text-white font-semibold py-2.5 px-4 rounded-xl border border-rose-500/10 transition-all text-sm shadow-md">
+                <i data-lucide="log-out" class="w-4 h-4"></i> Sair do Sistema
+            </button>
+        </div>
+    </aside>
+
+    <main class="flex-1 flex flex-col min-w-0 overflow-hidden">
+        
+        <div class="bg-slate-950/80 dark:bg-slate-950/80 border-b border-slate-800 dark:border-slate-800 p-4 shrink-0 flex items-center justify-between px-8 [html.light_&]:bg-white [html.light_&]:border-slate-200 shadow-sm">
+            <div class="flex items-center gap-4">
+                <div class="w-11 h-11 bg-slate-900 dark:bg-slate-900 rounded-xl flex items-center justify-center border border-slate-800 dark:border-slate-800 text-blue-400 [html.light_&]:bg-emerald-50 [html.light_&]:border-emerald-200 [html.light_&]:text-emerald-700">
+                    <i data-lucide="gavel" class="w-5 h-5"></i>
+                </div>
+                <div>
+                    <h3 class="font-black text-sm uppercase text-white [html.light_&]:text-slate-900 leading-tight">Câmara Municipal de Gonçalves Dias</h3>
+                    <p class="text-[10px] text-slate-400 [html.light_&]:text-emerald-700 font-bold uppercase tracking-widest">Terminal Eletrônico de Votação e Presença</p>
+                </div>
+            </div>
+            <div class="text-right font-mono text-xs text-slate-400 [html.light_&]:text-slate-500">
+                <span class="block">Sessão Plenária</span>
+                <span class="font-bold text-slate-300 [html.light_&]:text-slate-800">ID #ORD-2026</span>
+            </div>
+        </div>
+
+        <header class="bg-slate-950/40 dark:bg-slate-950/40 border-b border-slate-800/60 dark:border-slate-800/60 px-8 py-4 flex items-center justify-between sticky top-0 backdrop-blur-md z-10 shrink-0 [html.light_&]:bg-slate-100/50 [html.light_&]:border-slate-200">
+            <div>
+                <h2 id="titulo-pagina-topo" class="font-bold text-xl text-white [html.light_&]:text-slate-900">Terminal do Parlamentar</h2>
+                <p id="subtitulo-sessao" class="text-xs text-slate-400 [html.light_&]:text-slate-500">Aguardando abertura dos trabalhos solenes pelo presidente...</p>
+            </div>
+        </header>
+
+        <div id="aba-votacao" class="flex-1 overflow-y-auto p-8 space-y-6 global-aba">
+            
+            <div class="bg-gradient-to-r from-slate-900 via-slate-950 to-slate-900 border border-slate-800 p-6 rounded-2xl flex flex-col md:flex-row items-center justify-between gap-6 shadow-xl [html.light_&]:from-white [html.light_&]:to-white [html.light_&]:border-slate-200">
+                <div class="flex flex-col md:flex-row items-center gap-5 text-center md:text-left min-w-0 flex-1">
+                    <div class="relative shrink-0">
+                        <img id="painel-foto-vereador" src="" alt="Foto Oficial" class="w-20 h-20 rounded-full object-cover border-2 border-blue-500 bg-slate-950 shadow-lg">
+                        <div class="absolute bottom-0 right-1 w-4 h-4 rounded-full bg-emerald-500 border-2 border-slate-950"></div>
+                    </div>
+                    <div class="min-w-0 flex-1 space-y-0.5">
+                        <h4 class="text-xs font-bold text-blue-400 uppercase tracking-wider">Bem-vindo ao Plenário Virtual</h4>
+                        <div class="flex items-center justify-center md:justify-start gap-2.5">
+                            <h2 id="painel-nome-urna" class="text-2xl font-black text-white [html.light_&]:text-slate-950 tracking-wide uppercase">Buscando...</h2>
+                            <span id="painel-partido" class="text-xs font-mono font-bold bg-blue-500/10 text-blue-400 border border-blue-500/20 px-2 py-0.5 rounded uppercase">--</span>
+                        </div>
+                        <p id="painel-nome-completo" class="text-sm text-slate-400 [html.light_&]:text-slate-500 font-medium">Buscando nome completo...</p>
+                    </div>
+                </div>
+                <div class="shrink-0 flex flex-col items-center md:items-end gap-1.5">
+                    <span class="text-[10px] bg-blue-600/10 text-blue-400 font-black uppercase tracking-widest px-3 py-1 rounded-full border border-blue-500/20 shadow-sm">PARLAMENTAR ATIVO</span>
+                    <p class="text-[10px] font-mono text-slate-500">Acesso seguro via SISCAM</p>
+                </div>
+            </div>
+            
+            <div id="painel-sessao-informacoes" class="bg-slate-950/60 dark:bg-slate-950/60 border border-blue-500/30 p-6 rounded-2xl flex flex-col md:flex-row items-center justify-between gap-4 hidden [html.light_&]:bg-white [html.light_&]:border-slate-200 shadow-md animate-in fade-in slide-in-from-top-4 duration-300">
+                <div class="flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-400 flex items-center justify-center shrink-0">
+                        <i data-lucide="presentation" class="w-6 h-6"></i>
+                    </div>
+                    <div>
+                        <span class="text-[10px] bg-blue-500/10 text-blue-400 border border-blue-500/20 px-2 py-0.5 rounded uppercase tracking-wider font-bold">Trabalhos em Andamento</span>
+                        <h3 id="sessao-materia-codigo" class="font-black text-white [html.light_&]:text-slate-950 text-base mt-1">PL Nº 00/0000</h3>
+                        <p id="sessao-materia-ementa" class="text-xs text-slate-400 [html.light_&]:text-slate-500 mt-0.5">Descrição completa da ementa regulamentar lida na Ordem do Dia.</p>
+                    </div>
+                </div>
+                <button onclick="window.open('./telao.html', '_blank')" class="bg-blue-600 hover:bg-blue-500 text-white font-bold py-2.5 px-5 rounded-xl text-xs transition-all flex items-center gap-2 shadow-lg shrink-0">
+                    <i data-lucide="tv" class="w-4 h-4"></i> Assistir no Telão Plenário
+                </button>
+            </div>
+
+            <div id="painel-microfone" class="bg-slate-950/60 dark:bg-slate-950/60 border border-slate-800 dark:border-slate-800 p-6 rounded-2xl flex flex-col md:flex-row items-center justify-between gap-4 hidden [html.light_&]:bg-white [html.light_&]:border-slate-200 shadow-sm">
+                <div class="flex items-center gap-4">
+                    <div id="mic-status-icone" class="w-12 h-12 rounded-xl bg-slate-900 dark:bg-slate-900 border border-slate-800 text-slate-500 flex items-center justify-center shrink-0">
+                        <i data-lucide="mic-off" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-white [html.light_&]:text-slate-900 text-base">Controle de Palavra e Tribuna</h3>
+                        <p id="mic-status-texto" class="text-xs text-slate-400 [html.light_&]:text-slate-500">Você está em modo de escuta. Peça permissão para falar.</p>
+                    </div>
+                </div>
+                <button onclick="solicitarPalavra()" id="btn-pedir-fala" class="bg-blue-600 hover:bg-blue-500 text-white font-bold py-2.5 px-5 rounded-xl text-sm transition-all flex items-center gap-2 shadow-lg shrink-0">
+                    <i data-lucide="message-square-plus" class="w-4 h-4"></i> Solicitar Permissão de Fala
+                </button>
+            </div>
+
+            <div id="painel-votacao-nominal" class="bg-slate-950/60 dark:bg-slate-950/60 border border-amber-500/20 p-6 rounded-2xl space-y-4 hidden [html.light_&]:bg-white [html.light_&]:border-amber-500/30 shadow-xl">
+                <div class="border-b border-slate-800 dark:border-slate-800 [html.light_&]:border-slate-200 pb-3">
+                    <span class="text-[10px] font-bold bg-amber-500/10 text-amber-400 px-2 py-0.5 rounded uppercase tracking-wider">Cédula de Votação Nominal Disponível</span>
+                    <h3 id="materia-codigo-titulo" class="font-black text-white [html.light_&]:text-slate-950 text-lg mt-1">PL Nº 00/0000</h3>
+                    <p id="materia-ementa-sub" class="text-xs text-slate-400 [html.light_&]:text-slate-500"></p>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <button onclick="registrarVoto('SIM')" class="bg-emerald-600 hover:bg-emerald-500 text-white font-black py-3 px-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-md">
+                        <i data-lucide="check-circle" class="w-5 h-5"></i> Votar SIM (Aprovar)
+                    </button>
+                    <button onclick="registrarVoto('NÃO')" class="bg-rose-600 hover:bg-rose-500 text-white font-black py-3 px-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-md">
+                        <i data-lucide="x-circle" class="w-5 h-5"></i> Votar NÃO (Rejeitar)
+                    </button>
+                    <button onclick="registrarVoto('ABSTENÇÃO')" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2 transition-all border border-slate-700">
+                        <i data-lucide="minus-circle" class="w-5 h-5"></i> Abster-se
+                    </button>
+                </div>
+            </div>
+
+            <div id="sessao-inativa-card" class="bg-slate-950/40 dark:bg-slate-950/40 border border-slate-800 dark:border-slate-800 p-8 rounded-2xl flex flex-col items-center justify-center text-center min-h-[300px] space-y-4 [html.light_&]:bg-white [html.light_&]:border-slate-200 shadow-md">
+                <div class="w-14 h-14 bg-slate-900 dark:bg-slate-900 border border-slate-800 text-slate-600 rounded-2xl flex items-center justify-center [html.light_&]:bg-slate-100 [html.light_&]:border-slate-200">
+                    <i data-lucide="lock" class="w-7 h-7"></i>
+                </div>
+                <div>
+                    <h3 class="font-bold text-lg text-white [html.light_&]:text-slate-900">Nenhuma Sessão Ativa no Momento</h3>
+                    <p class="text-sm text-slate-400 [html.light_&]:text-slate-500 max-w-sm mx-auto mt-1">O painel eletrônico de votação e os canais de áudio serão liberados assim que a Mesa Diretora iniciar a Ordem do Dia.</p>
+                </div>
+            </div>
+
+            <div id="sessao-ativa-card" class="bg-slate-950/40 dark:bg-slate-950/40 border border-slate-800 dark:border-slate-800 p-8 rounded-2xl flex flex-col items-center justify-center text-center min-h-[300px] space-y-4 hidden [html.light_&]:bg-white [html.light_&]:border-slate-200 shadow-md">
+                <div class="w-14 h-14 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-2xl flex items-center justify-center">
+                    <i data-lucide="play" class="w-7 h-7"></i>
+                </div>
+                <div>
+                    <h3 class="font-bold text-lg text-white [html.light_&]:text-slate-900">Trabalhos Plenários Iniciados!</h3>
+                    <p class="text-sm text-slate-400 [html.light_&]:text-slate-500 max-w-sm mx-auto mt-1 mb-4">Confirme sua presença eletrônica para liberar suas cédulas de voto e ingressar no sistema de som do telão.</p>
+                    <button onclick="confirmarPresenca()" id="btn-presenca" class="bg-emerald-600 hover:bg-emerald-500 text-white font-black px-6 py-3 rounded-xl transition-all shadow-lg text-sm [html.light_&]:bg-emerald-700">
+                        Confirmar Minha Presença na Sessão
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div id="aba-gabinete" class="flex-1 overflow-y-auto p-8 space-y-6 global-aba hidden">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                
+                <div class="lg:col-span-2 space-y-4">
+                    <div class="bg-slate-950 dark:bg-slate-950 border border-slate-800 p-6 rounded-2xl [html.light_&]:bg-white [html.light_&]:border-slate-200 shadow-sm">
+                        <h3 class="text-base font-bold text-white [html.light_&]:text-slate-900 mb-1 flex items-center gap-2">
+                            <i data-lucide="file-plus" class="text-blue-400"></i> Redigir Nova Matéria Legislativa
+                        </h3>
+                        <p class="text-xs text-slate-400 [html.light_&]:text-slate-500 mb-4">Insira o identificador oficial, a ementa regulamentar e o texto articulado.</p>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                            <div>
+                                <label class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Código do Projeto</label>
+                                <input type="text" id="proj-codigo" placeholder="Ex: PL Nº 05/2026" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-2 text-sm text-slate-200 focus:outline-none focus:border-blue-500 [html.light_&]:bg-slate-50 [html.light_&]:border-slate-300 [html.light_&]:text-slate-900">
+                            </div>
+                            <div class="md:col-span-2">
+                                <label class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Ementa do Projeto</label>
+                                <input type="text" id="proj-ementa" placeholder="Ex: Dispõe sobre as diretrizes de arborização urbana..." class="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-2 text-sm text-slate-200 focus:outline-none focus:border-blue-500 [html.light_&]:bg-slate-50 [html.light_&]:border-slate-300 [html.light_&]:text-slate-900">
+                            </div>
+                        </div>
+
+                        <div class="space-y-1 mb-4">
+                            <label class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Corpo e Justificativa do Texto</label>
+                            <textarea id="proj-corpo" rows="8" placeholder="Art. 1º Fica determinado que..." class="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-3 text-sm text-slate-200 focus:outline-none focus:border-blue-500 resize-none [html.light_&]:bg-slate-50 [html.light_&]:border-slate-300 [html.light_&]:text-slate-900"></textarea>
+                        </div>
+
+                        <div class="flex items-center justify-end gap-2">
+                            <button onclick="limparFormularioProposicao()" class="bg-slate-900 text-slate-400 text-xs px-4 py-2 rounded-xl border border-slate-800 hover:bg-slate-800">Limpar</button>
+                            <button onclick="salvarNovaProposicaoInterna()" class="bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs px-5 py-2.5 rounded-xl flex items-center gap-1.5 shadow-md"><i data-lucide="save" class="w-4 h-4"></i> Salvar no Gabinete</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="lg:col-span-1 space-y-4">
+                    <div class="bg-slate-950 dark:bg-slate-950 border border-slate-800 p-6 rounded-2xl [html.light_&]:bg-white [html.light_&]:border-slate-200 shadow-sm flex flex-col h-full">
+                        <h3 class="text-sm font-bold text-white [html.light_&]:text-slate-900 mb-3 flex items-center gap-2">
+                            <i data-lucide="folder-kanban" class="text-amber-400"></i> Banco de Proposições
+                        </h3>
+                        <div id="container-projetos-gabinete" class="space-y-3 overflow-y-auto max-h-[460px] pr-1">
+                            </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </main>
+
+    <script>
+        lucide.createIcons();
+
+        const socket = io('http://localhost:3000');
+        const VEREADOR_ID = localStorage.getItem('siscam_user_id');
+
+        // RECEPTOR INTELIGENTE E INTEGRADO DAS CREDENCIAIS LEGISLATIVAS
+        async function inicializarPerfilParlamentar() {
+            const nomeUrna = localStorage.getItem('siscam_user_nome_urna') || localStorage.getItem('siscam_user_nome_eleitoral') || localStorage.getItem('siscam_user_nome') || 'PARLAMENTAR';
+            const nomeCompleto = localStorage.getItem('siscam_user_nome_completo') || localStorage.getItem('user_nome_completo') || localStorage.getItem('nome_completo') || 'Câmara Municipal';
+            const siglaPartido = localStorage.getItem('siscam_user_partido') || localStorage.getItem('user_partido') || localStorage.getItem('partido') || 'PL';
+            
+            document.getElementById('painel-nome-urna').innerText = nomeUrna;
+            document.getElementById('painel-nome-completo').innerText = nomeCompleto;
+            document.getElementById('painel-partido').innerText = siglaPartido;
+
+            try {
+                // CONTINGÊNCIA ATIVA: Pede o status em tempo real à API para buscar a mesma foto exata que o Telão lê do banco
+                const res = await fetch('http://localhost:3000/api/sessao/status');
+                const status = await res.json();
+                
+                const mim = status.vereadores.find(v => v.id === String(VEREADOR_ID));
+                let fotoFinal = '';
+
+                if (mim && mim.foto) {
+                    fotoFinal = mim.foto;
+                } else {
+                    // Fallback para chaves de sessão locais
+                    fotoFinal = localStorage.getItem('siscam_user_foto') || 
+                                localStorage.getItem('user_foto') || 
+                                localStorage.getItem('foto_perfil') || 
+                                localStorage.getItem('foto');
+                }
+
+                if (fotoFinal && !fotoFinal.startsWith('http') && !fotoFinal.startsWith('data:')) {
+                    fotoFinal = 'http://localhost:3000/uploads/' + fotoFinal;
+                }
+
+                if (!fotoFinal) {
+                    fotoFinal = 'https://images.unsplash.com/photo-1560250097-0b93528c311a?q=80&w=256&auto=format&fit=crop';
+                }
+
+                document.getElementById('painel-foto-vereador').src = fotoFinal;
+
+            } catch (e) {
+                // Caso o servidor esteja offline no milissegundo inicial, usa o rascunho local provisório
+                let localFoto = localStorage.getItem('siscam_user_foto') || 'https://images.unsplash.com/photo-1560250097-0b93528c311a?q=80&w=256&auto=format&fit=crop';
+                document.getElementById('painel-foto-vereador').src = localFoto;
+            }
+        }
+
+        let audioStream = null;
+        let mediaRecorder = null;
+
+        let bancoDeProjetos = JSON.parse(localStorage.getItem('siscam_projetos_gabinete')) || [
+            { codigo: "PL Nº 18/2026", ementa: "Dispõe sobre a instalação de cisternas para captação de água nas escolas da rede municipal.", corpo: "Art. 1º Fica instituído o programa..." },
+            { codigo: "IND Nº 04/2026", ementa: "Indica ao Poder Executivo a pavimentação asfáltica das vias de acesso ao bairro Centro.", corpo: "Justificativa: As vias encontram-se em estado..." }
+        ];
+
+        async function sincronizarPainel() {
+            try {
+                const res = await fetch('http://localhost:3000/api/sessao/status');
+                const status = await res.json();
+
+                const sub = document.getElementById('subtitulo-sessao');
+                const cardInativo = document.getElementById('sessao-inativa-card');
+                const cardAtivo = document.getElementById('sessao-ativa-card');
+                const pnlMic = document.getElementById('painel-microfone');
+                const pnlVoto = document.getElementById('painel-votacao-nominal');
+                const pnlInfo = document.getElementById('painel-sessao-informacoes');
+
+                // Sincronização em tempo real da foto caso mude durante a sessão plenária
+                const meuUser = status.vereadores.find(v => v.id === String(VEREADOR_ID));
+                if (meuUser && meuUser.foto) {
+                    document.getElementById('painel-foto-vereador').src = meuUser.foto;
+                }
+
+                if (!status.sessaoAtiva) {
+                    sub.innerText = "Aguardando abertura dos trabalhos solenes pelo presidente...";
+                    cardInativo.classList.remove('hidden');
+                    cardAtivo.classList.add('hidden');
+                    pnlMic.classList.add('hidden');
+                    pnlVoto.classList.add('hidden');
+                    pnlInfo.classList.add('hidden');
+                    desativarCapturaMicrofone();
+                    return;
+                }
+
+                const eu = status.vereadores.find(v => v.id === String(VEREADOR_ID));
+                const codigoMateria = status.materiaAtual.codigo || 'EXPEDIENTE ORDINÁRIO';
+                const ementaSessao = status.materiaAtual.ementa || 'Leitura e avaliação de pareceres e requerimentos avulsos da Mesa Diretora.';
+                
+                sub.innerText = `Matéria do Plenário: ${codigoMateria}`;
+
+                if (eu && eu.status === "Presente") {
+                    cardInativo.classList.add('hidden');
+                    cardAtivo.classList.add('hidden');
+                    pnlMic.classList.remove('hidden');
+                    pnlInfo.classList.remove('hidden');
+                    
+                    document.getElementById('sessao-materia-codigo').innerText = codigoMateria;
+                    document.getElementById('sessao-materia-ementa').innerText = ementaSessao;
+
+                    if (status.materiaAtual.codigo && status.materiaAtual.codigo.trim() !== '') {
+                        pnlVoto.classList.remove('hidden');
+                        document.getElementById('materia-codigo-titulo').innerText = codigoMateria;
+                        document.getElementById('materia-ementa-sub').innerText = ementaSessao;
+                    } else {
+                        pnlVoto.classList.add('hidden');
+                    }
+
+                    atualizarEstadoAudioInterface(status.microfoneAutorizadoId);
+                } else {
+                    cardInativo.classList.add('hidden');
+                    cardAtivo.classList.remove('hidden');
+                    pnlMic.classList.add('hidden');
+                    pnlVoto.classList.add('hidden');
+                    pnlInfo.classList.add('hidden');
+                }
+
+            } catch (e) { console.error("Falha ao sincronizar terminal parlamentar:", e); }
+        }
+
+        function salvarNovaProposicaoInterna() {
+            const cod = document.getElementById('proj-codigo').value.trim();
+            const emn = document.getElementById('proj-ementa').value.trim();
+            const crp = document.getElementById('proj-corpo').value.trim();
+
+            if(!cod || !emn || !crp) {
+                alert("Preencha todos os campos da matéria legislativa antes de salvar.");
+                return;
+            }
+
+            bancoDeProjetos.unshift({ codigo: cod, ementa: emn, corpo: crp });
+            localStorage.setItem('siscam_projetos_gabinete', JSON.stringify(bancoDeProjetos));
+            
+            limparFormularioProposicao();
+            renderizerProjetosGabinete();
+            alert("Proposição gravada com sucesso no seu banco do Gabinete!");
+        }
+
+        function limparFormularioProposicao() {
+            document.getElementById('proj-codigo').value = '';
+            document.getElementById('proj-ementa').value = '';
+            document.getElementById('proj-corpo').value = '';
+        }
+
+        function renderizerProjetosGabinete() {
+            const container = document.getElementById('container-projetos-gabinete');
+            container.innerHTML = '';
+
+            if(bancoDeProjetos.length === 0) {
+                container.innerHTML = `<p class="text-xs text-slate-500 italic text-center py-4">Nenhum rascunho de projeto protocolado.</p>`;
+                return;
+            }
+
+            bancoDeProjetos.forEach((p, idx) => {
+                const card = document.createElement('div');
+                card.className = "bg-slate-900/60 border border-slate-800 p-4 rounded-xl space-y-2 [html.light_&]:bg-slate-50 [html.light_&]:border-slate-200";
+                card.innerHTML = `
+                    <div class="flex items-center justify-between">
+                        <span class="text-[10px] font-mono font-bold bg-blue-500/10 text-blue-400 border border-blue-500/20 px-2 py-0.5 rounded">${p.codigo}</span>
+                        <button onclick="removerProjetoInterno(${idx})" class="text-slate-500 hover:text-rose-500 transition-colors"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>
+                    </div>
+                    <h5 class="text-xs font-bold text-white [html.light_&]:text-slate-950 line-clamp-2">${p.ementa}</h5>
+                    <button onclick="apresentarProjetoNoTelao('${p.codigo}', '${p.ementa}')" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-1.5 rounded-lg text-[11px] flex items-center justify-center gap-1 shadow-sm transition-all">
+                        <i data-lucide="monitor-up" class="w-3.5 h-3.5"></i> Apresentar no Telão
+                    </button>
+                `;
+                container.appendChild(card);
+            });
+            lucide.createIcons();
+        }
+
+        async function apresentarProjetoNoTelao(codigo, ementa) {
+            if(!confirm(`Deseja projetar a ementa do projeto ${codigo} na TV/Telão principal do Plenário?`)) return;
+            
+            try {
+                await fetch('http://localhost:3000/api/sessao/controle', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ acao: 'iniciar', codigo: codigo, ementa: ementa })
+                });
+                
+                socket.emit('atualizarPainel');
+                alert(`Sucesso! Matéria ${codigo} enviada para o painel de projeção e Telão.`);
+            } catch(e) {
+                alert("Erro de comunicação com o servidor ao apresentar no telão.");
+            }
+        }
+
+        function removerProjetoInterno(idx) {
+            if(!confirm("Remover esta proposição do rascunho de gabinete?")) return;
+            bancoDeProjetos.splice(idx, 1);
+            localStorage.setItem('siscam_projetos_gabinete', JSON.stringify(bancoDeProjetos));
+            renderizerProjetosGabinete();
+        }
+
+        async function confirmarPresenca() {
+            await fetch('http://localhost:3000/api/sessao/presenca', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ vereadorId: VEREADOR_ID })
+            });
+            sincronizarPainel();
+        }
+
+        async function registrarVoto(opcao) {
+            try {
+                await fetch('http://localhost:3000/api/vereadores/votar', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ vereadorId: VEREADOR_ID, voto: opcao })
+                });
+                alert(`Cédula de voto (${opcao}) computada no telão da TV!`);
+                document.getElementById('painel-votacao-nominal').classList.add('hidden');
+            } catch(e) { alert("Erro ao computar voto."); }
+        }
+
+        async function solicitarPalavra() {
+            await fetch('http://localhost:3000/api/microfone/pedir', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ vereadorId: VEREADOR_ID })
+            });
+            const btn = document.getElementById('btn-pedir-fala');
+            btn.className = "bg-slate-800 text-slate-500 font-bold py-2.5 px-5 rounded-xl text-sm cursor-not-allowed";
+            btn.innerText = "Aguardando Autorização da Mesa...";
+            btn.disabled = true;
+        }
+
+        function atualizarEstadoAudioInterface(autorizadoId) {
+            const icone = document.getElementById('mic-status-icone');
+            const texto = document.getElementById('mic-status-texto');
+            const btn = document.getElementById('btn-pedir-fala');
+
+            if (String(autorizadoId) === String(VEREADOR_ID)) {
+                icone.className = "w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 flex items-center justify-center animate-pulse";
+                icone.innerHTML = `<i data-lucide="mic" class="w-5 h-5"></i>`;
+                texto.innerHTML = `<span class="text-emerald-400 font-bold uppercase tracking-wider block text-[11px]">Sua fala está ativa</span> Seu microfone está captando áudio diretamente para a TV do Plenário.`;
+                activarCapturaMicrofone();
+            } else {
+                icone.className = "w-12 h-12 rounded-xl bg-slate-900 border border-slate-800 text-slate-500 flex items-center justify-center";
+                icone.innerHTML = `<i data-lucide="mic-off" class="w-5 h-5"></i>`;
+                texto.innerText = "Você está em modo de escuta. Peça permissão para falar.";
+                
+                if(btn.disabled && autorizadoId === null) {
+                    btn.className = "bg-blue-600 hover:bg-blue-500 text-white font-bold py-2.5 px-5 rounded-xl text-sm transition-all flex items-center gap-2 shadow-lg";
+                    btn.innerText = "Solicitar Permissão de Fala";
+                    btn.disabled = false;
+                }
+                desativarCapturaMicrofone();
+            }
+            lucide.createIcons();
+        }
+
+        async function activarCapturaMicrofone() {
+            if (audioStream) return;
+            try {
+                audioStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+                mediaRecorder = new MediaRecorder(audioStream, { mimeType: 'audio/webm; codecs=opus' });
+                mediaRecorder.ondataavailable = async (e) => {
+                    if (e.data && e.data.size > 0) {
+                        const arrayBuffer = await e.data.arrayBuffer();
+                        socket.emit('transmitirAudioStream', arrayBuffer);
+                    }
+                };
+                mediaRecorder.start(100);
+            } catch (err) { console.error("Hardware recusado.", err); }
+        }
+
+        function desativarCapturaMicrofone() {
+            if (mediaRecorder && mediaRecorder.state !== "inactive") { mediaRecorder.stop(); mediaRecorder = null; }
+            if (audioStream) { audioStream.getTracks().forEach(track => track.stop()); audioStream = null; }
+        }
+
+        function mudarAba(aba) {
+            document.querySelectorAll('.global-aba').forEach(el => el.classList.add('hidden'));
+            document.getElementById(`aba-${aba}`).classList.remove('hidden');
+
+            document.querySelectorAll('.tab-btn').forEach(el => el.className = "w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-400 hover:bg-slate-900 hover:text-slate-200 rounded-xl transition-all text-left [html.light_&]:text-emerald-100 tab-btn");
+            
+            const btnAtivo = document.getElementById(`btn-aba-${aba}`);
+            btnAtivo.className = "w-full flex items-center gap-3 px-4 py-3 text-sm font-semibold rounded-xl bg-blue-600/10 text-blue-400 border border-blue-500/10 text-left tab-btn active";
+            
+            const topoTitulo = document.getElementById('titulo-pagina-topo');
+            if(aba === 'votacao') topoTitulo.innerText = "Terminal do Parlamentar";
+            if(aba === 'gabinete') topoTitulo.innerText = "Meu Gabinete Virtual";
+        }
+
+        function alternarTema() {
+            const html = document.documentElement;
+            const novoTema = html.classList.contains('dark') ? 'light' : 'dark';
+            html.className = novoTema;
+            localStorage.setItem('siscam_tema', novoTema);
+        }
+
+        (function initializeTheme() {
+            document.documentElement.className = localStorage.getItem('siscam_tema') || 'dark';
+        })();
+
+        function fazerLogout() { desativarCapturaMicrofone(); localStorage.clear(); window.location.href = './login.html'; }
+
+        socket.on('atualizarPainel', () => sincronizarPainel());
+
+        inicializarPerfilParlamentar();
+        sincronizarPainel();
+        setInterval(sincronizarPainel, 2000);
+        renderizerProjetosGabinete();
+    </script>
+</body>
+</html>

@@ -1,0 +1,41 @@
+/* Customizações finas para o SISCAM 1.0 */
+
+/* Customização da barra de rolagem (Scrollbar) para ficar elegante no modo escuro */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: #020617; /* Slate 950 */
+}
+
+::-webkit-scrollbar-thumb {
+    background: #1e293b; /* Slate 800 */
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #334155; /* Slate 700 */
+}
+
+/* Efeito de transição suave global */
+a, button, input {
+    transition: all 0.2s ease-in-out;
+}
+
+/* Animação suave de entrada dos cards */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+section {
+    animation: fadeIn 0.4s ease-out forwards;
+}

@@ -1,0 +1,974 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SISCAM 1.0 - Painel do Presidente</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- CONEXÃO WEBSOCKET INTEGRAÇÃO REAL-TIME PARA O TELÃO -->
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    
+    <script>
+        // Configuração customizada do Tailwind com suporte a temas e variações de cores
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        centaurea: {
+                            DEFAULT: '#6590CA',
+                            hover: '#527eb7',
+                            bg: 'rgba(101, 144, 202, 0.1)',
+                            border: 'rgba(101, 144, 202, 0.2)'
+                        },
+                        // Paleta do Modo Claro (Branco + Azul Clarencia)
+                        clarencia: {
+                            bg: '#f8fafc',
+                            card: '#ffffff',
+                            border: '#e2e8f0',
+                            text: '#0f172a',
+                            sub: '#475569',
+                            sidebar: '#f1f5f9'
+                        },
+                        // Paleta do Modo Escuro Atual Mantido
+                        legisDark: { bg: '#030712', card: '#0f172a', border: '#1e293b' }
+                    },
+                    animation: {
+                        'sonar': 'sonar 2s cubic-bezier(0, 0, 0.2, 1) infinite',
+                    },
+                    keyframes: {
+                        sonar: {
+                            '0%': { transform: 'scale(1)', opacity: '0.8' },
+                            '100%': { transform: 'scale(1.5)', opacity: '0' },
+                        }
+                    }
+                }
+            }
+        }
+        // Trava de Segurança: Perfil Presidente
+        if (!localStorage.getItem('siscam_user_id') || localStorage.getItem('siscam_user_cargo') !== 'PRESIDENTE') {
+            localStorage.clear();
+            window.location.href = './login.html';
+        }
+    </script>
+    <style>
+        /* Estilos de Abas Dinâmicas baseados na classe root dark */
+        .tab-btn.active {
+            border-color: rgba(101, 144, 202, 0.2);
+            background-color: rgba(101, 144, 202, 0.1);
+            color: #6590CA;
+        }
+        
+        /* Custom scrollbar adaptável */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        .dark ::webkit-scrollbar-thumb { background: #1e293b; border-radius: 4px; }
+        .light ::webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        
+        .text-shadow-stroke {
+            text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;
+        }
+    </style>
+</head>
+<body class="bg-clarencia-bg dark:bg-legisDark-bg text-clarencia-text dark:text-slate-100 font-sans flex h-screen overflow-hidden transition-colors duration-200">
+
+    <!-- SIDEBAR DA MESA DIRETORA -->
+    <aside class="w-72 bg-clarencia-sidebar dark:bg-slate-950 border-r border-clarencia-border dark:border-slate-800 flex flex-col justify-between shrink-0 transition-colors duration-200">
+        <div>
+            <!-- LOGO -->
+            <div class="p-6 border-b border-clarencia-border dark:border-slate-800 flex items-center gap-3">
+                <i data-lucide="shield-check" class="text-centaurea w-8 h-8"></i>
+                <div>
+                    <h1 class="font-bold text-lg leading-none tracking-wide text-clarencia-text dark:text-white">SISCAM 1.0</h1>
+                    <span class="text-xs text-white text-shadow-stroke font-bold tracking-wider uppercase">Mesa Diretora</span>
+                </div>
+            </div>
+
+            <!-- NAVEGAÇÃO INTERNA CONTROLE -->
+            <div class="px-4 py-6">
+                <span class="text-[10px] font-bold text-clarencia-sub dark:text-slate-500 uppercase tracking-widest px-2 block mb-2">Painéis Operacionais</span>
+                <nav class="space-y-1">
+                    <button id="btn-aba-votacao" onclick="alternarAba('votacao')" class="w-full flex items-center gap-3 px-4 py-3 text-sm font-semibold rounded-xl text-left text-clarencia-sub dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-900 hover:text-clarencia-text dark:hover:text-slate-200 transition-all tab-btn active">
+                        <i data-lucide="sliders" class="w-4 h-4"></i> Controle do Plenário
+                    </button>
+                    <button id="btn-aba-oradores" onclick="alternarAba('oradores')" class="w-full flex items-center gap-3 px-4 py-3 text-sm font-semibold rounded-xl text-left text-clarencia-sub dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-900 hover:text-clarencia-text dark:hover:text-slate-200 transition-all tab-btn">
+                        <i data-lucide="mic" class="w-4 h-4"></i> Gestão de Oradores
+                    </button>
+                    <button id="btn-aba-ata" onclick="alternarAba('ata')" class="w-full flex items-center gap-3 px-4 py-3 text-sm font-semibold rounded-xl text-left text-clarencia-sub dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-900 hover:text-clarencia-text dark:hover:text-slate-200 transition-all tab-btn">
+                        <i data-lucide="file-text" class="w-4 h-4"></i> Ata Rápida
+                    </button>
+                </nav>
+            </div>
+        </div>
+
+        <!-- CONTROLES INFERIORES DA SIDEBAR -->
+        <div class="p-4 border-t border-clarencia-border dark:border-slate-800 space-y-2">
+            <!-- BOTÃO ALTERNADOR DE TEMA -->
+            <button onclick="alternarTema()" class="w-full flex items-center justify-center gap-2 bg-centaurea/10 dark:bg-centaurea/20 hover:bg-centaurea text-centaurea hover:text-white font-semibold py-2 px-4 rounded-xl border border-centaurea/20 transition-all text-xs shadow-sm">
+                <i data-lucide="sun" class="w-4 h-4 block dark:hidden"></i>
+                <i data-lucide="moon" class="w-4 h-4 hidden dark:block"></i>
+                <span>Alternar Visual</span>
+            </button>
+            
+            <button onclick="fazerLogout()" class="w-full flex items-center justify-center gap-2 bg-rose-500/10 hover:bg-rose-500 text-rose-400 hover:text-white font-semibold py-2.5 px-4 rounded-xl border border-rose-500/10 transition-all text-sm shadow-md">
+                <i data-lucide="log-out" class="w-4 h-4"></i> Encerrar Sessão
+            </button>
+        </div>
+    </aside>
+
+    <!-- CONTEÚDO PRINCIPAL -->
+    <main class="flex-1 flex flex-col min-w-0 overflow-hidden">
+        
+        <!-- TOPO RESTRITO -->
+        <div class="bg-clarencia-card dark:bg-slate-950/80 border-b border-clarencia-border dark:border-slate-800 p-4 shrink-0 flex items-center justify-between px-8 shadow-sm transition-colors duration-200">
+            <div class="flex items-center gap-4">
+                <div class="w-11 h-11 bg-slate-100 dark:bg-slate-900 rounded-xl flex items-center justify-center border border-clarencia-border dark:border-slate-800 text-centaurea">
+                    <i data-lucide="crown" class="w-5 h-5"></i>
+                </div>
+                <div>
+                    <h3 id="titulo-topbar" class="font-black text-sm uppercase text-clarencia-text dark:text-white leading-tight">Mesa Diretora</h3>
+                    <p id="subtitulo-topbar" class="text-[10px] text-centaurea font-bold uppercase tracking-widest">Controle e abertura de votações em tempo real</p>
+                </div>
+            </div>
+            
+            <div class="flex items-center gap-4">
+                <button onclick="window.open('./telao.html', '_blank')" class="bg-slate-200 hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 text-clarencia-text dark:text-slate-200 font-bold text-xs px-4 py-2 rounded-xl flex items-center gap-2 transition-all border border-clarencia-border dark:border-slate-700 shadow-sm">
+                    <i data-lucide="tv" class="w-4 h-4 text-centaurea"></i> Abrir Telão TV
+                </button>
+                <div class="text-right font-mono text-xs text-clarencia-sub dark:text-slate-400 hidden sm:block">
+                    <span class="block">Módulo do Presidente</span>
+                    <span class="font-bold text-white text-shadow-stroke">SISTEMA RESTRITO</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- ABA 1: CONTROLE DO PLENÁRIO -->
+        <div id="aba-votacao" class="flex-1 overflow-y-auto p-8 space-y-6 tab-content">
+            
+            <!-- CARTÃO DE BOAS-VINDAS DO PRESIDENTE COM O SONAR DE ONDAS PULSANTES -->
+            <div class="bg-clarencia-card dark:bg-slate-900/50 border border-clarencia-border dark:border-slate-800 p-6 rounded-2xl flex flex-col md:flex-row items-center justify-between gap-4 shadow-sm transition-colors duration-200">
+                <div class="flex items-center gap-5">
+                    <div class="relative shrink-0 flex items-center justify-center">
+                        <!-- Camadas invisíveis por padrão para a animação de ondas brancas -->
+                        <div id="sonar-wave-1" class="absolute w-16 h-16 bg-white rounded-full opacity-0 z-0"></div>
+                        <div id="sonar-wave-2" class="absolute w-16 h-16 bg-white rounded-full opacity-0 z-0"></div>
+                        
+                        <img id="presidente-foto" src="" alt="Presidente" class="w-16 h-16 rounded-full object-cover border-2 border-slate-300 dark:border-slate-700 bg-slate-100 dark:bg-slate-950 relative z-10">
+                        <div class="absolute bottom-0 right-0 w-3.5 h-3.5 bg-emerald-500 border-2 border-white dark:border-slate-900 rounded-full z-20"></div>
+                    </div>
+                    <div>
+                        <span class="text-[10px] font-bold text-centaurea uppercase tracking-widest block mb-0.5">Bem-vindo à Mesa Diretora</span>
+                        <div class="flex items-center gap-2">
+                            <h2 id="presidente-nome-urna" class="text-2xl font-black text-clarencia-text dark:text-white uppercase tracking-wide text-shadow-stroke">Carregando...</h2>
+                            <span id="presidente-partido" class="text-[10px] bg-centaurea/20 text-centaurea border border-centaurea/30 px-1.5 py-0.5 rounded font-bold uppercase">--</span>
+                        </div>
+                        <p id="presidente-nome-completo" class="text-[11px] text-clarencia-sub dark:text-slate-400 mt-0.5 uppercase font-medium">Buscando nome...</p>
+                    </div>
+                </div>
+                
+                <!-- CONTROLES DO MICROFONE DO PRÓPRIO PRESIDENTE -->
+                <div class="flex flex-col items-end gap-2 shrink-0 w-full md:w-auto">
+                    <div id="status-mic-presidente-container" class="border border-clarencia-border dark:border-slate-700 text-clarencia-text dark:text-slate-300 font-bold px-4 py-2 rounded-xl text-xs uppercase tracking-wider flex items-center gap-2 bg-slate-100 dark:bg-slate-950/50 w-full md:w-auto justify-center md:justify-end">
+                        <span id="indicador-led-mic" class="w-2.5 h-2.5 bg-slate-400 rounded-full"></span>
+                        <span id="texto-status-mic">Microfone Desligado</span>
+                    </div>
+                    <p class="text-[9px] text-clarencia-sub dark:text-slate-500 font-mono text-center md:text-right w-full">Acesso seguro via SISCAM</p>
+                </div>
+            </div>
+
+            <!-- ENTRADA E COMANDOS DA SESSÃO GERAL -->
+            <div class="bg-gradient-to-r from-slate-100 via-white to-slate-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 border border-clarencia-border dark:border-slate-800 p-6 rounded-2xl shadow-xl flex flex-col lg:flex-row items-center justify-between gap-6 transition-all">
+                <div class="space-y-1">
+                    <span class="text-[10px] bg-slate-200 dark:bg-slate-900 text-clarencia-text dark:text-white border border-clarencia-border dark:border-black px-2.5 py-0.5 rounded-full font-bold uppercase tracking-wider text-shadow-stroke">Status Geral do Plenário</span>
+                    <h2 id="status-sessao-texto" class="text-xl font-black text-clarencia-text dark:text-white">Sessão Plenária Fechada</h2>
+                    <p class="text-xs text-clarencia-sub dark:text-slate-400">Inicie a sessão para liberar os terminais de presença e os canais de áudio eletrônicos dos vereadores.</p>
+                </div>
+                <div class="flex flex-wrap items-center gap-3 shrink-0">
+                    <button onclick="alternarSessao(true)" id="btn-abrir-sessao" class="bg-centaurea hover:bg-centaurea-hover text-white font-black px-6 py-3 rounded-xl transition-all shadow-lg text-xs flex items-center gap-2">
+                        <i data-lucide="play" class="w-4 h-4"></i> Abrir Nova Sessão
+                    </button>
+                    <button onclick="alternarSessao(false)" id="btn-fechar-sessao" class="bg-rose-600 hover:bg-rose-500 text-white font-black px-6 py-3 rounded-xl transition-all shadow-lg text-xs flex items-center gap-2 hidden">
+                        <i data-lucide="square" class="w-4 h-4"></i> Encerrar Trabalhos Hoje
+                    </button>
+                </div>
+            </div>
+
+            <!-- DASHBOARD DE TRABALHO APÓS ABERTURA -->
+            <div id="painel-dashboard-presidente" class="grid grid-cols-1 lg:grid-cols-3 gap-6 hidden">
+                
+                <!-- COLUNA ESQUERDA: CADASTRO E CONTROLE DA MATÉRIA -->
+                <div class="lg:col-span-2 space-y-4">
+                    <div class="bg-clarencia-card dark:bg-slate-950 border border-clarencia-border dark:border-slate-800 p-6 rounded-2xl shadow-md transition-colors">
+                        <h3 class="text-base font-bold text-clarencia-text dark:text-white mb-1 flex items-center gap-2">
+                            <i data-lucide="file-edit" class="text-centaurea"></i> Ordem do Dia - Lançar Matéria para Votação
+                        </h3>
+                        <p class="text-xs text-clarencia-sub dark:text-slate-400 mb-4">Insira os dados do projeto de lei, requerimento ou indicação para disponibilizar nas cédulas eletrônicas dos vereadores.</p>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                            <div>
+                                <label class="text-[11px] font-bold text-clarencia-sub dark:text-slate-400 uppercase tracking-wider block mb-1">Código Oficial</label>
+                                <input type="text" id="materia-codigo" placeholder="Ex: PL Nº 12/2026" class="w-full bg-slate-50 dark:bg-slate-900 border border-clarencia-border dark:border-slate-800 rounded-xl px-4 py-2 text-sm text-clarencia-text dark:text-slate-200 focus:outline-none focus:border-centaurea">
+                            </div>
+                            <div class="md:col-span-2">
+                                <label class="text-[11px] font-bold text-clarencia-sub dark:text-slate-400 uppercase tracking-wider block mb-1">Ementa Regulamentar</label>
+                                <input type="text" id="materia-ementa" placeholder="Ex: Dispõe sobre as metas de infraestrutura..." class="w-full bg-slate-50 dark:bg-slate-900 border border-clarencia-border dark:border-slate-800 rounded-xl px-4 py-2 text-sm text-clarencia-text dark:text-slate-200 focus:outline-none focus:border-centaurea">
+                            </div>
+                        </div>
+
+                        <div class="flex items-center justify-between border-t border-clarencia-border dark:border-slate-800 pt-4 mt-2">
+                            <button onclick="limparMateriaAtual()" class="bg-slate-100 dark:bg-slate-900 border border-clarencia-border dark:border-slate-800 text-clarencia-sub dark:text-slate-400 hover:text-clarencia-text dark:hover:text-white px-4 py-2 rounded-xl text-xs">Limpar Painel</button>
+                            <div class="flex gap-2">
+                                <button onclick="lancarMateriaPlenaria()" class="bg-centaurea hover:bg-centaurea-hover text-white font-black px-5 py-2.5 rounded-xl text-xs flex items-center gap-1.5 shadow-md">
+                                    <i data-lucide="radio" class="w-4 h-4"></i> Transmitir e Abrir Votação Nominal
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- TABELA DE PRESENÇA E VOTAÇÃO DOS VEREADORES EM TEMPO REAL -->
+                    <div class="bg-clarencia-card dark:bg-slate-950 border border-clarencia-border dark:border-slate-800 p-6 rounded-2xl shadow-md transition-colors">
+                        <div class="flex items-center justify-between mb-4">
+                            <div>
+                                <h3 class="text-base font-bold text-clarencia-text dark:text-white">Monitor do Quórum e Cédulas Eletrônicas</h3>
+                                <p class="text-xs text-clarencia-sub dark:text-slate-400">Acompanhe quem confirmou presença e o posicionamento de voto nominal.</p>
+                            </div>
+                            <span class="text-[10px] bg-slate-100 dark:bg-slate-900 text-clarencia-text dark:text-white border border-clarencia-border dark:border-black px-3 py-1 rounded-full font-mono font-bold text-shadow-stroke">REVERSÃO EM TEMPO REAL</span>
+                        </div>
+
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-xs border-collapse">
+                                <thead>
+                                    <tr class="border-b border-clarencia-border dark:border-slate-800 text-clarencia-sub dark:text-slate-400 uppercase tracking-wider font-bold">
+                                        <th class="py-3 px-2">Vereador</th>
+                                        <th class="py-3 px-2">Partido</th>
+                                        <th class="py-3 px-2">Presença</th>
+                                        <th class="py-3 px-2 text-center">Voto Atual</th>
+                                        <th class="py-3 px-2 text-right">Ação Forçada</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tabela-vereadores-corpo" class="divide-y divide-slate-100 dark:divide-slate-900">
+                                    <!-- Inserido dinamicamente pelo loop javascript -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- COLUNA DIREITA: PLACAR ATUAL RESUMIDO -->
+                <div class="space-y-4">
+                    <div class="bg-clarencia-card dark:bg-slate-950 border border-clarencia-border dark:border-slate-800 p-6 rounded-2xl shadow-md transition-colors">
+                        <h3 class="text-sm font-bold text-clarencia-sub dark:text-slate-400 mb-4 uppercase tracking-wider">Resultado Acumulado</h3>
+                        
+                        <div class="space-y-3">
+                            <div class="bg-emerald-500/10 dark:bg-emerald-950/30 border border-emerald-500/20 dark:border-emerald-900/40 p-4 rounded-xl flex items-center justify-between">
+                                <div class="flex items-center gap-2">
+                                    <span class="w-3 h-3 bg-emerald-500 rounded-full animate-pulse"></span>
+                                    <span class="text-sm font-bold text-emerald-600 dark:text-emerald-400">Votos SIM</span>
+                                </div>
+                                <span id="placar-sim" class="text-2xl font-black font-mono text-emerald-600 dark:text-emerald-400">00</span>
+                            </div>
+                            
+                            <div class="bg-rose-500/10 dark:bg-rose-950/30 border border-rose-500/20 dark:border-rose-900/40 p-4 rounded-xl flex items-center justify-between">
+                                <div class="flex items-center gap-2">
+                                    <span class="w-3 h-3 bg-rose-500 rounded-full animate-pulse"></span>
+                                    <span class="text-sm font-bold text-rose-600 dark:text-rose-400">Votos NÃO</span>
+                                </div>
+                                <span id="placar-nao" class="text-2xl font-black font-mono text-rose-600 dark:text-rose-400">00</span>
+                            </div>
+
+                            <div class="bg-slate-100 dark:bg-slate-900/60 border border-clarencia-border dark:border-slate-800 p-4 rounded-xl flex items-center justify-between">
+                                <div class="flex items-center gap-2">
+                                    <span class="w-3 h-3 bg-slate-400 dark:bg-slate-500 rounded-full"></span>
+                                    <span class="text-sm font-bold text-clarencia-sub dark:text-slate-400">Abstenções</span>
+                                </div>
+                                <span id="placar-abst" class="text-2xl font-black font-mono text-clarencia-text dark:text-slate-400">00</span>
+                            </div>
+
+                            <div class="border-t border-clarencia-border dark:border-slate-800 pt-4 flex justify-between text-[11px] font-mono text-clarencia-sub dark:text-slate-500">
+                                <span>PRESENÇAS REGISTRADAS:</span>
+                                <span id="placar-total-presencas" class="font-bold text-clarencia-text dark:text-slate-300">0 / 0</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- ABA 2: GESTÃO DE ORADORES / DISCURSOS -->
+        <div id="aba-oradores" class="flex-1 overflow-y-auto p-8 space-y-6 tab-content hidden">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- COLUNA DA ESQUERDA: CONTROLE DO CRONÔMETRO -->
+                <div class="lg:col-span-2 space-y-4">
+                    <div class="bg-clarencia-card dark:bg-slate-950 border border-clarencia-border dark:border-slate-800 p-8 rounded-2xl text-center space-y-6 shadow-md transition-colors">
+                        <div>
+                            <span class="text-xs bg-slate-100 dark:bg-slate-900 text-clarencia-text dark:text-white border border-clarencia-border dark:border-black px-3 py-1 rounded-full font-bold uppercase tracking-wider text-shadow-stroke">Cronômetro de Pronunciamento</span>
+                            <h3 id="tribuna-parlamentar-nome" class="text-2xl font-black text-clarencia-text dark:text-white mt-3 uppercase tracking-wide">Nenhum orador na tribuna</h3>
+                            <p id="tribuna-tempo-tipo" class="text-xs text-clarencia-sub dark:text-slate-500 mt-1">Selecione um vereador abaixo e defina o tempo regimental básico.</p>
+                        </div>
+
+                        <!-- DISPLAY DO TEMPO -->
+                        <div class="text-7xl font-black font-mono tracking-widest text-clarencia-text dark:text-white text-shadow-stroke bg-slate-50 dark:bg-slate-900/60 border border-clarencia-border dark:border-slate-800 max-w-sm mx-auto py-6 rounded-2xl shadow-inner">
+                            <span id="cronometro-display">05:00</span>
+                        </div>
+
+                        <!-- CONTROLES -->
+                        <div class="flex items-center justify-center gap-3">
+                            <button onclick="controlarCronometro('iniciar')" class="bg-centaurea hover:bg-centaurea-hover text-white font-bold px-5 py-2.5 rounded-xl text-xs flex items-center gap-1.5 shadow-md transition-all">
+                                <i data-lucide="play" class="w-4 h-4"></i> Iniciar Contagem
+                            </button>
+                            <button onclick="controlarCronometro('pausar')" class="bg-slate-200 dark:bg-slate-800 border border-clarencia-border dark:border-slate-700 hover:bg-slate-300 dark:hover:bg-slate-700 text-clarencia-text dark:text-white font-bold px-5 py-2.5 rounded-xl text-xs flex items-center gap-1.5 shadow-md transition-all">
+                                <i data-lucide="pause" class="w-4 h-4"></i> Pausar
+                            </button>
+                            <button onclick="controlarCronometro('resetar')" class="bg-slate-100 dark:bg-slate-900 border border-clarencia-border dark:border-slate-800 hover:bg-slate-200 dark:hover:bg-slate-800 text-clarencia-sub dark:text-slate-300 font-bold px-5 py-2.5 rounded-xl text-xs flex items-center gap-1.5 transition-all">
+                                <i data-lucide="rotate-ccw" class="w-4 h-4"></i> Resetar Tempo
+                            </button>
+                        </div>
+
+                        <!-- TEMPOS PRÉ-DEFINIDOS -->
+                        <div class="flex justify-center gap-2 pt-2 border-t border-clarencia-border dark:border-slate-900">
+                            <button onclick="definirTempoCronometro(180, 'Explicação Pessoal')" class="bg-slate-100 dark:bg-slate-900 text-clarencia-sub dark:text-slate-400 hover:text-clarencia-text dark:hover:text-white px-3 py-1.5 rounded-lg text-[11px] font-mono border border-clarencia-border dark:border-slate-800">03 MIN (Explicação)</button>
+                            <button onclick="definirTempoCronometro(300, 'Grande Expediente')" class="bg-slate-100 dark:bg-slate-900 text-clarencia-sub dark:text-slate-400 hover:text-clarencia-text dark:hover:text-white px-3 py-1.5 rounded-lg text-[11px] font-mono border border-clarencia-border dark:border-slate-800">05 MIN (Expediente)</button>
+                            <button onclick="definirTempoCronometro(600, 'Discurso Liderança')" class="bg-slate-100 dark:bg-slate-900 text-clarencia-sub dark:text-slate-400 hover:text-clarencia-text dark:hover:text-white px-3 py-1.5 rounded-lg text-[11px] font-mono border border-clarencia-border dark:border-slate-800">10 MIN (Liderança)</button>
+                            <button onclick="definirTempoCronometro(60, 'Considerações / Aparte')" class="bg-rose-500/10 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 px-3 py-1.5 rounded-lg text-[11px] font-mono border border-rose-500/20 dark:border-rose-900/30">01 MIN (Aparte)</button>
+                        </div>
+                    </div>
+
+                    <!-- FILA DE SOLICITAÇÃO PARLAMENTAR -->
+                    <div class="bg-clarencia-card dark:bg-slate-950 border border-clarencia-border dark:border-slate-800 p-6 rounded-2xl shadow-md transition-colors">
+                        <h3 class="text-sm font-bold text-clarencia-text dark:text-white mb-4 flex items-center gap-2">
+                            <i data-lucide="list-ordered" class="text-centaurea"></i> Fila de Vereadores Inscritos / Pedidos de Fala
+                        </h3>
+                        <div id="oradores-lista-pedidos" class="space-y-2 max-h-[300px] overflow-y-auto">
+                            <!-- Inserido dinamicamente -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- COLUNA DA DIREITA: MICROFONES E REGRAS -->
+                <div class="space-y-4">
+                    <div class="bg-clarencia-card dark:bg-slate-950 border border-clarencia-border dark:border-slate-800 p-6 rounded-2xl shadow-md transition-colors">
+                        <h3 class="text-sm font-bold text-clarencia-text dark:text-white mb-2 flex items-center gap-2">
+                            <i data-lucide="mic" class="text-centaurea"></i> Corte Técnico de Áudio
+                        </h3>
+                        <p class="text-xs text-clarencia-sub dark:text-slate-400 mb-4">Conceda a palavra diretamente a qualquer parlamentar presente no recinto ou revogue imediatamente o sinal.</p>
+
+                        <div id="status-mic-central" class="bg-slate-100 dark:bg-slate-900/50 p-4 border border-clarencia-border dark:border-slate-800 rounded-xl text-center space-y-1 mb-4">
+                            <span class="text-[10px] text-clarencia-sub dark:text-slate-500 uppercase tracking-widest font-mono block">Canal de Áudio Master</span>
+                            <p id="nome-parlamentar-falando-master" class="text-base font-black text-clarencia-text dark:text-white">NENHUM VEREADOR ATIVO</p>
+                            <button onclick="revogarMicrofoneGeral()" id="btn-cortar-som-master" class="bg-rose-600/10 hover:bg-rose-600 text-rose-600 dark:text-rose-400 hover:text-white font-bold text-xs px-3 py-1.5 rounded-lg border border-rose-500/20 transition-all mt-2 hidden">
+                                Mutar Canal Master
+                            </button>
+                        </div>
+
+                        <span class="text-[10px] font-bold text-clarencia-sub dark:text-slate-500 uppercase block mb-2 tracking-wider">Forçar Liberação Direta</span>
+                        <div id="oradores-lista-atalhos-mics" class="space-y-1.5 max-h-[250px] overflow-y-auto">
+                            <!-- Botões rápidos de microfones -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ABA 3: ABA DE ATA RÁPIDA -->
+        <div id="aba-ata" class="flex-1 overflow-y-auto p-8 space-y-6 tab-content hidden">
+            <div class="bg-clarencia-card dark:bg-slate-950 border border-clarencia-border dark:border-slate-800 p-6 rounded-2xl max-w-4xl mx-auto shadow-md transition-colors">
+                <div class="flex items-center justify-between border-b border-clarencia-border dark:border-slate-900 pb-4 mb-4">
+                    <div>
+                        <h3 class="text-base font-bold text-clarencia-text dark:text-white">Livro de Atas e Histórico de Matérias</h3>
+                        <p class="text-xs text-clarencia-sub dark:text-slate-400">Compilação semi-automatizada dos eventos e votações ocorridas na data de hoje.</p>
+                    </div>
+                    <button onclick="gerarAtaDocumento()" class="bg-centaurea hover:bg-centaurea-hover text-white font-bold text-xs px-4 py-2 rounded-xl flex items-center gap-1.5 transition-all shadow-md">
+                        <i data-lucide="download" class="w-4 h-4"></i> Exportar Texto da Ata
+                    </button>
+                </div>
+
+                <div class="space-y-4">
+                    <div>
+                        <label class="text-[11px] font-bold text-clarencia-sub dark:text-slate-400 uppercase tracking-wider block mb-1">Cabeçalho Institucional / Abertura</label>
+                        <textarea id="ata-cabecalho" rows="3" class="w-full bg-slate-50 dark:bg-slate-900 border border-clarencia-border dark:border-slate-800 rounded-xl px-4 py-2.5 text-xs text-clarencia-text dark:text-slate-300 focus:outline-none focus:border-centaurea font-mono"></textarea>
+                    </div>
+
+                    <div>
+                        <div class="flex items-center justify-between mb-1">
+                            <label class="text-[11px] font-bold text-clarencia-sub dark:text-slate-400 uppercase tracking-wider block">Matérias e Deliberações Registradas</label>
+                            <span class="text-[10px] bg-slate-200 dark:bg-slate-900 text-clarencia-text dark:text-white border border-clarencia-border dark:border-black font-bold px-2 py-0.5 rounded text-shadow-stroke">AUTO-LOG</span>
+                        </div>
+                        <div id="ata-log-materias" class="bg-slate-50 dark:bg-slate-900/40 border border-clarencia-border dark:border-slate-900 p-4 rounded-xl min-h-[120px] max-h-[200px] overflow-y-auto space-y-2 font-mono text-xs text-clarencia-sub dark:text-slate-400">
+                            <!-- Preenchido via log de votações encerradas -->
+                            <p class="text-slate-400 italic">Nenhuma matéria arquivada ou votada nesta sessão ainda.</p>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="text-[11px] font-bold text-clarencia-sub dark:text-slate-400 uppercase tracking-wider block mb-1">Notas Finais e Encerramento</label>
+                        <textarea id="ata-rodape" rows="3" placeholder="Nada mais havendo a tratar, o Senhor Presidente declarou encerrada a sessão..." class="w-full bg-slate-50 dark:bg-slate-900 border border-clarencia-border dark:border-slate-800 rounded-xl px-4 py-2.5 text-xs text-clarencia-text dark:text-slate-300 focus:outline-none focus:border-centaurea"></textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- SISTEMA DE ÁUDIO CENTRALIZADO DO PRESIDENTE (ESCUITAR OS VEREADORES NA TV) -->
+    <audio id="audio-player-plenaria" autoplay></audio>
+
+    <script>
+        // Inicialização dos ícones do Lucide
+        lucide.createIcons();
+
+        // Conexão com o servidor Socket.io
+        const socket = io('http://localhost:3000');
+        const PRESIDENTE_ID = localStorage.getItem('siscam_user_id');
+
+        // VAVRIÁVEIS GLOBAIS DE ÁUDIO STREAM (CAPTURA DO MICROFONE DO PRESIDENTE)
+        let mediaStream = null;
+        let mediaRecorder = null;
+        let micEstaAtivoLocal = false;
+
+        // ALTERNADOR INTERNO DE TEMAS (MANTÉM O ESCURO ATUAL OU MUDA PARA O BRANCO + AZUL CLARENCIA)
+        function alternarTema() {
+            const html = document.documentElement;
+            const novoTema = html.classList.contains('dark') ? 'light' : 'dark';
+            html.className = novoTema;
+            localStorage.setItem('siscam_tema', novoTema);
+            lucide.createIcons();
+        }
+
+        (function inicializarTema() {
+            document.documentElement.className = localStorage.getItem('siscam_tema') || 'dark';
+        })();
+
+        // INICIALIZAÇÃO FIXA DOS METADADOS DO PRESIDENTE LOGADO
+        function carregarDadosPresidente() {
+            const nomeUrna = localStorage.getItem('siscam_user_nome_urna') || 'Presidente';
+            const nomeCompleto = localStorage.getItem('siscam_user_nome_completo') || 'Mesa Diretora';
+            const partido = localStorage.getItem('siscam_user_partido') || 'MESA';
+            let foto = localStorage.getItem('siscam_user_foto') || '';
+
+            if (foto && !foto.startsWith('http') && !foto.startsWith('data:')) {
+                foto = 'http://localhost:3000/uploads/' + foto;
+            }
+
+            document.getElementById('presidente-nome-urna').innerText = nomeUrna;
+            document.getElementById('presidente-nome-completo').innerText = nomeCompleto;
+            document.getElementById('presidente-partido').innerText = partido;
+
+            if (foto) {
+                document.getElementById('presidente-foto').src = foto;
+            }
+        }
+
+        // CONTROLADOR DE CRONÔMETRO VIA WEBSOCKET (SINCRONIZADO PRO TELÃO)
+        let tempoRestanteLocal = 300;
+        let tipoTempoLocal = "Grande Expediente";
+        
+        function definirTempoCronometro(segundos, tipo) {
+            tempoRestanteLocal = segundos;
+            tipoTempoLocal = tipo;
+            
+            socket.emit('comandoCronometro', {
+                acao: 'definir',
+                segundos: segundos,
+                tipo: tipo
+            });
+            atualizarDisplayCronometroLocal(segundos, tipo);
+        }
+
+        function controlarCronometro(acao) {
+            socket.emit('comandoCronometro', { acao: acao });
+        }
+
+        function atualizarDisplayCronometroLocal(segundos, tipo) {
+            const min = String(Math.floor(segundos / 60)).padStart(2, '0');
+            const seg = String(segundos % 60).padStart(2, '0');
+            document.getElementById('cronometro-display').innerText = `${min}:${seg}`;
+            
+            if(tipo) {
+                document.getElementById('tribuna-tempo-tipo').innerText = `Contagem ativa para: ${tipo}`;
+            }
+        }
+
+        // ESCUTADOR DE EVENTOS DO CRONÔMETRO REMOTO (TICK VINDOS DO BACKEND)
+        socket.on('cronometroTick', (data) => {
+            atualizarDisplayCronometroLocal(data.tempoRestante, data.tipoTempo);
+            if(data.oradorNome) {
+                document.getElementById('tribuna-parlamentar-nome').innerText = data.oradorNome;
+            }
+        });
+
+        // MANIPULAÇÃO DE ALTERNÂNCIA DE ABAS DO SISTEMA
+        function alternarAba(aba) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+
+            document.getElementById(`aba-${aba}`).classList.remove('hidden');
+            document.getElementById(`btn-aba-${aba}`).classList.add('active');
+
+            if (aba === 'votacao') {
+                document.getElementById('titulo-topbar').innerText = "Mesa Diretora";
+                document.getElementById('subtitulo-topbar').innerText = "Controle e abertura de votações em tempo real";
+            } else if (aba === 'oradores') {
+                document.getElementById('titulo-topbar').innerText = "Uso da Palavra";
+                document.getElementById('subtitulo-topbar').innerText = "Tribuna Legislativa e tempos regimentais";
+            } else if (aba === 'ata') {
+                document.getElementById('titulo-topbar').innerText = "Ata Institucional";
+                document.getElementById('subtitulo-topbar').innerText = "Redação e compilação de ata solene";
+                montarEstruturaAtaAutomatica();
+            }
+        }
+
+        // PUXAR ESTADO GERAL DO PLENÁRIO DA API E GERENCIAR MICROFONES
+        async function atualizarEstadoGeral() {
+            try {
+                const res = await fetch('http://localhost:3000/api/sessao/status');
+                const status = await res.json();
+
+                const txtStatus = document.getElementById('status-sessao-texto');
+                const btnAbrir = document.getElementById('btn-abrir-sessao');
+                const btnFechar = document.getElementById('btn-fechar-sessao');
+                const pnlDash = document.getElementById('painel-dashboard-presidente');
+
+                if (status.sessaoAtiva) {
+                    txtStatus.innerText = "Trabalhos Solenes Iniciados - SESSÃO ATIVA";
+                    txtStatus.className = "text-xl font-black text-emerald-600 dark:text-emerald-400";
+                    btnAbrir.classList.add('hidden');
+                    btnFechar.classList.remove('hidden');
+                    pnlDash.classList.remove('hidden');
+
+                    renderizarListaVereadores(status.vereadores);
+                    atualizarPainelFilaMicrofones(status.vereadores, status.microfoneAutorizadoId);
+                    calcularPlacarVotos(status.vereadores);
+                    gerarBotoesAtalhosMicrofones(status.vereadores);
+                    
+                    // GERENCIADOR DE ÁUDIO DO PRÓPRIO PRESIDENTE
+                    verificarEGerenciarMicrofonePresidente(status.microfoneAutorizadoId);
+                } else {
+                    txtStatus.innerText = "Sessão Plenária Fechada";
+                    txtStatus.className = "text-xl font-black text-clarencia-text dark:text-white";
+                    btnAbrir.classList.remove('hidden');
+                    btnFechar.classList.add('hidden');
+                    pnlDash.classList.add('hidden');
+                     desligarMicrofoneHardware();
+                }
+
+                if (status.materiaAtiva && status.materiaAtiva.codigo) {
+                    document.getElementById('materia-codigo').value = status.materiaAtiva.codigo;
+                    document.getElementById('materia-ementa').value = status.materiaAtiva.ementa;
+                }
+
+            } catch (e) { console.error("Falha ao puxar dados da API SISCAM:", e); }
+        }
+
+        // FUNÇÃO DE ACIONAMENTO DO HARDWARE DE CAPTURA (IGUAL AO TERMINAL DO VEREADOR)
+        function verificarEGerenciarMicrofonePresidente(autorizadoId) {
+            const led = document.getElementById('indicador-led-mic');
+            const txt = document.getElementById('texto-status-mic');
+            const wave1 = document.getElementById('sonar-wave-1');
+            const wave2 = document.getElementById('sonar-wave-2');
+
+            if (String(autorizadoId) === String(PRESIDENTE_ID)) {
+                if (!micEstaAtivoLocal) {
+                    micEstaAtivoLocal = true;
+                    led.className = "w-2.5 h-2.5 bg-emerald-500 rounded-full animate-pulse";
+                    txt.innerText = "Seu Microfone está Ativo";
+                    txt.className = "text-emerald-600 dark:text-emerald-400 font-bold";
+                    
+                    // Ativa animação de ondas pulsantes brancas
+                    wave1.className = "absolute w-16 h-16 bg-white rounded-full animate-sonar z-0";
+                    wave2.className = "absolute w-16 h-16 bg-white rounded-full animate-sonar z-0 [animation-delay:1s]";
+                    
+                    ligarMicrofoneHardware();
+                }
+            } else {
+                if (micEstaAtivoLocal) {
+                    micEstaAtivoLocal = false;
+                    led.className = "w-2.5 h-2.5 bg-slate-400 rounded-full";
+                    txt.innerText = "Microfone Desligado";
+                    txt.className = "text-clarencia-text dark:text-slate-300 font-medium";
+                    
+                    // Desliga animação de ondas pulsantes brancas
+                    wave1.className = "absolute w-16 h-16 bg-white rounded-full opacity-0 z-0";
+                    wave2.className = "absolute w-16 h-16 bg-white rounded-full opacity-0 z-0";
+                    
+                    desligarMicrofoneHardware();
+                }
+            }
+        }
+
+        async function ligarMicrofoneHardware() {
+            try {
+                mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                mediaRecorder = new MediaRecorder(mediaStream);
+                
+                mediaRecorder.ondataavailable = async (event) => {
+                    if (event.data.size > 0 && socket.connected) {
+                        const buffer = await event.data.arrayBuffer();
+                        socket.emit('enviarAudioStream', buffer);
+                    }
+                };
+                // Envia blocos de áudio em tempo real a cada 250ms para a TV/Mesa
+                mediaRecorder.start(250); 
+            } catch (err) {
+                console.error("Erro ao acessar hardware de áudio do sistema:", err);
+            }
+        }
+
+        function desligarMicrofoneHardware() {
+            if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+                mediaRecorder.stop();
+            }
+            if (mediaStream) {
+                mediaStream.getTracks().forEach(track => track.stop());
+            }
+            mediaStream = null;
+            mediaRecorder = null;
+        }
+
+        // ENVIAR SINAL DE ABERTURA OU FECHAMENTO DE SESSÃO DIA
+        async function alternarSessao(abrir) {
+            const acao = abrir ? 'abrir' : 'fechar';
+            if (!confirm(`Deseja realmente ${abrir ? 'ABRIR os painéis e a Ordem do Dia' : 'ENCERRAR em definitivo'} a sessão plenária de hoje?`)) return;
+
+            await fetch('http://localhost:3000/api/sessao/controle', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ acao: acao })
+            });
+            socket.emit('atualizarPainel');
+            atualizarEstadoGeral();
+        }
+
+        // SOLICITAR TRANSMISSÃO DE MATÉRIA PARA VOTAÇÃO DOS VEREADORES
+        async function lancarMateriaPlenaria() {
+            const cod = document.getElementById('materia-codigo').value.trim();
+            const emn = document.getElementById('materia-ementa').value.trim();
+
+            if (!cod || !emn) {
+                alert("Preencha o código identificador e a ementa da matéria antes de lançar.");
+                return;
+            }
+
+            await fetch('http://localhost:3000/api/sessao/controle', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ acao: 'iniciar', codigo: cod, ementa: emn })
+            });
+
+            socket.emit('atualizarPainel');
+            alert(`Sucesso! Matéria ${cod} lançada e disponível nos terminais parlamentares.`);
+        }
+
+        // LIMPAR QUADRO ATUAL E ENVIAR MATÉRIA ATUAL PARA O HISTÓRICO DE LOG DE TRABALHO
+        async function limparMateriaAtual() {
+            const cod = document.getElementById('materia-codigo').value.trim();
+            if (!cod) return;
+
+            if (!confirm("Deseja arquivar e fechar a votação da matéria atual? Os votos computados serão adicionados ao livro de atas.")) return;
+            
+            const placarSim = document.getElementById('placar-sim').innerText;
+            const placarNao = document.getElementById('placar-nao').innerText;
+            const placarAbst = document.getElementById('placar-abst').innerText;
+
+            materiasVotadasHistorico.push({
+                codigo: cod,
+                ementa: document.getElementById('materia-ementa').value,
+                sim: placarSim,
+                nao: placarNao,
+                abst: placarAbst,
+                hora: new Date().toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'})
+            });
+
+            document.getElementById('materia-codigo').value = '';
+            document.getElementById('materia-ementa').value = '';
+
+            await fetch('http://localhost:3000/api/sessao/controle', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ acao: 'limparMateria' })
+            });
+
+            socket.emit('atualizarPainel');
+            atualizarListaLogMateriasAta();
+        }
+
+        // RENDERIZAÇÃO DA TABELA DOS PARLAMENTARES EM TEMPO REAL
+        function renderizarListaVereadores(lista) {
+            const tbody = document.getElementById('tabela-vereadores-corpo');
+            tbody.innerHTML = '';
+
+            if (lista.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="text-center text-clarencia-sub py-4 italic">Nenhum vereador cadastrado no banco.</td></tr>`;
+                return;
+            }
+
+            lista.forEach(v => {
+                const tr = document.createElement('tr');
+                tr.className = "border-b border-slate-200 dark:border-slate-900 hover:bg-slate-100 dark:hover:bg-slate-900/30 font-medium";
+
+                let badgePresenca = `<span class="bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20 px-2 py-0.5 rounded font-bold uppercase text-[10px]">Ausente</span>`;
+                if (v.status === "Presente") {
+                    badgePresenca = `<span class="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded font-bold uppercase text-[10px]">Presente</span>`;
+                }
+
+                let badgeVoto = `<span class="text-clarencia-sub dark:text-slate-500 italic">Aguardando...</span>`;
+                if (v.voto === "SIM") badgeVoto = `<span class="bg-emerald-600 text-white font-black px-2 py-0.5 rounded text-[10px]">SIM</span>`;
+                if (v.voto === "NÃO") badgeVoto = `<span class="bg-rose-600 text-white font-black px-2 py-0.5 rounded text-[10px]">NÃO</span>`;
+                if (v.voto === "ABSTENÇÃO") badgeVoto = `<span class="bg-slate-400 dark:bg-slate-700 text-white dark:text-slate-300 font-bold px-2 py-0.5 rounded text-[10px]">ABST.</span>`;
+
+                tr.innerHTML = `
+                    <td class="py-3 px-2 font-bold text-clarencia-text dark:text-white">${v.nomeEleitoral || v.nomeUrna}</td>
+                    <td class="py-3 px-2 font-mono">${v.sigla || v.partido}</td>
+                    <td class="py-3 px-2">${badgePresenca}</td>
+                    <td class="py-3 px-2 text-center">${badgeVoto}</td>
+                    <td class="py-3 px-2 text-right">
+                        <button onclick="alternarPresencaForcada('${v.id}')" class="text-clarencia-sub dark:text-slate-400 hover:text-centaurea transition-colors px-1 text-[11px] font-bold">Alternar Presença</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // CÁLCULO RÁPIDO DO PLACAR E QUÓRUM
+        function calcularPlacarVotos(vereadores) {
+            let sim = 0, nao = 0, abst = 0, presentes = 0;
+            vereadores.forEach(v => {
+                if (v.status === 'Presente') presentes++;
+                if (v.voto === 'SIM') sim++;
+                if (v.voto === 'NÃO') nao++;
+                if (v.voto === 'ABSTENÇÃO') abst++;
+            });
+
+            document.getElementById('placar-sim').innerText = String(sim).padStart(2, '0');
+            document.getElementById('placar-nao').innerText = String(nao).padStart(2, '0');
+            document.getElementById('placar-abst').innerText = String(abst).padStart(2, '0');
+            document.getElementById('placar-total-presencas').innerText = `${presentes} / ${vereadores.length}`;
+        }
+
+        // INTERVENÇÃO FORÇADA DE PRESENÇA ADMIN MESA DIRECTA
+        async function alternarPresencaForcada(vId) {
+            await fetch('http://localhost:3000/api/sessao/presenca', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ vereadorId: vId })
+            });
+            socket.emit('atualizarPainel');
+            atualizarEstadoGeral();
+        }
+
+        // ATUALIZAR FILA DE PEDIDOS DE MICROFONE/FALA
+        function atualizarPainelFilaMicrofones(vereadores, autorizadoId) {
+            const container = document.getElementById('container-pedidos-microfone');
+            const containerAbaOradores = document.getElementById('oradores-lista-pedidos');
+            const txtNome = document.getElementById('mic-autorizado-nome');
+            const btnCortar = document.getElementById('btn-cortar-som');
+            
+            if(container) container.innerHTML = '';
+            if(containerAbaOradores) containerAbaOradores.innerHTML = '';
+
+            const caraFalando = vereadores.find(v => String(v.id) === String(autorizadoId));
+            if (caraFalando) {
+                if(txtNome) {
+                    txtNome.innerText = caraFalando.nomeEleitoral || caraFalando.nomeUrna;
+                    txtNome.className = "text-sm font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-wide";
+                }
+                if(btnCortar) btnCortar.classList.remove('hidden');
+                document.getElementById('nome-parlamentar-falando-master').innerText = (caraFalando.nomeEleitoral || caraFalando.nomeUrna).toUpperCase();
+                document.getElementById('btn-cortar-som-master').classList.remove('hidden');
+            } else {
+                if(txtNome) {
+                    txtNome.innerText = "Ninguém com a Palavra";
+                    txtNome.className = "text-sm font-black text-clarencia-text dark:text-white";
+                }
+                if(btnCortar) btnCortar.classList.add('hidden');
+                document.getElementById('nome-parlamentar-falando-master').innerText = "NENHUM VEREADOR ATIVO";
+                document.getElementById('btn-cortar-som-master').classList.add('hidden');
+            }
+
+            const daFila = []
+            if(vereadores && Array.isArray(vereadores)) {
+                vereadores.forEach(v => {
+                    if(v.pedidoFala === true && String(v.id) !== String(autorizadoId)) {
+                        daFila.push(v);
+                    }
+                });
+            }
+
+            if (daFila.length === 0) {
+                const vazioHtml = `<p class="text-xs text-clarencia-sub dark:text-slate-500 italic py-2 text-center">Nenhum pedido de fala na fila.</p>`;
+                if(container) container.innerHTML = vazioHtml;
+                if(containerAbaOradores) containerAbaOradores.innerHTML = vazioHtml;
+                return;
+            }
+
+            daFila.forEach(v => {
+                const card = `
+                    <div class="bg-slate-50 dark:bg-slate-900 border border-clarencia-border dark:border-slate-800 p-3 rounded-xl flex items-center justify-between gap-2 animate-in fade-in duration-200">
+                        <div class="min-w-0">
+                            <h4 class="text-xs font-bold text-clarencia-text dark:text-white uppercase">${v.nomeEleitoral || v.nomeUrna}</h4>
+                            <span class="text-[9px] text-clarencia-sub dark:text-slate-500 font-mono uppercase">${v.sigla || v.partido}</span>
+                        </div>
+                        <div class="flex gap-1">
+                            <button onclick="chamarParaTribunaDireto('${v.id}', '${v.nomeEleitoral || v.nomeUrna}')" class="bg-centaurea hover:bg-centaurea-hover text-white font-bold text-[9px] px-2 py-1 rounded-lg transition-all flex items-center gap-1">
+                                <i data-lucide="external-link" class="w-3 h-3"></i> Tribuna
+                            </button>
+                            <button onclick="autorizarMicrofoneEspecifico('${v.id}')" class="bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-clarencia-text dark:text-white font-bold text-[9px] px-2 py-1 rounded-lg transition-all">
+                                Liberar Mic
+                            </button>
+                        </div>
+                    </div>
+                `;
+                if(container) container.insertAdjacentHTML('beforeend', card);
+                if(containerAbaOradores) containerAbaOradores.insertAdjacentHTML('beforeend', card);
+            });
+            lucide.createIcons();
+        }
+
+        // DISPARAR COMANDO PARA COLOCAR O VEREADOR NA TRIBUNA E VINCULAR CRONÔMETRO
+        function chamarParaTribunaDireto(vId, nomeUrna) {
+            alternarAba('oradores');
+            document.getElementById('tribuna-parlamentar-nome').innerText = nomeUrna;
+            
+            socket.emit('comandoCronometro', {
+                acao: 'vincularOrador',
+                oradorNome: nomeUrna,
+                vereadorId: vId
+            });
+            autorizarMicrofoneEspecifico(vId);
+        }
+
+        // GERAR BOTÕES DE ATALHO RÁPIDO PARA ABRIR QUALQUE MICROFONE NA MARRA (INCLUI O PRÓPRIO PRESIDENTE NA LISTA SE ELE ESTIVER PRESENTE)
+        function gerarBotoesAtalhosMicrofones(vereadores) {
+            const container = document.getElementById('oradores-lista-atalhos-mics');
+            if(!container) return;
+            container.innerHTML = '';
+
+            vereadores.forEach(v => {
+                // O presidente e vereadores ativos podem receber o áudio master
+                if(v.status !== 'Presente' && String(v.id) !== String(PRESIDENTE_ID)) return;
+
+                const div = document.createElement('div');
+                div.className = "flex items-center justify-between p-2 rounded-lg bg-slate-50 dark:bg-slate-900/40 border border-clarencia-border dark:border-slate-900 text-xs";
+                div.innerHTML = `
+                    <span class="font-bold text-clarencia-sub dark:text-slate-300">${v.nomeEleitoral || v.nomeUrna} ${String(v.id) === String(PRESIDENTE_ID) ? '👑' : ''}</span>
+                    <button onclick="autorizarMicrofoneEspecifico('${v.id}')" class="text-[10px] bg-slate-200 dark:bg-slate-800 hover:bg-centaurea border border-clarencia-border dark:border-slate-700 text-clarencia-sub dark:text-slate-400 hover:text-white px-2 py-1 rounded font-bold transition-all">
+                        Ligar Som
+                    </button>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        // REQUISIÇÕES DE ACIONAMENTO DE ÁUDIO NO SERVIDOR
+        async function autorizarMicrofoneEspecifico(vId) {
+            await fetch('http://localhost:3000/api/microfone/autorizar', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ vereadorId: vId })
+            });
+            socket.emit('atualizarPainel');
+            atualizarEstadoGeral();
+        }
+
+        async function revogarMicrofoneGeral() {
+            await fetch('http://localhost:3000/api/microfone/autorizar', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ vereadorId: null })
+            });
+            socket.emit('atualizarPainel');
+            atualizarEstadoGeral();
+        }
+
+        // MONTAR CORPO TEXTUAL DA ATA DE MANEIRA SEMI AUTOMÁTICA
+        function montarEstruturaAtaAutomatica() {
+            const dataHoje = new Date().toLocaleDateString('pt-BR', { dateStyle: 'long' });
+            
+            if(!document.getElementById('ata-cabecalho').value) {
+                document.getElementById('ata-cabecalho').value = `Aos ${dataHoje}, sob a Proteção de Deus e em nome da lei, reuniu-se a Mesa Diretora da Câmara Municipal de Gonçalves Dias para a realização da presente Sessão Plenária Ordinária, presidida pelo Excelentíssimo Senhor Presidente da Casa Legislativa.`;
+            }
+            if(!document.getElementById('ata-rodape').value) {
+                document.getElementById('ata-rodape').value = `Nada mais havendo a tratar, o Senhor Presidente agradeceu a presença de todos os parlamentares e munícipes presentes, determinando o encerramento dos trabalhos da Ordem do Dia, da qual eu, Secretário, lavrei a presente ata que segue para assinatura regimental.`;
+            }
+        }
+
+        function atualizarListaLogMateriasAta() {
+            const container = document.getElementById('ata-log-materias');
+            container.innerHTML = '';
+
+            if(materiasVotadasHistorico.length === 0) {
+                container.innerHTML = `<p class="text-clarencia-sub italic">Nenhuma matéria arquivada ou votada nesta sessão ainda.</p>`;
+                return;
+            }
+
+            materiasVotadasHistorico.forEach(m => {
+                const p = document.createElement('p');
+                p.className = "border-b border-slate-200 dark:border-slate-950 pb-1 text-clarencia-text dark:text-slate-300 leading-relaxed";
+                p.innerHTML = `<strong>[${m.hora}] ${m.codigo}:</strong> ${m.ementa} -> <strong>Aprovada/Deliberada</strong> com Placar de: <span class="text-emerald-600 dark:text-emerald-400">${m.sim} SIM</span>, <span class="text-rose-600 dark:text-rose-400">${m.nao} NÃO</span>, e <span class="text-slate-400 dark:text-slate-500">${m.abst} ABST.</span>`;
+                container.appendChild(p);
+            });
+        }
+
+        // COMPILAR E SALVAR COMPILADO DE ATA NUM ARQUIVO TXT DOWNLOAD RÁPIDO
+        function gerarAtaDocumento() {
+            const cabecalho = document.getElementById('ata-cabecalho').value;
+            const rodape = document.getElementById('ata-rodape').value;
+            
+            let corpoMaterias = "MATÉRIAS DISCUTIDAS E VOTADAS:\n";
+            if(materiasVotadasHistorico.length === 0) {
+                corpoMaterias += "- Sem matérias nominais deliberadas na sessão.\n";
+            } else {
+                materiasVotadasHistorico.forEach(m => {
+                    corpoMaterias += `- ${m.codigo}: ${m.ementa} [Placar: SIM:${m.sim} | NÃO:${m.nao} | ABST:${m.abst}]\n`;
+                });
+            }
+
+            const textoCompletoAta = `CÂMARA MUNICIPAL DE GONÇALVES DIAS\nATA DA SESSÃO PLENÁRIA\n\n${cabecalho}\n\n${corpoMaterias}\n\n${rodape}`;
+            
+            const blob = new Blob([textoCompletoAta], { type: 'text/plain;charset=utf-8' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `ATA_SESSAO_${new Date().toISOString().split('T')[0]}.txt`;
+            link.click();
+        }
+
+        // COLETOR DO FLUXO DE ÁUDIO REAL TIME DAS CÉDULAS PARLAMENTARES (CONECTA NO AUTO-SPEAKER)
+        let queue = [];
+        let audioCtx = null;
+        let scheduledTime = 0;
+
+        socket.on('receberAudioStream', async (arrayBuffer) => {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                scheduledTime = audioCtx.currentTime;
+            }
+            try {
+                const audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
+                if (scheduledTime < audioCtx.currentTime) {
+                    scheduledTime = audioCtx.currentTime;
+                }
+                const source = audioCtx.createBufferSource();
+                source.buffer = audioBuffer;
+                source.connect(audioCtx.destination);
+                source.start(scheduledTime);
+                scheduledTime += audioBuffer.duration;
+            } catch (err) { }
+        });
+
+        function fazerLogout() { 
+            desligarMicrofoneHardware();
+            localStorage.clear(); 
+            window.location.href = './login.html'; 
+        }
+
+        // Eventos gerais recebidos por Broadcast Websocket
+        socket.on('atualizarPainel', () => atualizarEstadoGeral());
+
+        // Inicializações automáticas na carga da página
+        carregarDadosPresidente();
+        atualizarEstadoGeral();
+        setInterval(atualizarEstadoGeral, 2000);
+    </script>
+</body>
+</html>
