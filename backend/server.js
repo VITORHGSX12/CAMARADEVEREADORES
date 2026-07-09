@@ -9,6 +9,20 @@ const { Server } = require('socket.io');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// CORS MANUAL "À PROVA DE FALHA" - roda ANTES de tudo, garante que o preflight
+// (OPTIONS) SEMPRE recebe os headers corretos e responde 200 na hora,
+// mesmo que algo mais adiante no código quebre.
+app.use((req, res, next) => {
+    res.header('Access-Control-Allow-Origin', req.headers.origin || '*');
+    res.header('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+    res.header('Access-Control-Allow-Credentials', 'true');
+    if (req.method === 'OPTIONS') {
+        return res.sendStatus(200);
+    }
+    next();
+});
+
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
@@ -19,8 +33,6 @@ app.use(cors({
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
 }));
-
-app.options('*', cors());
 
 const server = http.createServer(app);
 
@@ -489,6 +501,17 @@ io.on("connection", socket => {
             oradorNome: cronometroEstado.oradorNome
         });
     });
+});
+
+// CAPTURA DE ERROS - impede que o servidor "quebre" sem responder nada ao navegador
+app.use((err, req, res, next) => {
+    console.error("ERRO NÃO TRATADO:", err);
+    if (res.headersSent) return next(err);
+    res.status(500).json({ error: "Erro interno no servidor: " + err.message });
+});
+
+process.on('uncaughtException', (err) => {
+    console.error("EXCEÇÃO NÃO CAPTURADA (o processo continua rodando):", err);
 });
 
 server.listen(PORT, () => {
