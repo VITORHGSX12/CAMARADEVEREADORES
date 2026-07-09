@@ -6,11 +6,22 @@ const path = require('path');
 const { Server } = require('socket.io');
 
 const app = express();
-// PORTA DINÂMICA: Ajustada corretamente para escutar a porta do Railway
 const PORT = process.env.PORT || 3000;
 
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+
+// CABEÇALHOS DE SEGURANÇA CORS COMPLETO PARA PRODUÇÃO (VERCEL)
+app.use((req, res, next) => {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    if (req.method === 'OPTIONS') {
+        return res.sendStatus(200);
+    }
+    next();
+});
+
 app.use(cors({ origin: '*' }));
 
 const server = http.createServer(app);
@@ -18,13 +29,12 @@ const server = http.createServer(app);
 const io = new Server(server, {
     cors: {
         origin: '*',
-        methods: ['GET', 'POST', 'PUT', 'DELETE']
+        methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS']
     }
 });
 
 const BANCO = path.join(__dirname, 'banco_vereadores.json');
 
-// Estrutura padrão com suporte a metadados, configurações globais e livro de atas
 function carregarBanco() {
     if (!fs.existsSync(BANCO)) {
         fs.writeFileSync(
@@ -53,20 +63,15 @@ function salvarBanco() {
     );
 }
 
-// Inicialização unificada do banco e referências auxiliares
 let bancoDadosGlobal = carregarBanco();
 let bancoVereadores = bancoDadosGlobal.vereadores;
 let atasSalvasLivro = bancoDadosGlobal.atasSalvas;
 
 let sessaoAtiva = false;
-let materiaAtual = {
-    codigo: '',
-    ementa: ''
-};
+let materiaAtual = { codigo: '', ementa: '' };
 let microfoneAutorizadoId = null;
 let filaOradores = [];
 
-// Estado Global do Cronômetro em Memória
 let cronometroEstado = {
     tempoRestante: 300,
     tipoTempo: "Grande Expediente",
@@ -75,7 +80,7 @@ let cronometroEstado = {
 };
 
 function gerarUsuario(nome) {
-    return nome
+    return String(nome || "")
         .normalize("NFD")
         .replace(/[\u0300-\u036f]/g, "")
         .toLowerCase()
@@ -85,7 +90,8 @@ function gerarUsuario(nome) {
 }
 
 function existeUsuario(usuario) {
-    return bancoVereadores.find(v => v.username === usuario);
+    if (!bancoVereadores) return false;
+    return bancoVereadores.find(v => v && v.username === usuario);
 }
 
 function gerarUsuarioUnico(nome) {
@@ -105,13 +111,15 @@ function emitirAtualizacao() {
     salvarBanco();
     
     let sim = 0, nao = 0, abst = 0;
-    bancoVereadores.forEach(v => {
-        if (v.status === 'Presente') {
-            if (v.voto === 'SIM') sim++;
-            if (v.voto === 'NÃO') nao++;
-            if (v.voto === 'ABSTENÇÃO') abst++;
-        }
-    });
+    if (bancoVereadores && Array.isArray(bancoVereadores)) {
+        bancoVereadores.forEach(v => {
+            if (v && v.status === 'Presente') {
+                if (v.voto === 'SIM') sim++;
+                if (v.voto === 'NÃO') nao++;
+                if (v.voto === 'ABSTENÇÃO') abst++;
+            }
+        });
+    }
 
     io.emit("atualizarPainel", {
         vereadores: bancoVereadores,
@@ -126,26 +134,19 @@ function emitirAtualizacao() {
     io.emit("atualizarPainelSemPayload");
 }
 
-function buscarPresidente() {
-    return bancoVereadores.find(v => v.cargo === "PRESIDENTE");
-}
-
 function removerPresidenteAnterior(idAtual) {
+    if (!bancoVereadores) return;
     bancoVereadores.forEach(v => {
-        if (v.cargo === "PRESIDENTE" && v.id !== idAtual) {
+        if (v && v.cargo === "PRESIDENTE" && v.id !== idAtual) {
             v.cargo = "VEREADOR";
         }
     });
 }
 
-// ======================================================
 // CONFIGURAÇÕES GLOBAIS DO SISTEMA
-// ======================================================
 app.post('/api/configuracoes/logo', (req, res) => {
     const { logoBase64 } = req.body;
-    if (!logoBase64) {
-        return res.status(400).json({ error: "Nenhum dado de imagem fornecido." });
-    }
+    if (!logoBase64) return res.status(400).json({ error: "Nenhum dado de imagem fornecido." });
     try {
         bancoDadosGlobal.logoSistemaComum = logoBase64;
         emitirAtualizacao();
@@ -159,14 +160,10 @@ app.get('/api/configuracoes/logo', (req, res) => {
     res.json({ logo: bancoDadosGlobal.logoSistemaComum || "" });
 });
 
-// ======================================================
 // LIVRO DE ATAS
-// ======================================================
 app.post('/api/atas/salvar', (req, res) => {
     const { textoAta, identificador } = req.body;
-    if (!textoAta) {
-        return res.status(400).json({ error: "Conteúdo da ata vazio." });
-    }
+    if (!textoAta) return res.status(400).json({ error: "Conteúdo da ata vazio." });
     try {
         const novaAta = {
             id: Date.now().toString(),
@@ -187,14 +184,11 @@ app.get('/api/atas', (req, res) => {
     res.json(atasSalvasLivro);
 });
 
-// ======================================================
-// AUTENTICAÇÃO / LOGIN BLINDADA CONTRA ERRO 500
-// ======================================================
+// AUTENTICAÇÃO / LOGIN SEGURO
 const processarLogin = (req, res) => {
     try {
         const { usuario, username, senha, password } = req.body;
 
-        // Proteção: Tratamento estrito de strings nulas ou indefinidas
         const userFinal = String(usuario || username || "").trim().toLowerCase();
         const passFinal = String(senha || password || "");
 
@@ -202,12 +196,15 @@ const processarLogin = (req, res) => {
             return res.status(400).json({ error: "Informe usuário e senha." });
         }
 
-        // Autenticação do SUPER ADMIN
+        // Credencial master do Administrador
         if (userFinal === "admin" && passFinal === "123456") {
             return res.json({ id: "admin", nome: "Super Admin", cargo: "SUPERADMIN" });
         }
 
-        // Varre o banco garantindo validações individuais seguras
+        if (!bancoVereadores || !Array.isArray(bancoVereadores)) {
+            return res.status(401).json({ error: "Usuário ou senha inválidos." });
+        }
+
         const parlamentar = bancoVereadores.find(v => {
             if (!v || !v.username) return false;
             return v.username.toLowerCase() === userFinal && String(v.senha) === passFinal;
@@ -237,11 +234,9 @@ const processarLogin = (req, res) => {
 app.post('/api/auth/login', processarLogin);
 app.post('/api/vereadores/login', processarLogin);
 
-// ======================================================
-// GERENCIAMENTO DE PARLAMENTARES
-// ======================================================
+// PARLAMENTARES
 app.get('/api/vereadores', (req, res) => {
-    res.json(bancoVereadores);
+    res.json(bancoVereadores || []);
 });
 
 app.post('/api/vereadores/cadastrar', (req, res) => {
@@ -253,7 +248,7 @@ app.post('/api/vereadores/cadastrar', (req, res) => {
         }
 
         const cpfLimpo = String(cpf).replace(/\D/g, '');
-        if (bancoVereadores.find(v => v.cpf.replace(/\D/g, '') === cpfLimpo)) {
+        if (bancoVereadores && bancoVereadores.find(v => v && v.cpf.replace(/\D/g, '') === cpfLimpo)) {
             return res.status(400).json({ error: "Este CPF já está cadastrado." });
         }
 
@@ -286,6 +281,7 @@ app.post('/api/vereadores/cadastrar', (req, res) => {
         };
 
         if (novo.cargo === "PRESIDENTE") removerPresidenteAnterior(novo.id);
+        if (!bancoVereadores) bancoVereadores = [];
         bancoVereadores.push(novo);
         emitirAtualizacao();
         res.status(201).json({ sucesso: true, parlamentar: novo });
@@ -296,42 +292,36 @@ app.post('/api/vereadores/cadastrar', (req, res) => {
 
 app.post('/api/vereadores/alterar-senha', (req, res) => {
     const { id, novaSenha } = req.body;
-    const vereador = bancoVereadores.find(v => v.id === String(id));
+    const vereador = bancoVereadores.find(v => v && v.id === String(id));
     if (!vereador) return res.status(404).json({ error: "Parlamentar não encontrado." });
     vereador.senha = novaSenha.trim();
     emitirAtualizacao();
     res.json({ success: true });
 });
 
-// ======================================================
-// CONTROLE DA SESSÃO
-// ======================================================
+// SESSÃO
 app.post('/api/sessao/controle', (req, res) => {
-    const { acao, codigo, ementa } = req.body;
+    const { acao, Server, codigo, ementa } = req.body;
 
     if (acao === "abrir") {
         sessaoAtiva = true;
         bancoVereadores.forEach(v => {
-            v.status = "Ausente";
-            v.voto = "Pendente";
-            v.pedidoFala = false;
+            if(v) { v.status = "Ausente"; v.voto = "Pendente"; v.pedidoFala = false; }
         });
     } else if (acao === "iniciar") {
         sessaoAtiva = true;
         materiaAtual = { codigo: codigo || "", ementa: ementa || "" };
-        bancoVereadores.forEach(v => { v.voto = "Pendente"; });
+        bancoVereadores.forEach(v => { if(v) v.voto = "Pendente"; });
     } else if (acao === "limparMateria") {
         materiaAtual = { codigo: '', ementa: '' };
-        bancoVereadores.forEach(v => { v.voto = "Pendente"; });
+        bancoVereadores.forEach(v => { if(v) v.voto = "Pendente"; });
     } else if (acao === "fechar" || acao === "encerrar") {
         sessaoAtiva = false;
         materiaAtual = { codigo: '', ementa: '' };
         microfoneAutorizadoId = null;
         filaOradores = [];
         bancoVereadores.forEach(v => {
-            v.status = "Ausente";
-            v.voto = "Pendente";
-            v.pedidoFala = false;
+            if(v) { v.status = "Ausente"; v.voto = "Pendente"; v.pedidoFala = false; }
         });
         if (cronometroEstado.intervalId) {
             clearInterval(cronometroEstado.intervalId);
@@ -342,12 +332,9 @@ app.post('/api/sessao/controle', (req, res) => {
     res.json({ success: true });
 });
 
-// ======================================================
-// PRESENÇA E VOTAÇÃO
-// ======================================================
 app.post('/api/sessao/presenca', (req, res) => {
     const { vereadorId } = req.body;
-    const vereador = bancoVereadores.find(v => v.id === String(vereadorId));
+    const { vereador } = bancoVereadores.find(v => v && v.id === String(vereadorId));
 
     if (!vereador) return res.status(404).json({ error: "Parlamentar não encontrado." });
 
@@ -368,7 +355,7 @@ app.post('/api/sessao/presenca', (req, res) => {
 app.put('/api/vereadores/alterar-usuario', (req, res) => {
     const { id, username } = req.body;
     const novoUsuario = username.trim().toLowerCase();
-    const vereador = bancoVereadores.find(v => v.id === String(id));
+    const vereador = bancoVereadores.find(v => v && v.id === String(id));
     if (!vereador) return res.status(404).json({ error: "Parlamentar não encontrado." });
     vereador.username = novoUsuario;
     emitirAtualizacao();
@@ -376,7 +363,7 @@ app.put('/api/vereadores/alterar-usuario', (req, res) => {
 });
 
 app.delete('/api/vereadores/:id', (req, res) => {
-    const indice = bancoVereadores.findIndex(v => v.id === String(req.params.id));
+    const { indice } = bancoVereadores.findIndex(v => v && v.id === String(req.params.id));
     if (indice === -1) return res.status(404).json({ error: "Parlamentar não encontrado." });
     bancoVereadores.splice(indice, 1);
     emitirAtualizacao();
@@ -385,20 +372,22 @@ app.delete('/api/vereadores/:id', (req, res) => {
 
 app.get('/api/sessao/status', (req, res) => {
     let sim = 0, nao = 0, abst = 0;
-    bancoVereadores.forEach(v => {
-        if (v.status === 'Presente') {
-            if (v.voto === 'SIM') sim++;
-            if (v.voto === 'NÃO') nao++;
-            if (v.voto === 'ABSTENÇÃO') abst++;
-        }
-    });
+    if (bancoVereadores) {
+        bancoVereadores.forEach(v => {
+            if (v && v.status === 'Presente') {
+                if (v.voto === 'SIM') sim++;
+                if (v.voto === 'NÃO') nao++;
+                if (v.voto === 'ABSTENÇÃO') abst++;
+            }
+        });
+    }
     res.json({
         sessaoAtiva,
         materiaAtiva: materiaAtual,
         materiaAtual,
         microfoneAutorizadoId,
         filaOradores,
-        vereadores: bancoVereadores,
+        vereadores: bancoVereadores || [],
         logoSistemaComum: bancoDadosGlobal.logoSistemaComum,
         totaisVotos: { sim, nao, abstencao: abst }
     });
@@ -406,7 +395,7 @@ app.get('/api/sessao/status', (req, res) => {
 
 app.post('/api/vereadores/votar', (req, res) => {
     const { vereadorId, voto } = req.body;
-    const vereador = bancoVereadores.find(v => v.id === String(vereadorId));
+    const vereador = bancoVereadores.find(v => v && v.id === String(vereadorId));
     if (!vereador) return res.status(404).json({ error: "Não encontrado." });
     vereador.voto = voto;
     emitirAtualizacao();
@@ -415,7 +404,7 @@ app.post('/api/vereadores/votar', (req, res) => {
 
 app.post('/api/microfone/pedir', (req, res) => {
     const { vereadorId } = req.body;
-    const vereador = bancoVereadores.find(v => v.id === String(vereadorId));
+    const vereador = bancoVereadores.find(v => v && v.id === String(vereadorId));
     if (vereador && vereador.status === "Presente") {
         vereador.pedidoFala = true;
         if (!filaOradores.includes(vereadorId)) filaOradores.push(vereadorId);
@@ -429,15 +418,13 @@ app.post('/api/microfone/autorizar', (req, res) => {
     microfoneAutorizadoId = vereadorId;
     filaOradores = filaOradores.filter(id => id !== vereadorId);
     bancoVereadores.forEach(v => {
-        if (String(v.id) === String(vereadorId)) v.pedidoFala = false;
+        if (v && String(v.id) === String(vereadorId)) v.pedidoFala = false;
     });
     emitirAtualizacao();
     res.json({ success: true });
 });
 
-// ======================================================
-// WEBSOCKETS (SOCKET.IO REAL-TIME)
-// ======================================================
+// WEBSOCKETS
 io.on("connection", socket => {
     socket.on("registrarConexao", (dados) => {
         socket.userId = dados.userId;
