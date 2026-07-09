@@ -6,7 +6,8 @@ const path = require('path');
 const { Server } = require('socket.io');
 
 const app = express();
-const PORT = 3000;
+// PORTA DINÂMICA: Essencial para o Railway conseguir inicializar o contêiner Node.js
+const PORT = process.env.PORT || 3000;
 
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
@@ -206,21 +207,22 @@ app.get('/api/atas', (req, res) => {
 });
 
 // ======================================================
-// LOGIN
+// AUTENTICAÇÃO / LOGIN (UNIFICADO COM SUPORTE A ROTAS FRONT)
 // ======================================================
-app.post('/api/auth/login', (req, res) => {
-    const { usuario, senha } = req.body;
+const processarLogin = (req, res) => {
+    const { usuario, username, senha, password } = req.body;
 
-    if (!usuario || !senha) {
+    const userFinal = (usuario || username || "").trim().toLowerCase();
+    const passFinal = (senha || password || "");
+
+    if (!userFinal || !passFinal) {
         return res.status(400).json({
             error: "Informe usuário e senha."
         });
     }
 
-    const user = usuario.trim().toLowerCase();
-
     // SUPER ADMIN
-    if (user === "admin" && senha === "123456") {
+    if (userFinal === "admin" && passFinal === "123456") {
         return res.json({
             id: "admin",
             nome: "Super Admin",
@@ -230,8 +232,8 @@ app.post('/api/auth/login', (req, res) => {
 
     // PROCURA QUALQUER USUÁRIO CADASTRADO
     const parlamentar = bancoVereadores.find(v =>
-        v.username.toLowerCase() === user &&
-        v.senha === senha
+        v.username.toLowerCase() === userFinal &&
+        v.senha === passFinal
     );
 
     if (!parlamentar) {
@@ -251,7 +253,11 @@ app.post('/api/auth/login', (req, res) => {
         sigla: parlamentar.sigla,
         foto: parlamentar.foto
     });
-});
+};
+
+// Vincula o mesmo processador para as duas variantes de rotas disparadas pelas interfaces
+app.post('/api/auth/login', processarLogin);
+app.post('/api/vereadores/login', processarLogin);
 
 // ======================================================
 // LISTAR PARLAMENTARES
@@ -331,9 +337,6 @@ app.post('/api/vereadores/cadastrar', (req, res) => {
         }
 
         bancoVereadores.push(novo);
-        
-        // CORREÇÃO: Usando a função unificada emitirAtualizacao(), garantimos que o array local 
-        // seja jogado para dentro do objeto estruturado global antes de descarregar os dados no arquivo .json
         emitirAtualizacao();
         
         res.status(201).json({ sucesso: true, parlamentar: novo });
@@ -397,7 +400,7 @@ app.post('/api/sessao/controle', (req, res) => {
     } else if (acao === "limparMateria") {
         materiaAtual = { codigo: '', ementa: '' };
         bancoVereadores.forEach(v => { v.voto = "Pendente"; });
-    } else if (acao === "fechar") {
+    } else if (acao === "fechar" || acao === "encerrar") {
         sessaoAtiva = false;
         materiaAtual = { codigo: '', ementa: '' };
         microfoneAutorizadoId = null;
@@ -445,19 +448,19 @@ app.post('/api/sessao/presenca', (req, res) => {
         }
         filaOradores = filaOradores.filter(id => String(id) !== String(vereadorId));
         io.emit("notificacaoVereadorEntrou", {
-            nome: vereador.nomeEleitoral || vereador.nomeCompleto,
+            name: vereador.nomeEleitoral || vereador.nomeCompleto,
             status: "Ausente"
         });
     } else {
         vereador.status = "Presente";
         io.emit("notificacaoVereadorEntrou", {
-            nome: vereador.nomeEleitoral || vereador.nomeCompleto,
+            name: vereador.nomeEleitoral || vereador.nomeCompleto,
             status: "Presente"
         });
     }
 
     emitirAtualizacao();
-    res.json({ success: true, statusAtual: vereador.status });
+    res.json({ success: true, statusAtual: ...vereador.status });
 });
 
 // ======================================================
