@@ -1,17 +1,17 @@
 const express = require('express');
 const cors = require('cors');
-const http = require('http'); // <--- ESSA LINHA É OBRIGATÓRIA
+const http = require('http'); 
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
 const { Server } = require('socket.io');
+const { PrismaClient } = require('@prisma/client'); // <--- ADICIONADO
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const prisma = new PrismaClient(); // <--- INICIALIZADO
 
-// CORS MANUAL "À PROVA DE FALHA" - roda ANTES de tudo, garante que o preflight
-// (OPTIONS) SEMPRE recebe os headers corretos e responde 200 na hora,
-// mesmo que algo mais adiante no código quebre.
+// CORS MANUAL "À PROVA DE FALHA"
 app.use((req, res, next) => {
     res.header('Access-Control-Allow-Origin', req.headers.origin || '*');
     res.header('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
@@ -26,7 +26,6 @@ app.use((req, res, next) => {
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
-// CONFIGURAÇÃO ROBUSTA DE CORS PARA PRODUÇÃO (VERCEL + RAILWAY)
 app.use(cors({
     origin: true,
     credentials: true,
@@ -44,53 +43,12 @@ const io = new Server(server, {
     }
 });
 
-// ALTERAÇÃO CRÍTICA: Salvando o arquivo de banco na pasta temporária gravável da hospedagem
-const BANCO = path.join(os.tmpdir(), 'banco_vereadores.json');
-
-function carregarBanco() {
-    if (!fs.existsSync(BANCO)) {
-        try {
-            fs.writeFileSync(
-                BANCO,
-                JSON.stringify({ logoSistemaComum: "", vereadores: [], atasSalvas: [] }, null, 4)
-            );
-        } catch (err) {
-            console.error("Erro ao criar arquivo inicial de banco:", err);
-        }
-    }
-    try {
-        const dados = JSON.parse(fs.readFileSync(BANCO, 'utf8'));
-        if (Array.isArray(dados)) {
-            return { logoSistemaComum: "", vereadores: dados, atasSalvas: [] };
-        }
-        if (!dados.vereadores) dados.vereadores = [];
-        if (!dados.logoSistemaComum) dados.logoSistemaComum = "";
-        if (!dados.atasSalvas) dados.atasSalvas = [];
-        return dados;
-    } catch (e) {
-        return { logoSistemaComum: "", vereadores: [], atasSalvas: [] };
-    }
-}
-
-function salvarBanco() {
-    try {
-        fs.writeFileSync(
-            BANCO,
-            JSON.stringify(bancoDadosGlobal, null, 4)
-        );
-    } catch (err) {
-        console.error("Erro ao salvar arquivo físico de banco:", err);
-    }
-}
-
-let bancoDadosGlobal = carregarBanco();
-let bancoVereadores = bancoDadosGlobal.vereadores;
-let atasSalvasLivro = bancoDadosGlobal.atasSalvas;
-
+// Variáveis de controle da sessão (mantidas em memória para o Socket.io)
 let sessaoAtiva = false;
 let materiaAtual = { codigo: '', ementa: '' };
 let microfoneAutorizadoId = null;
 let filaOradores = [];
+let logoSistemaComumGlobal = ""; // Salva temporariamente em memória
 
 let cronometroEstado = {
     tempoRestante: 300,
@@ -99,39 +57,14 @@ let cronometroEstado = {
     intervalId: null
 };
 
-function gerarUsuario(nome) {
-    return String(nome || "")
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "")
-        .toLowerCase()
-        .replace(/[^a-z0-9 ]/g, "")
-        .trim()
-        .replace(/\s+/g, "");
-}
+// Função para emitir atualizações em tempo real via Socket.io buscando do Postgres
+async function emitirAtualizacao() {
+    try {
+        const bancoVereadores = await prisma.tableVereador.findMany({
+            orderBy: { nomeEleitoral: 'asc' }
+        });
 
-function existeUsuario(usuario) {
-    if (!bancoVereadores) return false;
-    return bancoVereadores.find(v => v && v.username === usuario);
-}
-
-function gerarUsuarioUnico(nome) {
-    let base = gerarUsuario(nome);
-    let usuario = base;
-    let contador = 1;
-    while (existeUsuario(usuario)) {
-        usuario = base + contador;
-        contador++;
-    }
-    return usuario;
-}
-
-function emitirAtualizacao() {
-    bancoDadosGlobal.vereadores = bancoVereadores;
-    bancoDadosGlobal.atasSalvas = atasSalvasLivro;
-    salvarBanco();
-    
-    let sim = 0, nao = 0, abst = 0;
-    if (bancoVereadores && Array.isArray(bancoVereadores)) {
+        let sim = 0, nao = 0, abst = 0;
         bancoVereadores.forEach(v => {
             if (v && v.status === 'Presente') {
                 if (v.voto === 'SIM') sim++;
@@ -139,76 +72,40 @@ function emitirAtualizacao() {
                 if (v.voto === 'ABSTENÇÃO') abst++;
             }
         });
+
+        io.emit("atualizarPainel", {
+            vereadores: bancoVereadores,
+            sessaoAtiva,
+            materiaAtiva: materiaAtual,
+            materiaAtual,
+            filaOradores,
+            microfoneAutorizadoId,
+            logoSistemaComum: logoSistemaComumGlobal,
+            totaisVotos: { sim, nao, abstencao: abst }
+        });
+        io.emit("atualizarPainelSemPayload");
+    } catch (err) {
+        console.error("Erro ao emitir atualização do Socket:", err);
     }
-
-    io.emit("atualizarPainel", {
-        vereadores: bancoVereadores,
-        sessaoAtiva,
-        materiaAtiva: materiaAtual,
-        materiaAtual,
-        filaOradores,
-        microfoneAutorizadoId,
-        logoSistemaComum: bancoDadosGlobal.logoSistemaComum,
-        totaisVotos: { sim, nao, abstencao: abst }
-    });
-    io.emit("atualizarPainelSemPayload");
-}
-
-function removerPresidenteAnterior(idAtual) {
-    if (!bancoVereadores) return;
-    bancoVereadores.forEach(v => {
-        if (v && v.cargo === "PRESIDENTE" && v.id !== idAtual) {
-            v.cargo = "VEREADOR";
-        }
-    });
 }
 
 // CONFIGURAÇÕES GLOBAIS DO SISTEMA
 app.post('/api/configuracoes/logo', (req, res) => {
     const { logoBase64 } = req.body;
     if (!logoBase64) return res.status(400).json({ error: "Nenhum dado de imagem fornecido." });
-    try {
-        bancoDadosGlobal.logoSistemaComum = logoBase64;
-        emitirAtualizacao();
-        return res.json({ success: true, message: "Logo salva com sucesso!" });
-    } catch (error) {
-        return res.status(500).json({ error: "Falha na gravação do banco: " + error.message });
-    }
+    logoSistemaComumGlobal = logoBase64;
+    emitirAtualizacao();
+    return res.json({ success: true, message: "Logo salva com sucesso!" });
 });
 
 app.get('/api/configuracoes/logo', (req, res) => {
-    res.json({ logo: bancoDadosGlobal.logoSistemaComum || "" });
+    res.json({ logo: logoSistemaComumGlobal });
 });
 
-// LIVRO DE ATAS
-app.post('/api/atas/salvar', (req, res) => {
-    const { textoAta, identificador } = req.body;
-    if (!textoAta) return res.status(400).json({ error: "Conteúdo da ata vazio." });
-    try {
-        const novaAta = {
-            id: Date.now().toString(),
-            dataRegistro: new Date().toLocaleDateString('pt-BR'),
-            horaRegistro: new Date().toLocaleTimeString('pt-BR'),
-            identificador: identificador || `SESSÃO_${new Date().toISOString().split('T')[0]}`,
-            texto: textoAta
-        };
-        atasSalvasLivro.unshift(novaAta);
-        emitirAtualizacao();
-        return res.json({ success: true, message: "Ata arquivada com sucesso!", ata: novaAta });
-    } catch (error) {
-        return res.status(500).json({ error: "Falha ao gravar ata: " + error.message });
-    }
-});
-
-app.get('/api/atas', (req, res) => {
-    res.json(atasSalvasLivro);
-});
-
-// AUTENTICAÇÃO / LOGIN
-const processarLogin = (req, res) => {
+// AUTENTICAÇÃO / LOGIN (Buscando do PostgreSQL via Prisma)
+const processarLogin = async (req, res) => {
     try {
         const { usuario, username, senha, password } = req.body;
-
         const userFinal = String(usuario || username || "").trim().toLowerCase();
         const passFinal = String(senha || password || "");
 
@@ -220,16 +117,11 @@ const processarLogin = (req, res) => {
             return res.json({ id: "admin", nome: "Super Admin", cargo: "SUPERADMIN" });
         }
 
-        if (!bancoVereadores || !Array.isArray(bancoVereadores)) {
-            return res.status(401).json({ error: "Usuário ou senha inválidos." });
-        }
-
-        const parlamentar = bancoVereadores.find(v => {
-            if (!v || !v.username) return false;
-            return v.username.toLowerCase() === userFinal && String(v.senha) === passFinal;
+        const parlamentar = await prisma.tableVereador.findUnique({
+            where: { username: userFinal }
         });
 
-        if (!parlamentar) {
+        if (!parlamentar || String(parlamentar.senha) !== passFinal) {
             return res.status(401).json({ error: "Usuário ou senha inválidos." });
         }
 
@@ -245,7 +137,7 @@ const processarLogin = (req, res) => {
             foto: parlamentar.foto
         });
     } catch (err) {
-        console.error("Erro interno no processamento de login:", err);
+        console.error("Erro no login:", err);
         return res.status(500).json({ error: "Erro interno no servidor ao processar autenticação." });
     }
 };
@@ -253,194 +145,234 @@ const processarLogin = (req, res) => {
 app.post('/api/auth/login', processarLogin);
 app.post('/api/vereadores/login', processarLogin);
 
-// PARLAMENTARES
-app.get('/api/vereadores', (req, res) => {
-    res.json(bancoVereadores || []);
-});
-
-app.post('/api/vereadores/cadastrar', (req, res) => {
+// PARLAMENTARES - LISTAR (GET)
+const listarParlamentares = async (req, res) => {
     try {
-        const { cargo, nomeCompleto, nomeEleitoral, dataNascimento, cpf, nomeMae, partido, sigla, username, password, fotoBase64 } = req.body;
+        const lista = await prisma.tableVereador.findMany({ orderBy: { createdAt: 'desc' } });
+        res.json(lista || []);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+app.get('/api/vereadores', listarParlamentares);
+app.get('/api/parlamentares', listarParlamentares);
 
-        if (!nomeCompleto || !cpf || !nomeMae || !dataNascimento) {
+// PARLAMENTARES - CADASTRAR (POST)
+const cadastrarParlamentar = async (req, res) => {
+    try {
+        const { cargo, nomeCompleto, nomeEleitoral, dataNascimento, cpf, nomeMae, partido, sigla, username, password, senha, fotoBase64, foto } = req.body;
+
+        if (!nomeCompleto || !cpf) {
             return res.status(400).json({ error: "Campos obrigatórios não preenchidos." });
         }
 
         const cpfLimpo = String(cpf).replace(/\D/g, '');
-        if (bancoVereadores && bancoVereadores.find(v => v && v.cpf.replace(/\D/g, '') === cpfLimpo)) {
+        const existeCpf = await prisma.tableVereador.findUnique({ where: { cpf: cpfLimpo } });
+        if (existeCpf) {
             return res.status(400).json({ error: "Este CPF já está cadastrado." });
         }
 
         let usernameFinal = "";
         if (username && username.trim() !== "") {
-            const userValidado = username.trim().toLowerCase();
-            if (existeUsuario(userValidado)) {
-                return res.status(400).json({ error: "Este nome de usuário já está em uso." });
-            }
-            usernameFinal = userValidado;
+            usernameFinal = username.trim().toLowerCase();
+            const existeUser = await prisma.tableVereador.findUnique({ where: { username: usernameFinal } });
+            if (existeUser) return res.status(400).json({ error: "Este nome de usuário já está em uso." });
         } else {
-            usernameFinal = gerarUsuarioUnico(nomeEleitoral || nomeCompleto);
+            let base = String(nomeEleitoral || nomeCompleto).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9 ]/g, "").trim().replace(/\s+/g, "");
+            usernameFinal = base;
+            let contador = 1;
+            while (await prisma.tableVereador.findUnique({ where: { username: usernameFinal } })) {
+                usernameFinal = base + contador;
+                contador++;
+            }
         }
 
-        const novo = {
-            id: Date.now().toString(),
-            cargo: cargo === "PRESIDENTE" ? "PRESIDENTE" : "VEREADOR",
-            nomeCompleto: nomeCompleto.trim(),
-            nomeEleitoral: (nomeEleitoral || nomeCompleto).trim(),
-            dataNascimento,
-            cpf: cpfLimpo,
-            nomeMae,
-            partido,
-            sigla: (sigla || "").toUpperCase(),
-            username: usernameFinal,
-            senha: password || "123456",
-            foto: fotoBase64 || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=250",
-            status: "Ausente",
-            voto: "Pendente"
-        };
+        if (cargo === "PRESIDENTE") {
+            // Remove cargo de presidente dos outros
+            await prisma.tableVereador.updateMany({
+                where: { cargo: "PRESIDENTE" },
+                data: { cargo: "VEREADOR" }
+            });
+        }
 
-        if (novo.cargo === "PRESIDENTE") removerPresidenteAnterior(novo.id);
-        if (!bancoVereadores) bancoVereadores = [];
-        bancoVereadores.push(novo);
-        emitirAtualizacao();
+        const novo = await prisma.tableVereador.create({
+            data: {
+                cargo: cargo === "PRESIDENTE" ? "PRESIDENTE" : "VEREADOR",
+                nomeCompleto: nomeCompleto.trim(),
+                nomeEleitoral: (nomeEleitoral || nomeCompleto).trim(),
+                dataNascimento: dataNascimento || "",
+                cpf: cpfLimpo,
+                nomeMae: nomeMae || "",
+                partido: partido || "",
+                sigla: (sigla || "").toUpperCase(),
+                username: usernameFinal,
+                senha: password || senha || "123456",
+                foto: fotoBase64 || foto || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=250",
+                status: "Ausente",
+                voto: "Aguardando",
+                pedidoFala: false,
+                votos: 0
+            }
+        });
+
+        await emitirAtualizacao();
         res.status(201).json({ sucesso: true, parlamentar: novo });
     } catch (error) {
         res.status(500).json({ error: "Erro interno: " + error.message });
     }
-});
+};
+app.post('/api/vereadores/cadastrar', cadastrarParlamentar);
+app.post('/api/parlamentares', cadastrarParlamentar);
 
-app.post('/api/vereadores/alterar-senha', (req, res) => {
+app.post('/api/vereadores/alterar-senha', async (req, res) => {
     const { id, novaSenha } = req.body;
-    const vera = bancoVereadores.find(v => v && v.id === String(id));
-    if (!vera) return res.status(404).json({ error: "Parlamentar não encontrado." });
-    vera.senha = novaSenha.trim();
-    emitirAtualizacao();
-    res.json({ success: true });
+    try {
+        await prisma.tableVereador.update({
+            where: { id: String(id) },
+            data: { senha: novaSenha.trim() }
+        });
+        await emitirAtualizacao();
+        res.json({ success: true });
+    } catch (err) {
+        res.status(404).json({ error: "Parlamentar não encontrado." });
+    }
 });
 
-// SESSÃO
-app.post('/api/sessao/controle', (req, res) => {
+// SESSÃO CONTROLE
+app.post('/api/sessao/controle', async (req, res) => {
     const { acao, codigo, ementa } = req.body;
 
     if (acao === "abrir") {
         sessaoAtiva = true;
-        bancoVereadores.forEach(v => {
-            if(v) { v.status = "Ausente"; v.voto = "Pendente"; v.pedidoFala = false; }
+        await prisma.tableVereador.updateMany({
+            data: { status: "Ausente", voto: "Aguardando", pedidoFala: false }
         });
     } else if (acao === "iniciar") {
         sessaoAtiva = true;
         materiaAtual = { codigo: codigo || "", ementa: ementa || "" };
-        bancoVereadores.forEach(v => { if(v) v.voto = "Pendente"; });
+        await prisma.tableVereador.updateMany({ data: { voto: "Aguardando" } });
     } else if (acao === "limparMateria") {
         materiaAtual = { codigo: '', ementa: '' };
-        bancoVereadores.forEach(v => { if(v) v.voto = "Pendente"; });
+        await prisma.tableVereador.updateMany({ data: { voto: "Aguardando" } });
     } else if (acao === "fechar" || acao === "encerrar") {
         sessaoAtiva = false;
         materiaAtual = { codigo: '', ementa: '' };
         microfoneAutorizadoId = null;
         filaOradores = [];
-        bancoVereadores.forEach(v => {
-            if(v) { v.status = "Ausente"; v.voto = "Pendente"; v.pedidoFala = false; }
+        await prisma.tableVereador.updateMany({
+            data: { status: "Ausente", voto: "Aguardando", pedidoFala: false }
         });
         if (cronometroEstado.intervalId) {
             clearInterval(cronometroEstado.intervalId);
             cronometroEstado.intervalId = null;
         }
     }
-    emitirAtualizacao();
+    await emitirAtualizacao();
     res.json({ success: true });
 });
 
-app.post('/api/sessao/presenca', (req, res) => {
+app.post('/api/sessao/presenca', async (req, res) => {
     const { vereadorId } = req.body;
-    const item = bancoVereadores.find(v => v && v.id === String(vereadorId));
-    const vereador = item ? item : null;
+    try {
+        const vereador = await prisma.tableVereador.findUnique({ where: { id: String(vereadorId) } });
+        if (!vereador) return res.status(404).json({ error: "Parlamentar não encontrado." });
 
-    if (!vereador) return res.status(404).json({ error: "Parlamentar não encontrado." });
+        let novoStatus = "Presente";
+        let dadosUpdate = { status: "Presente" };
 
-    if (vereador.status === "Presente") {
-        vereador.status = "Ausente";
-        vereador.voto = "Pendente";
-        vereador.pedidoFala = false;
-        if (String(microfoneAutorizadoId) === String(vereadorId)) microfoneAutorizadoId = null;
-        filaOradores = filaOradores.filter(id => String(id) !== String(vereadorId));
-    } else {
-        vereador.status = "Presente";
+        if (vereador.status === "Presente") {
+            novoStatus = "Ausente";
+            dadosUpdate = { status: "Ausente", voto: "Aguardando", pedidoFala: false };
+            if (String(microfoneAutorizadoId) === String(vereadorId)) microfoneAutorizadoId = null;
+            filaOradores = filaOradores.filter(id => String(id) !== String(vereadorId));
+        }
+
+        await prisma.tableVereador.update({
+            where: { id: String(vereadorId) },
+            data: dadosUpdate
+        });
+
+        await emitirAtualizacao();
+        res.json({ success: true, statusAtual: novoStatus });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
     }
-
-    emitirAtualizacao();
-    res.json({ success: true, statusAtual: vereador.status });
 });
 
-app.put('/api/vereadores/alterar-usuario', (req, res) => {
-    const { id, username } = req.body;
-    const novoUsuario = username.trim().toLowerCase();
-    const vereador = bancoVereadores.find(v => v && v.id === String(id));
-    if (!vereador) return res.status(404).json({ error: "Parlamentar não encontrado." });
-    vereador.username = novoUsuario;
-    emitirAtualizacao();
-    res.json({ success: true });
+app.delete('/api/vereadores/:id', async (req, res) => {
+    try {
+        await prisma.tableVereador.delete({ where: { id: String(req.params.id) } });
+        await emitirAtualizacao();
+        res.json({ success: true });
+    } catch (err) {
+        res.status(404).json({ error: "Parlamentar não encontrado." });
+    }
 });
 
-app.delete('/api/vereadores/:id', (req, res) => {
-    const indice = bancoVereadores.findIndex(v => v && v.id === String(req.params.id));
-    if (indice === -1) return res.status(404).json({ error: "Parlamentar não encontrado." });
-    bancoVereadores.splice(indice, 1);
-    emitirAtualizacao();
-    res.json({ success: true });
-});
-
-app.get('/api/sessao/status', (req, res) => {
-    let sim = 0, nao = 0, abst = 0;
-    if (bancoVereadores) {
-        bancoVereadores.forEach(v => {
+app.get('/api/sessao/status', async (req, res) => {
+    try {
+        const vereadores = await prisma.tableVereador.findMany({ orderBy: { nomeEleitoral: 'asc' } });
+        let sim = 0, nao = 0, abst = 0;
+        vereadores.forEach(v => {
             if (v && v.status === 'Presente') {
                 if (v.voto === 'SIM') sim++;
                 if (v.voto === 'NÃO') nao++;
                 if (v.voto === 'ABSTENÇÃO') abst++;
             }
         });
+        res.json({
+            sessaoAtiva,
+            materiaAtiva: materiaAtual,
+            materiaAtual,
+            microfoneAutorizadoId,
+            filaOradores,
+            vereadores,
+            logoSistemaComum: logoSistemaComumGlobal,
+            totaisVotos: { sim, nao, abstencao: abst }
+        });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
     }
-    res.json({
-        sessaoAtiva,
-        materiaAtiva: materiaAtual,
-        materiaAtual,
-        microfoneAutorizadoId,
-        filaOradores,
-        vereadores: bancoVereadores || [],
-        logoSistemaComum: bancoDadosGlobal.logoSistemaComum,
-        totaisVotos: { sim, nao, abstencao: abst }
-    });
 });
 
-app.post('/api/vereadores/votar', (req, res) => {
+app.post('/api/vereadores/votar', async (req, res) => {
     const { vereadorId, voto } = req.body;
-    const ver = bancoVereadores.find(v => v && v.id === String(vereadorId));
-    if (!ver) return res.status(404).json({ error: "Não encontrado." });
-    ver.voto = voto;
-    emitirAtualizacao();
-    res.json({ success: true });
-});
-
-app.post('/api/microfone/pedir', (req, res) => {
-    const { vereadorId } = req.body;
-    const vereador = bancoVereadores.find(v => v && v.id === String(vereadorId));
-    if (vereador && vereador.status === "Presente") {
-        vereador.pedidoFala = true;
-        if (!filaOradores.includes(vereadorId)) filaOradores.push(vereadorId);
-        emitirAtualizacao();
+    try {
+        await prisma.tableVereador.update({
+            where: { id: String(vereadorId) },
+            data: { voto: voto }
+        });
+        await emitirAtualizacao();
+        res.json({ success: true });
+    } catch (err) {
+        res.status(404).json({ error: "Não encontrado." });
     }
-    res.json({ success: true });
 });
 
-app.post('/api/microfone/autorizar', (req, res) => {
+app.post('/api/microfone/pedir', async (req, res) => {
+    const { vereadorId } = req.body;
+    try {
+        await prisma.tableVereador.update({
+            where: { id: String(vereadorId), status: "Presente" },
+            data: { pedidoFala: true }
+        });
+        if (!filaOradores.includes(vereadorId)) filaOradores.push(vereadorId);
+        await emitirAtualizacao();
+        res.json({ success: true });
+    } catch (err) {
+        res.json({ success: false });
+    }
+});
+
+app.post('/api/microfone/autorizar', async (req, res) => {
     const { vereadorId } = req.body;
     microfoneAutorizadoId = vereadorId;
     filaOradores = filaOradores.filter(id => id !== vereadorId);
-    bancoVereadores.forEach(v => {
-        if (v && String(v.id) === String(vereadorId)) v.pedidoFala = false;
+    await prisma.tableVereador.update({
+        where: { id: String(vereadorId) },
+        data: { pedidoFala: false }
     });
-    emitirAtualizacao();
+    await emitirAtualizacao();
     res.json({ success: true });
 });
 
@@ -503,7 +435,6 @@ io.on("connection", socket => {
     });
 });
 
-// CAPTURA DE ERROS - impede que o servidor "quebre" sem responder nada ao navegador
 app.use((err, req, res, next) => {
     console.error("ERRO NÃO TRATADO:", err);
     if (res.headersSent) return next(err);
@@ -511,7 +442,7 @@ app.use((err, req, res, next) => {
 });
 
 process.on('uncaughtException', (err) => {
-    console.error("EXCEÇÃO NÃO CAPTURADA (o processo continua rodando):", err);
+    console.error("EXCEÇÃO NÃO CAPTURADA:", err);
 });
 
 server.listen(PORT, () => {
