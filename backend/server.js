@@ -1,6 +1,6 @@
 const express = require('express');
 const cors = require('cors');
-const http = require('http');
+const http = require('http'); // <--- ESSA LINHA É OBRIGATÓRIA
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
