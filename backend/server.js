@@ -184,7 +184,7 @@ app.get('/api/atas', (req, res) => {
     res.json(atasSalvasLivro);
 });
 
-// AUTENTICAÇÃO / LOGIN SEGURO
+// AUTENTICAÇÃO / LOGIN
 const processarLogin = (req, res) => {
     try {
         const { usuario, username, senha, password } = req.body;
@@ -196,7 +196,6 @@ const processarLogin = (req, res) => {
             return res.status(400).json({ error: "Informe usuário e senha." });
         }
 
-        // Credencial master do Administrador
         if (userFinal === "admin" && passFinal === "123456") {
             return res.json({ id: "admin", nome: "Super Admin", cargo: "SUPERADMIN" });
         }
@@ -292,16 +291,16 @@ app.post('/api/vereadores/cadastrar', (req, res) => {
 
 app.post('/api/vereadores/alterar-senha', (req, res) => {
     const { id, novaSenha } = req.body;
-    const vereador = bancoVereadores.find(v => v && v.id === String(id));
-    if (!vereador) return res.status(404).json({ error: "Parlamentar não encontrado." });
-    vereador.senha = novaSenha.trim();
+    const vera = bancoVereadores.find(v => v && v.id === String(id));
+    if (!vera) return res.status(404).json({ error: "Parlamentar não encontrado." });
+    vera.senha = novaSenha.trim();
     emitirAtualizacao();
     res.json({ success: true });
 });
 
 // SESSÃO
 app.post('/api/sessao/controle', (req, res) => {
-    const { acao, Server, codigo, ementa } = req.body;
+    const { acao, codigo, ementa } = req.body;
 
     if (acao === "abrir") {
         sessaoAtiva = true;
@@ -334,7 +333,8 @@ app.post('/api/sessao/controle', (req, res) => {
 
 app.post('/api/sessao/presenca', (req, res) => {
     const { vereadorId } = req.body;
-    const { vereador } = bancoVereadores.find(v => v && v.id === String(vereadorId));
+    // CORRIGIDO: Removida a desestruturação inválida { vereador } que causava o travamento e erro 500/Connection Refused
+    const vereador = bancoVereadores.find(v => v && v.id === String(vereadorId));
 
     if (!vereador) return res.status(404).json({ error: "Parlamentar não encontrado." });
 
@@ -363,7 +363,7 @@ app.put('/api/vereadores/alterar-usuario', (req, res) => {
 });
 
 app.delete('/api/vereadores/:id', (req, res) => {
-    const { indice } = bancoVereadores.findIndex(v => v && v.id === String(req.params.id));
+    const indice = bancoVereadores.findIndex(v => v && v.id === String(req.params.id));
     if (indice === -1) return res.status(404).json({ error: "Parlamentar não encontrado." });
     bancoVereadores.splice(indice, 1);
     emitirAtualizacao();
