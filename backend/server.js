@@ -12,29 +12,27 @@ const PORT = process.env.PORT || 3000;
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
-// CABEÇALHOS DE SEGURANÇA CORS COMPLETO PARA PRODUÇÃO (VERCEL)
-app.use((req, res, next) => {
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-    if (req.method === 'OPTIONS') {
-        return res.sendStatus(200);
-    }
-    next();
-});
+// CONFIGURAÇÃO ROBUSTA DE CORS PARA PRODUÇÃO (VERCEL + RAILWAY)[cite: 8]
+app.use(cors({
+    origin: true,
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
+}));
 
-app.use(cors({ origin: '*' }));
+app.options('*', cors());
 
 const server = http.createServer(app);
 
 const io = new Server(server, {
     cors: {
         origin: '*',
-        methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS']
+        methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+        credentials: true
     }
 });
 
-// ALTERAÇÃO CRÍTICA: Salvando o arquivo de banco na pasta temporária gravável da hospedagem
+// ALTERAÇÃO CRÍTICA: Salvando o arquivo de banco na pasta temporária gravável da hospedagem[cite: 7]
 const BANCO = path.join(os.tmpdir(), 'banco_vereadores.json');
 
 function carregarBanco() {
@@ -343,7 +341,8 @@ app.post('/api/sessao/controle', (req, res) => {
 
 app.post('/api/sessao/presenca', (req, res) => {
     const { vereadorId } = req.body;
-    const { vereador } = bancoVereadores.find(v => v && v.id === String(vereadorId));
+    const item = bancoVereadores.find(v => v && v.id === String(vereadorId));
+    const vereador = item ? item : null;
 
     if (!vereador) return res.status(404).json({ error: "Parlamentar não encontrado." });
 
@@ -365,7 +364,7 @@ app.put('/api/vereadores/alterar-usuario', (req, res) => {
     const { id, username } = req.body;
     const novoUsuario = username.trim().toLowerCase();
     const vereador = bancoVereadores.find(v => v && v.id === String(id));
-    if (!vera) return res.status(404).json({ error: "Parlamentar não encontrado." });
+    if (!vereador) return res.status(404).json({ error: "Parlamentar não encontrado." });
     vereador.username = novoUsuario;
     emitirAtualizacao();
     res.json({ success: true });
