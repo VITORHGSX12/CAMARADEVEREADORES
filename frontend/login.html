@@ -99,10 +99,10 @@
     <script>
         lucide.createIcons();
 
+        // Rota pública correta e sem a porta 3000 travada para o ambiente remoto
         const BACKEND_RAILWAY = 'https://camaradevereadores-production.up.railway.app';
         const LOCAL_HOST = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
         
-        // Aponta dinamicamente para a rota unificada /api/auth/login configurada no server.js
         const API_URL = LOCAL_HOST ? 'http://localhost:3000/api/auth/login' : `${BACKEND_RAILWAY}/api/auth/login`;
 
         async function manipularLogin(event) {
@@ -130,7 +130,6 @@
                     localStorage.setItem('siscam_user_partido', dados.sigla || dados.partido || 'MESA');
                     localStorage.setItem('siscam_user_foto', dados.foto || '');
 
-                    // Redirecionamento baseado nos cargos do banco de dados real
                     if (cargoTratado === 'SUPERADMIN') {
                         window.location.href = './index.html';
                     } else if (cargoTratado === 'PRESIDENTE') {
@@ -144,7 +143,7 @@
                 }
             } catch (e) {
                 console.error("Erro na ligação ao endpoint:", e);
-                alert("Erro ao conectar com o servidor do SISCAM. Verifique se o back-end está ativo no Railway.");
+                alert("Erro ao conectar com o servidor do SISCAM. Verifique as URLs configuradas.");
             }
         }
     </script>
