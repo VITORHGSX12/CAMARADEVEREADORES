@@ -1,5 +1,5 @@
 datasource db {
-  provider = "postgresql" // ou "sqlite", dependendo do banco que for usar no seu .env
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -7,14 +7,25 @@ generator client {
   provider = "prisma-client-js"
 }
 
-// DEFINIÇÃO DA TABELA DE VEREADORES
 model TableVereador {
-  id        String   @id @default(uuid())
-  nome      String
-  partido   String
-  votos     Int      @default(0)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id             String   @id @default(uuid())
+  cargo          String   
+  nomeCompleto   String
+  nomeEleitoral  String
+  dataNascimento String
+  cpf            String   @unique
+  nomeMae        String
+  partido        String?
+  sigla          String?
+  foto           String?  @db.Text
+  username       String   @unique
+  senha          String
+  status         String   @default("Ausente")
+  voto           String   @default("Aguardando")
+  pedidoFala     Boolean  @default(false)
+  votos          Int      @default(0)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
   @@map("vereadores")
 }
