@@ -188,41 +188,50 @@ app.get('/api/atas', (req, res) => {
 });
 
 // ======================================================
-// AUTENTICAÇÃO / LOGIN
+// AUTENTICAÇÃO / LOGIN BLINDADA CONTRA ERRO 500
 // ======================================================
 const processarLogin = (req, res) => {
-    const { usuario, username, senha, password } = req.body;
-    const userFinal = (usuario || username || "").trim().toLowerCase();
-    const passFinal = (senha || password || "");
+    try {
+        const { usuario, username, senha, password } = req.body;
 
-    if (!userFinal || !passFinal) {
-        return res.status(400).json({ error: "Informe usuário e senha." });
+        // Proteção: Tratamento estrito de strings nulas ou indefinidas
+        const userFinal = String(usuario || username || "").trim().toLowerCase();
+        const passFinal = String(senha || password || "");
+
+        if (!userFinal || !passFinal) {
+            return res.status(400).json({ error: "Informe usuário e senha." });
+        }
+
+        // Autenticação do SUPER ADMIN
+        if (userFinal === "admin" && passFinal === "123456") {
+            return res.json({ id: "admin", nome: "Super Admin", cargo: "SUPERADMIN" });
+        }
+
+        // Varre o banco garantindo validações individuais seguras
+        const parlamentar = bancoVereadores.find(v => {
+            if (!v || !v.username) return false;
+            return v.username.toLowerCase() === userFinal && String(v.senha) === passFinal;
+        });
+
+        if (!parlamentar) {
+            return res.status(401).json({ error: "Usuário ou senha inválidos." });
+        }
+
+        return res.json({
+            id: parlamentar.id,
+            cargo: parlamentar.cargo,
+            username: parlamentar.username,
+            nome: parlamentar.nomeEleitoral || parlamentar.nomeCompleto || "Parlamentar",
+            nomeCompleto: parlamentar.nomeCompleto,
+            nomeEleitoral: parlamentar.nomeEleitoral,
+            partido: parlamentar.partido,
+            sigla: parlamentar.sigla,
+            foto: parlamentar.foto
+        });
+    } catch (err) {
+        console.error("Erro interno no processamento de login:", err);
+        return res.status(500).json({ error: "Erro interno no servidor ao processar autenticação." });
     }
-
-    if (userFinal === "admin" && passFinal === "123456") {
-        return res.json({ id: "admin", nome: "Super Admin", cargo: "SUPERADMIN" });
-    }
-
-    const parlamentar = bancoVereadores.find(v =>
-        v.username.toLowerCase() === userFinal &&
-        v.senha === passFinal
-    );
-
-    if (!parlamentar) {
-        return res.status(401).json({ error: "Usuário ou senha inválidos." });
-    }
-
-    return res.json({
-        id: parlamentar.id,
-        cargo: parlamentar.cargo,
-        username: parlamentar.username,
-        nome: parlamentar.nomeEleitoral || parlamentar.nomeCompleto,
-        nomeCompleto: parlamentar.nomeCompleto,
-        nomeEleitoral: parlamentar.nomeEleitoral,
-        partido: parlamentar.partido,
-        sigla: parlamentar.sigla,
-        foto: parlamentar.foto
-    });
 };
 
 app.post('/api/auth/login', processarLogin);
@@ -352,7 +361,6 @@ app.post('/api/sessao/presenca', (req, res) => {
         vereador.status = "Presente";
     }
 
-    // CORREÇÃO: Removido o erro de sintaxe do operador spread (...) que causava o travamento.
     emitirAtualizacao();
     res.json({ success: true, statusAtual: vereador.status });
 });
