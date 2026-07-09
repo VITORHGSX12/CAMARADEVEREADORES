@@ -27,6 +27,17 @@
     </script>
     <style>
         .tab-btn.active { border-color: rgb(37 99 235 / 1); color: rgb(37 99 235 / 1); background-color: rgb(37 99 235 / 0.1); font-weight: 600; }
+
+        /* Efeito de onda/pulso indicando quem está com a palavra no momento */
+        @keyframes azulPulseVereador {
+            0% { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.6); }
+            70% { box-shadow: 0 0 0 10px rgba(37, 99, 235, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0); }
+        }
+        .speaking-pulse-vereador {
+            animation: azulPulseVereador 1.5s infinite;
+            border-color: #2563eb !important;
+        }
     </style>
 </head>
 <body class="bg-legisDark-bg dark:bg-legisDark-bg text-slate-100 dark:text-slate-100 font-sans flex h-screen overflow-hidden transition-colors duration-200 [html.light_&]:bg-legisLight-bg [html.light_&]:text-slate-800">
@@ -420,7 +431,7 @@
                 document.getElementById('painel-foto-vereador').src = meuUser.foto;
             }
 
-            renderizarListaVereadoresPlenario(status.vereadores);
+            renderizarListaVereadoresPlenario(status.vereadores, status.microfoneAutorizadoId);
 
             if (!status.sessaoAtiva) {
                 sub.innerText = "Aguardando abertura dos trabalhos solenes pelo presidente...";
@@ -472,7 +483,7 @@
             puxarLogoSincronizada();
         }
 
-        function renderizarListaVereadoresPlenario(vereadores) {
+        function renderizarListaVereadoresPlenario(vereadores, autorizadoId) {
             const container = document.getElementById('lista-vereadores-conectados');
             const painel = document.getElementById('painel-vereadores-plenario');
             if (!container || !painel) return;
@@ -485,22 +496,26 @@
                     if (v.cargo === 'SUPERADMIN') return;
                     
                     const isPresente = v.status === 'Presente';
-                    const dotClass = isPresente ? 'bg-emerald-500 animate-pulse' : 'bg-slate-500';
+                    const estaFalando = autorizadoId && String(v.id) === String(autorizadoId);
+                    const dotClass = estaFalando ? 'bg-blue-500 animate-pulse' : (isPresente ? 'bg-emerald-500 animate-pulse' : 'bg-slate-500');
                     
                     const div = document.createElement('div');
-                    div.className = "bg-slate-900/60 border border-slate-800 p-2.5 rounded-xl flex items-center gap-2.5 [html.light_&]:bg-slate-50 [html.light_&]:border-slate-200";
+                    div.className = `bg-slate-900/60 border p-2.5 rounded-xl flex items-center gap-2.5 [html.light_&]:bg-slate-50 transition-all duration-300 ${estaFalando ? 'border-blue-500' : 'border-slate-800 [html.light_&]:border-slate-200'}`;
                     div.innerHTML = `
                         <div class="relative shrink-0">
-                            <img src="${v.foto || 'https://via.placeholder.com/150'}" class="w-8 h-8 rounded-full object-cover border border-slate-700 bg-slate-950">
+                            <img src="${v.foto || 'https://via.placeholder.com/150'}" class="w-8 h-8 rounded-full object-cover border bg-slate-950 ${estaFalando ? 'speaking-pulse-vereador' : 'border-slate-700'}">
                             <div class="absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full ${dotClass} border border-slate-950"></div>
                         </div>
                         <div class="min-w-0">
                             <h4 class="text-[10px] font-bold text-white [html.light_&]:text-slate-900 truncate uppercase">${v.nomeEleitoral || v.nomeCompleto}</h4>
-                            <span class="text-[8px] text-slate-500 font-mono block uppercase">${v.sigla || v.partido}</span>
+                            ${estaFalando
+                                ? `<span class="text-[8px] text-blue-400 font-black block uppercase flex items-center gap-1"><i data-lucide="mic" class="w-2.5 h-2.5"></i> Em tribuna</span>`
+                                : `<span class="text-[8px] text-slate-500 font-mono block uppercase">${v.sigla || v.partido}</span>`}
                         </div>
                     `;
                     container.appendChild(div);
                 });
+                lucide.createIcons();
             } else {
                 painel.classList.add('hidden');
             }
