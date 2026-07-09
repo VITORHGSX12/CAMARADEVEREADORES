@@ -186,7 +186,7 @@
                 </div>
                 <div>
                     <h3 class="font-bold text-lg text-white [html.light_&]:text-slate-900">Trabalhos Plenários Iniciados!</h3>
-                    <p class="text-sm text-slate-400 [html.light_&]:text-slate-500 max-w-sm mx-auto mt-1 mb-4">Confirme sua presença eletrônica para liberar suas cédulas de voto e ingressar no system de som do telão.</p>
+                    <p class="text-sm text-slate-400 [html.light_&]:text-slate-500 max-w-sm mx-auto mt-1 mb-4">Confirme sua presença eletrônica para liberar suas cédulas de voto e ingressar no sistema de som do telão.</p>
                     <button onclick="confirmarPresenca()" id="btn-presenca" class="bg-emerald-600 hover:bg-emerald-500 text-white font-black px-6 py-3 rounded-xl transition-all shadow-lg text-sm [html.light_&]:bg-emerald-700">
                         Confirmar Minha Presença na Sessão
                     </button>
@@ -253,11 +253,12 @@
     <script>
         lucide.createIcons();
 
-        // CONFIGURAÇÃO DA URL INTELIGENTE DO SERVIDOR
+        // CONFIGURAÇÃO DINÂMICA DA INTERCONEXÃO LEGISLATIVA COM O BACK-END DO RAILWAY
         const BACKEND_RAILWAY = 'https://camaradevereadores-production.up.railway.app';
         const LOCAL_HOST = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.protocol === 'file:';
         const BACKEND_URL = LOCAL_HOST ? 'http://localhost:3000' : BACKEND_RAILWAY;
         
+        // Inicialização do barramento dinâmico de WebSockets seguro em produção
         const socket = io(BACKEND_URL);
         
         const API_URL = `${BACKEND_URL}/api/vereadores`;
@@ -266,7 +267,6 @@
 
         const VEREADOR_ID = localStorage.getItem('siscam_user_id');
 
-        // FUNÇÃO EXCLUSIVA DE RENDERIZAÇÃO DA LOGO GLOBAL INSERIDA PELO ADMIN (LEITURA)
         function puxarLogoSincronizada() {
             const logoSalva = localStorage.getItem('siscam_logo_comum');
             const imgSidebar = document.getElementById('logo-sidebar-global');
@@ -278,10 +278,8 @@
             }
         }
 
-        // Executa imediatamente na inicialização
         puxarLogoSincronizada();
 
-        // SISTEMA DE TOAST NOTIFICATIONS
         function mostrarToast(mensagem, tipo = 'info') {
             const containerId = 'toast-container';
             let container = document.getElementById(containerId);
@@ -391,7 +389,7 @@
         let audioContextSender = null;
 
         let bancoDeProjetos = JSON.parse(localStorage.getItem('siscam_projetos_gabinete')) || [
-            { codigo: "PL Nº 18/2026", ementa: "Dispõe sobre a instalação de cisternas para captação de água nas escolas da rede municipal.", corpo: "Art. 1º Fica instituído o programa..." },
+            { codigo: "PL Nº 18/2026", ementa: "Dispõe sobre a installation de cisternas para captação de água nas escolas da rede municipal.", corpo: "Art. 1º Fica instituído o programa..." },
             { codigo: "IND Nº 04/2026", ementa: "Indica ao Poder Executivo a pavimentação asfáltica das vias de acesso ao bairro Centro.", corpo: "Justificativa: As vias encontram-se em estado..." }
         ];
 
@@ -465,7 +463,6 @@
                 pnlInfo.classList.add('hidden');
             }
             
-            // Sincroniza a logo novamente caso ela tenha mudado no Admin
             puxarLogoSincronizada();
         }
 
@@ -652,7 +649,7 @@
                         const s = Math.max(-1, Math.min(1, inputData[i]));
                         pcmData[i] = s < 0 ? s * 0x8000 : s * 0x7FFF;
                     }
-                    socket.emit('transmitirAudioStream', pcmData.buffer);
+                    socket.emit('enviarAudioStream', pcmData.buffer);
                 };
                 
                 micSource.connect(scriptProcessor);

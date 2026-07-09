@@ -325,8 +325,8 @@
         const BACKEND_RAILWAY = 'https://camaradevereadores-production.up.railway.app';
         
         const LOCAL_HOST = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-        const API_URL = LOCAL_HOST ? 'http://localhost:3000/api/vereadores' : `${BACKEND_RAILWAY}/api/vereadores`;
-        const API_SESSAO_URL = LOCAL_HOST ? 'http://localhost:3000/api/sessao' : `${BACKEND_RAILWAY}/api/sessao`;
+        const API_URL = LOCAL_HOST ? 'http://localhost:3000/api/vereadores' : `${BACKEND_RAILWAY}/api/vereadores`; //[cite: 10]
+        const API_SESSAO_URL = LOCAL_HOST ? 'http://localhost:3000/api/sessao' : `${BACKEND_RAILWAY}/api/sessao`; //[cite: 10]
 
         let sessaoEstaAtivaGlobal = false;
         let projetosMemoriaLocal = [];
