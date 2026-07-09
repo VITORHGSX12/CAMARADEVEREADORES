@@ -7,16 +7,16 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script>
-        // Configuração customizada do Tailwind para injetar o Azul-Centáurea (RGB: 101,144,202 -> #6590CA)
+        // Configuração customizada do Tailwind injetando Azul Real e variações mais claras
         tailwind.config = {
             theme: {
                 extend: {
                     colors: {
                         centaurea: {
-                            DEFAULT: '#6590CA',
-                            hover: '#527eb7',
-                            bg: 'rgba(101, 144, 202, 0.1)',
-                            border: 'rgba(101, 144, 202, 0.2)'
+                            DEFAULT: '#2563EB', /* Azul Real Claro e Vibrante */
+                            hover: '#1D4ED8',
+                            bg: 'rgba(37, 99, 235, 0.08)',
+                            border: 'rgba(37, 99, 235, 0.15)'
                         }
                     }
                 }
@@ -30,79 +30,79 @@
         @media (max-width: 1024px) {
             .clip-diagonal { clip-path: none; }
         }
-        /* Efeito de contorno preto para o texto branco se destacar perfeitamente */
+        /* Efeito de contorno para o texto branco se destacar na imagem de fundo */
         .text-shadow-stroke {
-            text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;
+            text-shadow: -1px -1px 0 rgba(0,0,0,0.5), 1px -1px 0 rgba(0,0,0,0.5), -1px 1px 0 rgba(0,0,0,0.5), 1px 1px 0 rgba(0,0,0,0.5);
         }
     </style>
 </head>
-<body class="bg-slate-50 min-h-screen flex flex-col lg:flex-row font-sans overflow-x-hidden select-none">
+<body class="bg-blue-50/50 min-h-screen flex flex-col lg:flex-row font-sans overflow-x-hidden select-none">
 
-    <!-- LADO ESQUERDO: PAINEL INSTITUCIONAL -->
-    <section class="hidden lg:flex lg:w-[52%] bg-slate-950 relative flex-col justify-between p-12 text-white clip-diagonal shrink-0 shadow-2xl z-10">
-        <!-- Imagem de Fundo do Plenário -->
-        <div class="absolute inset-0 z-0 opacity-20 bg-cover bg-center mix-blend-overlay" style="background-image: url('https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=1200');"></div>
+    <!-- LADO ESQUERDO: PAINEL INSTITUCIONAL (AGORA EM TONS DE AZUL COM FOTO DE TRIBUNA) -->
+    <section class="hidden lg:flex lg:w-[52%] bg-gradient-to-br from-blue-900 to-sky-700 relative flex-col justify-between p-12 text-white clip-diagonal shrink-0 shadow-2xl z-10">
+        <!-- Imagem de Fundo de uma Tribuna / Parlamento Legislativo -->
+        <div class="absolute inset-0 z-0 opacity-25 bg-cover bg-center mix-blend-overlay" style="background-image: url('https://images.unsplash.com/photo-1541872703-74c5e44368f9?q=80&w=1200');"></div>
         
-        <!-- Faixa vertical Branca com contorno preto substituindo o antigo traço dourado -->
-        <div class="absolute top-0 right-0 h-full w-2 bg-white border-l border-black transform translate-x-[4px] z-20"></div>
+        <!-- Faixa vertical Branca de Separação -->
+        <div class="absolute top-0 right-0 h-full w-2 bg-white border-l border-blue-900 transform translate-x-[4px] z-20"></div>
 
         <!-- Logotipo superior esquerdo -->
         <div class="relative z-10 flex flex-col items-center text-center mt-6">
-            <div class="w-16 h-16 bg-white/10 backdrop-blur-md rounded-2xl border border-white/25 flex items-center justify-center p-3 shadow-xl mb-4">
-                <i data-lucide="gavel" class="text-white w-10 h-10 drop-shadow-[0_1.5px_1.5px_rgba(0,0,0,0.8)]"></i>
+            <div class="w-16 h-16 bg-white/15 backdrop-blur-md rounded-2xl border border-white/30 flex items-center justify-center p-3 shadow-xl mb-4">
+                <i data-lucide="gavel" class="text-white w-10 h-10 drop-shadow-md"></i>
             </div>
             <h1 class="text-3xl font-black uppercase tracking-wider text-white text-shadow-stroke">Câmara Municipal</h1>
-            <p class="text-xs uppercase tracking-widest font-bold text-slate-300 mt-1">A voz do cidadão. O compromisso é nosso.</p>
+            <p class="text-xs uppercase tracking-widest font-bold text-sky-100 mt-1">A voz do cidadão. O compromisso é nosso.</p>
         </div>
 
         <!-- Conteúdo de Compromisso e Pilares Institucionais -->
         <div class="relative z-10 my-auto max-w-xl space-y-8 pl-4">
             <div class="space-y-2">
                 <h2 class="text-2xl font-black uppercase tracking-wide leading-tight text-white">Transparência, Participação<br>e Compromisso com a População</h2>
-                <div class="w-24 h-1 bg-white border border-black rounded-full"></div>
+                <div class="w-24 h-1 bg-white rounded-full"></div>
             </div>
 
             <!-- Grid de Pilares -->
             <div class="grid grid-cols-2 gap-6 pt-4">
                 <div class="flex gap-3">
-                    <div class="w-10 h-10 rounded-xl bg-slate-900 border border-slate-700 flex items-center justify-center shrink-0 text-white"><i data-lucide="users" class="w-5 h-5"></i></div>
+                    <div class="w-10 h-10 rounded-xl bg-blue-950/50 border border-blue-700/50 flex items-center justify-center shrink-0 text-white"><i data-lucide="users" class="w-5 h-5"></i></div>
                     <div>
                         <h4 class="text-xs font-bold uppercase tracking-wider text-white text-shadow-stroke">Participação</h4>
-                        <p class="text-[11px] text-slate-300 mt-0.5">Espaço para ouvir e representar você.</p>
+                        <p class="text-[11px] text-sky-100 mt-0.5">Espaço para ouvir e representar você.</p>
                     </div>
                 </div>
                 <div class="flex gap-3">
-                    <div class="w-10 h-10 rounded-xl bg-slate-900 border border-slate-700 flex items-center justify-center shrink-0 text-white"><i data-lucide="file-text" class="w-5 h-5"></i></div>
+                    <div class="w-10 h-10 rounded-xl bg-blue-950/50 border border-blue-700/50 flex items-center justify-center shrink-0 text-white"><i data-lucide="file-text" class="w-5 h-5"></i></div>
                     <div>
                         <h4 class="text-xs font-bold uppercase tracking-wider text-white text-shadow-stroke">Transparência</h4>
-                        <p class="text-[11px] text-slate-300 mt-0.5">Informações claras e acessíveis.</p>
+                        <p class="text-[11px] text-sky-100 mt-0.5">Informações claras e acessíveis.</p>
                     </div>
                 </div>
                 <div class="flex gap-3">
-                    <div class="w-10 h-10 rounded-xl bg-slate-900 border border-slate-700 flex items-center justify-center shrink-0 text-white"><i data-lucide="shield-check" class="w-5 h-5"></i></div>
+                    <div class="w-10 h-10 rounded-xl bg-blue-950/50 border border-blue-700/50 flex items-center justify-center shrink-0 text-white"><i data-lucide="shield-check" class="w-5 h-5"></i></div>
                     <div>
                         <h4 class="text-xs font-bold uppercase tracking-wider text-white text-shadow-stroke">Fiscalização</h4>
-                        <p class="text-[11px] text-slate-300 mt-0.5">Atuação responsável com o dinheiro público.</p>
+                        <p class="text-[11px] text-sky-100 mt-0.5">Atuação responsável com o dinheiro público.</p>
                     </div>
                 </div>
                 <div class="flex gap-3">
-                    <div class="w-10 h-10 rounded-xl bg-slate-900 border border-slate-700 flex items-center justify-center shrink-0 text-white"><i data-lucide="landmark" class="w-5 h-5"></i></div>
+                    <div class="w-10 h-10 rounded-xl bg-blue-950/50 border border-blue-700/50 flex items-center justify-center shrink-0 text-white"><i data-lucide="landmark" class="w-5 h-5"></i></div>
                     <div>
                         <h4 class="text-xs font-bold uppercase tracking-wider text-white text-shadow-stroke">Legislação</h4>
-                        <p class="text-[11px] text-slate-300 mt-0.5">Leis que promovem o bem comum.</p>
+                        <p class="text-[11px] text-sky-100 mt-0.5">Leis que promovem o bem comum.</p>
                     </div>
                 </div>
             </div>
         </div>
 
         <!-- Frase de Efeito Inferior -->
-        <div class="relative z-10 bg-black/40 border-l-4 border-white p-4 rounded-r-xl backdrop-blur-sm max-w-xl font-medium italic text-xs text-slate-300 leading-relaxed">
+        <div class="relative z-10 bg-blue-950/40 border-l-4 border-white p-4 rounded-r-xl backdrop-blur-sm max-w-xl font-medium italic text-xs text-sky-100 leading-relaxed">
             "Construindo, juntos, uma cidade melhor com diálogo, ética e responsabilidade."
         </div>
     </section>
 
     <!-- LADO DIREITO: FORMULÁRIO DE LOGIN -->
-    <section class="flex-1 flex flex-col justify-center items-center p-6 sm:p-12 relative bg-slate-100">
+    <section class="flex-1 flex flex-col justify-center items-center p-6 sm:p-12 relative bg-blue-50/30">
         
         <!-- Bloco de Alerta de Erros -->
         <div id="alerta-erro" class="hidden w-full max-w-md bg-rose-50 border border-rose-200 p-4 rounded-xl flex items-center gap-3 text-rose-700 text-xs font-semibold mb-4 shadow-sm animate-in fade-in slide-in-from-top-2">
@@ -111,35 +111,36 @@
         </div>
 
         <!-- Container do Formulário -->
-        <div class="w-full max-w-md bg-white border border-slate-200 rounded-2xl p-8 sm:p-10 shadow-xl shadow-slate-200/60 flex flex-col items-center">
+        <div class="w-full max-w-md bg-white border border-blue-100 rounded-2xl p-8 sm:p-10 shadow-xl shadow-blue-100/50 flex flex-col items-center">
             
-            <!-- Ícone Superior Interno alterado para Azul-Centáurea -->
-            <div class="w-16 h-16 bg-slate-50 border border-slate-200 text-centaurea rounded-full flex items-center justify-center shadow-inner mb-4">
-                <i data-lucide="landmark" class="w-8 h-8"></i>
+            <!-- CONTÊINER DO LOGO DA PREFEITURA -->
+            <div class="w-full flex justify-center mb-6">
+                <!-- Substitua o src abaixo pelo caminho/URL real da logo da prefeitura -->
+                <img id="logo-prefeitura" src="https://via.placeholder.com/180x60/f1f5f9/2563eb?text=LOGO+PREFEITURA" alt="Prefeitura Municipal" class="max-h-16 object-contain drop-shadow-sm">
             </div>
 
             <!-- Cabeçalho Textual -->
-            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest block text-center">Let's connect to</span>
-            <h1 class="text-3xl font-black text-slate-900 tracking-wide text-center mt-0.5">SISCAM 1.0</h1>
+            <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest block text-center">Acesso ao Sistema</span>
+            <h1 class="text-3xl font-black text-blue-900 tracking-wide text-center mt-0.5">SISCAM 1.0</h1>
             <p class="text-[11px] font-mono font-bold tracking-wider text-slate-400 uppercase text-center mt-1 mb-4">Portal Legislativo Municipal</p>
-            <div class="w-32 h-0.5 bg-white border-t border-black rounded-full mb-8"></div>
+            <div class="w-32 h-0.5 bg-blue-100 rounded-full mb-8"></div>
 
             <!-- Formulário de Entrada -->
             <form onsubmit="autenticarUsuario(event)" class="w-full space-y-4">
                 <!-- Input Usuário -->
                 <div class="space-y-1">
-                    <label class="text-[11px] font-bold uppercase tracking-wider text-slate-500 block">Usuário ou E-mail</label>
+                    <label class="text-[11px] font-bold uppercase tracking-wider text-blue-700 block">Usuário ou E-mail</label>
                     <div class="relative flex items-center">
-                        <i data-lucide="user" class="w-4 h-4 text-slate-400 absolute left-4"></i>
+                        <i data-lucide="user" class="w-4 h-4 text-blue-400 absolute left-4"></i>
                         <input type="text" id="login-usuario" placeholder="admin ou e-mail do parlamentar" required class="w-full bg-slate-50 border border-slate-200 rounded-xl pl-11 pr-4 py-3 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:border-centaurea focus:bg-white transition-all">
                     </div>
                 </div>
 
                 <!-- Input Senha -->
                 <div class="space-y-1">
-                    <label class="text-[11px] font-bold uppercase tracking-wider text-slate-500 block">Senha Secreta</label>
+                    <label class="text-[11px] font-bold uppercase tracking-wider text-blue-700 block">Senha Secreta</label>
                     <div class="relative flex items-center">
-                        <i data-lucide="lock" class="w-4 h-4 text-slate-400 absolute left-4"></i>
+                        <i data-lucide="lock" class="w-4 h-4 text-blue-400 absolute left-4"></i>
                         <input type="password" id="login-senha" placeholder="••••••••" required class="w-full bg-slate-50 border border-slate-200 rounded-xl pl-11 pr-12 py-3 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:border-centaurea focus:bg-white transition-all">
                         <button type="button" onclick="alternarVisibilidadeSenha()" class="absolute right-4 text-slate-400 hover:text-slate-600 focus:outline-none">
                             <i id="icone-olho" data-lucide="eye" class="w-4 h-4"></i>
@@ -157,47 +158,38 @@
                 </div>
 
                 <!-- Botão de Envio Principal em Azul-Centáurea -->
-                <button type="submit" class="w-full bg-centaurea hover:bg-centaurea-hover text-white font-black py-3.5 px-4 rounded-xl text-sm transition-all flex items-center justify-center gap-2 shadow-lg shadow-slate-200/80 mt-6 group">
-                    <span>Entrar no Sistema</span>
-                    <i data-lucide="arrow-right" class="w-4 h-4 group-hover:translate-x-1 transition-transform"></i>
+                <button type="submit" id="btn-submit-login" class="w-full bg-centaurea hover:bg-centaurea-hover text-white font-black py-3.5 px-4 rounded-xl text-sm transition-all flex items-center justify-center gap-2 shadow-lg shadow-blue-200/50 mt-6 group">
+                    <span id="btn-texto-login">Entrar no Sistema</span>
+                    <i data-lucide="arrow-right" id="btn-icone-login" class="w-4 h-4 group-hover:translate-x-1 transition-transform"></i>
                 </button>
             </form>
 
             <!-- Rodapé de Proteção Interno -->
             <div class="w-full border-t border-slate-100 pt-5 mt-6 flex items-center justify-center gap-2 text-[11px] font-semibold text-slate-400 uppercase tracking-wider font-mono">
-                <i data-lucide="shield-check" class="w-4 h-4 text-slate-400"></i>
+                <i data-lucide="shield-check" class="w-4 h-4 text-blue-400"></i>
                 <span>Acesso Seguro e Restrito</span>
             </div>
         </div>
 
         <!-- Bloco de Acessos Rápidos Estilizado -->
-        <div class="w-full max-w-md bg-slate-200/60 border border-slate-300/60 p-4 rounded-xl text-[11px] text-slate-600 space-y-1.5 mt-4">
-            <span class="font-bold text-slate-700 block uppercase tracking-wider">Acessos rápidos de teste:</span>
+        <div class="w-full max-w-md bg-blue-50/80 border border-blue-100 p-4 rounded-xl text-[11px] text-slate-600 space-y-1.5 mt-4">
+            <span class="font-bold text-blue-900 block uppercase tracking-wider">Acessos rápidos de teste:</span>
             <p>• <strong class="text-centaurea">Super Admin:</strong> user: <span class="text-slate-800 font-mono font-bold">admin</span> | senha: <span class="text-slate-800 font-mono">123456</span></p>
-            <p>• <strong class="text-slate-700">Presidente:</strong> user: <span class="text-slate-800 font-mono font-bold">presidente</span> | senha: <span class="text-slate-800 font-mono">123456</span></p>
+            <p>• <strong class="text-blue-700">Presidente:</strong> user: <span class="text-slate-800 font-mono font-bold">presidente</span> | senha: <span class="text-slate-800 font-mono">123456</span></p>
             <p>• <strong class="text-slate-500">Vereador:</strong> user: <span class="text-slate-800 font-mono font-bold">vereador</span> | senha: <span class="text-slate-800 font-mono">123456</span></p>
-        </div>
-
-        <!-- Assinatura Institucional Inferior Externa -->
-        <div class="mt-6 flex flex-col items-center text-center space-y-1">
-            <div class="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-800">
-                <i data-lucide="gavel" class="text-white text-shadow-stroke"></i>
-                <span>Câmara Municipal</span>
-            </div>
-            <p class="text-[10px] uppercase font-bold tracking-widest text-slate-400 font-mono">Trabalhando por você. Fiscalizando por todos.</p>
         </div>
     </section>
 
     <script>
         lucide.createIcons();
 
-        // CONFIGURAÇÃO DA URL INTELIGENTE DO SERVIDOR (MUDAR PARA O SEU LINK GERADO NO RAILWAY)
         const BACKEND_RAILWAY = 'https://camaradevereadores-production.up.railway.app'; 
         
-        // Se o front estiver rodando no seu computador (localhost), ele usa o server local, senão usa o Railway online automaticamente
-        const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
-            ? 'http://localhost:3000/api' 
-            : `${BACKEND_RAILWAY}/api`;
+        // Verificação inteligente de hostname consertada para evitar congelamento por CORS
+        const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+        const API_URL = isLocal ? 'http://localhost:3000/api' : `${BACKEND_RAILWAY}/api`;
+
+        console.log("SISCAM conectado à API em:", API_URL);
 
         function alternarVisibilidadeSenha() {
             const inputSenha = document.getElementById('login-senha');
@@ -220,56 +212,62 @@
             const senhaInput = document.getElementById('login-senha').value;
             const alertaErro = document.getElementById('alerta-erro');
             const textoErro = document.getElementById('texto-erro');
+            const btnSubmit = document.getElementById('btn-submit-login');
+            const btnTexto = document.getElementById('btn-texto-login');
 
             alertaErro.classList.add('hidden');
+            
+            // Estado visual de carregamento para o usuário saber que o sistema está trabalhando
+            btnSubmit.disabled = true;
+            btnTexto.innerText = "Autenticando credenciais...";
 
             try {
+                // Timeout controller para a requisição não ficar pendurada para sempre
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 12000); // 12 segundos de limite
+
                 const resposta = await fetch(`${API_URL}/auth/login`, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        usuario: usuarioInput,
-                        senha: senhaInput
-                    })
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ usuario: usuarioInput, senha: senhaInput }),
+                    signal: controller.signal
                 });
 
+                clearTimeout(timeoutId);
                 const dados = await resposta.json();
-                console.log(dados);
 
                 if (!resposta.ok) {
                     throw new Error(dados.error || 'Erro na autenticação.');
                 }
 
-                // Guarda os dados da sessão no navegador
                 localStorage.setItem('siscam_user_id', dados.id);
                 localStorage.setItem('siscam_user_nome', dados.nome);
                 localStorage.setItem('siscam_user_cargo', dados.cargo);
-
                 localStorage.setItem('siscam_user_nome_completo', dados.nomeCompleto || '');
                 localStorage.setItem('siscam_user_nome_urna', dados.nomeEleitoral || '');
                 localStorage.setItem('siscam_user_partido', dados.sigla || dados.partido || '');
                 localStorage.setItem('siscam_user_foto', dados.foto || '');
                 localStorage.setItem('siscam_username', dados.username || '');
 
-                // Redirecionamento original mapeado
+                console.log("Sucesso! Redirecionando usuário do cargo:", dados.cargo);
+
                 switch (dados.cargo.toUpperCase()) {
-                    case 'SUPERADMIN':
-                        window.location.href = './index.html';
-                        break;
-                    case 'PRESIDENTE':
-                        window.location.href = './presidente.html';
-                        break;
-                    case 'VEREADOR':
-                        window.location.href = './vereador.html';
-                        break;
-                    default:
-                        throw new Error('Cargo não reconhecido.');
+                    case 'SUPERADMIN': window.location.href = './index.html'; break;
+                    case 'PRESIDENTE': window.location.href = './presidente.html'; break;
+                    case 'VEREADOR': window.location.href = './vereador.html'; break;
+                    default: throw new Error('Cargo não reconhecido.');
                 }
 
             } catch (error) {
-                textoErro.innerText = error.message;
+                console.error("Falha de Login capturada:", error);
+                btnSubmit.disabled = false;
+                btnTexto.innerText = "Entrar no Sistema";
+                
+                if (error.name === 'AbortError') {
+                    textoErro.innerText = "O servidor demorou muito para responder. Tente novamente em instantes (o Railway pode estar iniciando).";
+                } else {
+                    textoErro.innerText = error.message || "Não foi possível conectar ao servidor.";
+                }
                 alertaErro.classList.remove('hidden');
             }
         }
