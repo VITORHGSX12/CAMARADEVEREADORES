@@ -51,7 +51,6 @@
 </head>
 <body class="bg-clarencia-bg text-clarencia-text font-sans flex h-screen overflow-hidden">
 
-    <!-- BARRA LATERAL (SIDEBAR) -->
     <aside class="w-64 bg-clarencia-sidebar border-r border-clarencia-border flex flex-col justify-between shrink-0 no-print">
         <div>
             <div class="p-6 border-b border-clarencia-border flex items-center gap-3">
@@ -104,7 +103,6 @@
         </div>
     </aside>
 
-    <!-- CONTEÚDO PRINCIPAL -->
     <main class="flex-1 overflow-y-auto bg-clarencia-bg flex flex-col">
         <header class="bg-white/80 border-b border-clarencia-border px-8 py-4 flex items-center justify-between sticky top-0 backdrop-blur-md z-10 shrink-0 no-print">
             <div>
@@ -126,21 +124,18 @@
             </div>
         </header>
 
-        <!-- DASHBOARD ABA -->
         <div id="secao-dashboard" class="p-8 space-y-6 secao-conteudo no-print">
-            <!-- MENSAGEM DE BOAS VINDAS POLIDA -->
-            <div class="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 rounded-3xl p-6 text-white shadow-xl border border-slate-800 relative overflow-hidden">
-                <div class="absolute right-0 top-0 opacity-10 translate-x-10 -translate-y-10 pointer-events-none">
-                    <i data-lucide="gavel" class="w-64 h-64"></i>
+            <div class="bg-gradient-to-r from-slate-950 via-slate-900 to-indigo-950 rounded-3xl p-8 text-white shadow-xl border border-slate-800 relative overflow-hidden">
+                <div class="absolute right-0 top-0 opacity-5 translate-x-10 -translate-y-10 pointer-events-none">
+                    <i data-lucide="gavel" class="w-72 h-72"></i>
                 </div>
-                <div class="relative z-10 max-w-2xl">
-                    <span class="bg-centaurea/20 text-blue-300 font-bold tracking-widest uppercase text-[10px] px-3 py-1 rounded-full border border-blue-400/20">Painel Operacional</span>
-                    <h2 class="text-2xl font-black mt-2 tracking-tight">Bem-vindo ao <span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-300 font-extrabold tracking-normal">SISCAM</span></h2>
-                    <p class="text-slate-300 text-xs mt-1 leading-relaxed">Gerencie cadastros, compile atas, valide sessões plenárias e monitore a transparência legislativa municipal de forma centralizada.</p>
+                <div class="relative z-10 max-w-3xl">
+                    <span class="bg-centaurea/20 text-blue-300 font-bold tracking-widest uppercase text-[10px] px-3 py-1 rounded-full border border-blue-400/20">Painel Administrativo Principal</span>
+                    <h2 class="text-3xl font-black mt-3 tracking-tight">Bem-vindo ao <span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-300 font-extrabold tracking-normal">SISCAM</span></h2>
+                    <p class="text-slate-300 text-sm mt-1.5 leading-relaxed">Gerencie cadastros legislativos, controle sessões plenárias virtuais, verifique ementas e acompanhe a transparência pública municipal de forma centralizada.</p>
                 </div>
             </div>
 
-            <!-- CARDS DE METRICAS -->
             <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
                 <div class="bg-white border border-clarencia-border p-5 rounded-2xl flex items-center justify-between shadow-sm hover:shadow-md transition-shadow">
                     <div class="space-y-1">
@@ -165,16 +160,13 @@
                 </div>
             </div>
 
-            <!-- PARLAMENTARES JÁ CADASTRADOS -->
-            <div class="space-y-4">
-                <h3 class="font-bold text-clarencia-text text-base flex items-center gap-2"><i data-lucide="award" class="text-centaurea"></i> Corpo Parlamentar Ativo</h3>
+            <div class="space-y-4 pt-2">
+                <h3 class="font-bold text-clarencia-text text-base flex items-center gap-2"><i data-lucide="award" class="text-centaurea w-5 h-5"></i> Candidatos & Parlamentares Cadastrados</h3>
                 <div id="grid-parlamentares-dashboard" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-                    <!-- Gerado Dinamicamente -->
-                </div>
+                    </div>
             </div>
         </div>
 
-        <!-- FORMULÁRIO DE CADASTRO PARLAMENTARES -->
         <div id="secao-vereadores" class="p-8 space-y-6 secao-conteudo hidden no-print">
             <div class="bg-white border border-clarencia-border p-6 rounded-2xl space-y-4 shadow-sm">
                 <h3 class="font-bold text-clarencia-text text-base flex items-center gap-2"><i data-lucide="file-text" class="text-centaurea"></i> Ficha Cadastral do Parlamentar</h3>
@@ -260,7 +252,6 @@
             </section>
         </div>
 
-        <!-- SEÇÃO 3: SESSÕES & ATAS -->
         <div id="secao-sessoes" class="p-8 space-y-6 secao-conteudo hidden">
             <div class="bg-white border border-clarencia-border p-6 rounded-2xl space-y-4 shadow-sm no-print-area">
                 <h3 class="font-bold text-clarencia-text text-base flex items-center gap-2"><i data-lucide="edit-3" class="text-amber-500"></i> Redigir Corpo do Documento Administrativo</h3>
@@ -279,7 +270,6 @@
             <div id="container-ata-impressao" class="bg-white text-slate-950 p-12 border border-slate-300 rounded-2xl shadow-2xl max-w-4xl mx-auto hidden print-page font-serif leading-relaxed text-justify"></div>
         </div>
 
-        <!-- SEÇÃO 4: GERENCIAR PROJETOS -->
         <div id="secao-projetos" class="p-8 space-y-6 secao-conteudo hidden no-print">
             <div class="bg-white border border-clarencia-border p-6 rounded-2xl space-y-4 shadow-sm">
                 <h3 class="font-bold text-clarencia-text text-base flex items-center gap-2"><i data-lucide="folder-open" class="text-blue-500"></i> Protocolar Projeto de Lei / Matéria</h3>
@@ -319,15 +309,13 @@
             </section>
         </div>
 
-        <!-- NOVA SEÇÃO 5: TRANSPARÊNCIA DA CÂMARA -->
         <div id="secao-transparencia" class="flex-1 min-h-0 w-full secao-conteudo hidden no-print">
             <div class="w-full h-full p-4">
-                <iframe src="https://cmgoncalvesdias.ma.gov.br/transparencia" class="w-full h-full rounded-2xl border border-clarencia-border shadow-inner bg-white" allowfullscreen></iframe>
+                <iframe src="https://cmgoncalvesdias.ma.gov.br/transparencia" class="w-full h-full rounded-2xl border border-clarencia-border shadow-md bg-white" allowfullscreen></iframe>
             </div>
         </div>
     </main>
 
-    <!-- MODAL POPUP SESSÃO -->
     <div id="modal-sessao" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 backdrop-blur-sm no-print">
         <div class="bg-white border border-clarencia-border w-full max-w-lg p-6 rounded-2xl shadow-2xl space-y-4 animate-in fade-in zoom-in-95 duration-150">
             <div class="flex items-center justify-between border-b border-clarencia-border pb-3">
@@ -357,12 +345,14 @@
         
         const BACKEND_RAILWAY = 'https://camaradevereadores-production.up.railway.app';
         const LOCAL_HOST = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+        
+        // Corrigido para garantir que as rotas batam exatamente com o que seu backend espera receber
         const API_URL = LOCAL_HOST ? 'http://localhost:3000/api/vereadores' : `${BACKEND_RAILWAY}/api/vereadores`;
         const API_SESSAO_URL = LOCAL_HOST ? 'http://localhost:3000/api/sessao' : `${BACKEND_RAILWAY}/api/sessao`;
 
         let sessaoEstaAtivaGlobal = false;
         
-        // RECUPERA DO LOCALSTORAGE PARA NAO ZERAR AO ATUALIZAR A PAGINA
+        // Memória local exclusiva para os projetos protocolados de modo a persistir sem resetar
         let projetosMemoriaLocal = JSON.parse(localStorage.getItem('siscam_projetos_salvos')) || [];
 
         function carregarLogoSincronizada() {
@@ -455,27 +445,26 @@
                     btnSessao.className = "bg-amber-600 hover:bg-amber-500 text-slate-950 font-bold text-xs px-4 py-2.5 rounded-xl flex items-center gap-2 transition-all shadow-lg";
                 }
                 lucide.createIcons();
-            } catch(e) { console.error(e); }
+            } catch(e) { console.error("Erro na sincronização de dados:", e); }
         }
 
-        // RENDERIZA PARLAMENTARES NO DASHBOARD COM DESIGN POLIDO
         function renderizarCardsDashboard(dados) {
             const container = document.getElementById('grid-parlamentares-dashboard');
             container.innerHTML = '';
             
             if(dados.length === 0) {
-                container.innerHTML = `<p class="text-xs text-clarencia-sub col-span-full py-4 text-center bg-white border rounded-xl border-dashed">Nenhum candidato ou parlamentar listado.</p>`;
+                container.innerHTML = `<p class="text-xs text-clarencia-sub col-span-full py-6 text-center bg-white border border-dashed rounded-xl">Nenhum candidato ou parlamentar listado no sistema temporariamente.</p>`;
                 return;
             }
 
             dados.forEach(p => {
                 const card = document.createElement('div');
-                card.className = "bg-white border border-clarencia-border p-4 rounded-2xl flex items-center gap-3 shadow-sm";
+                card.className = "bg-white border border-clarencia-border p-4 rounded-2xl flex items-center gap-3 shadow-sm hover:shadow transition-shadow";
                 card.innerHTML = `
-                    <img src="${p.foto || 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=80'}" class="w-12 h-12 rounded-full object-cover border border-slate-200 shadow-inner shrink-0">
+                    <img src="${p.foto || 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=80'}" class="w-11 h-11 rounded-full object-cover border border-slate-200 shadow-inner shrink-0">
                     <div class="min-w-0">
                         <p class="font-bold text-xs text-clarencia-text truncate">${p.nomeEleitoral || p.nomeCompleto}</p>
-                        <span class="text-[10px] px-2 py-0.5 font-bold uppercase tracking-wide rounded-full ${p.cargo === 'PRESIDENTE' ? 'bg-amber-500/10 text-amber-700' : 'bg-slate-100 text-slate-600'} block w-max mt-0.5">${p.cargo}</span>
+                        <span class="text-[9px] px-2 py-0.5 font-bold uppercase tracking-wide rounded-full ${p.cargo === 'PRESIDENTE' ? 'bg-amber-500/10 text-amber-700' : 'bg-slate-100 text-slate-600'} block w-max mt-0.5">${p.cargo}</span>
                         <span class="text-[10px] font-medium text-clarencia-sub block truncate mt-0.5">${p.sigla || 'Sem Partido'}</span>
                     </div>
                 `;
@@ -587,8 +576,6 @@
             const ementa = document.getElementById('proj-ementa').value;
 
             projetosMemoriaLocal.push({ codigo, ementa });
-            
-            // PERSISTE NO BANCO LOCAL DO NAVEGADOR
             localStorage.setItem('siscam_projetos_salvos', JSON.stringify(projetosMemoriaLocal));
             
             document.getElementById('form-protocolo-projeto').reset();
@@ -700,6 +687,7 @@
                 });
                 if (res.ok) {
                     document.getElementById('form-cadastro-vereador').reset();
+                    document.getElementById('cad-cargo-parlamentar').value = 'VEREADOR';
                     sincronizarDadosGerais();
                     alert("Parlamentar criado com sucesso!");
                 } else { alert("Erro ao cadastrar."); }
