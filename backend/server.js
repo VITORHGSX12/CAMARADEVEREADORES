@@ -12,7 +12,7 @@ const PORT = process.env.PORT || 3000;
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
-// CONFIGURAÇÃO ROBUSTA DE CORS PARA PRODUÇÃO (VERCEL + RAILWAY)[cite: 8]
+// CONFIGURAÇÃO ROBUSTA DE CORS PARA PRODUÇÃO (VERCEL + RAILWAY)
 app.use(cors({
     origin: true,
     credentials: true,
@@ -32,7 +32,7 @@ const io = new Server(server, {
     }
 });
 
-// ALTERAÇÃO CRÍTICA: Salvando o arquivo de banco na pasta temporária gravável da hospedagem[cite: 7]
+// ALTERAÇÃO CRÍTICA: Salvando o arquivo de banco na pasta temporária gravável da hospedagem
 const BANCO = path.join(os.tmpdir(), 'banco_vereadores.json');
 
 function carregarBanco() {
@@ -490,8 +490,6 @@ io.on("connection", socket => {
         });
     });
 });
-
-const PORT = process.env.PORT || 3000;
 
 server.listen(PORT, () => {
     console.log(`Servidor rodando com sucesso na porta: ${PORT}`);
