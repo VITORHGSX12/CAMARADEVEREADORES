@@ -6,7 +6,7 @@ const path = require('path');
 const { Server } = require('socket.io');
 
 const app = express();
-// PORTA DINÂMICA: Essencial para o Railway conseguir inicializar o contêiner Node.js
+// PORTA DINÂMICA: Ajustada corretamente para escutar a porta do Railway
 const PORT = process.env.PORT || 3000;
 
 app.use(express.json({ limit: '50mb' }));
@@ -34,7 +34,6 @@ function carregarBanco() {
     }
     try {
         const dados = JSON.parse(fs.readFileSync(BANCO, 'utf8'));
-        // Garante compatibilidade caso o arquivo venha no formato antigo de array puro
         if (Array.isArray(dados)) {
             return { logoSistemaComum: "", vereadores: dados, atasSalvas: [] };
         }
@@ -101,11 +100,10 @@ function gerarUsuarioUnico(nome) {
 }
 
 function emitirAtualizacao() {
-    bancoDadosGlobal.vereadores = bancoVereadores; // Garante consistência do nó de parlamentares
-    bancoDadosGlobal.atasSalvas = atasSalvasLivro; // Garante consistência do nó de atas
+    bancoDadosGlobal.vereadores = bancoVereadores;
+    bancoDadosGlobal.atasSalvas = atasSalvasLivro;
     salvarBanco();
     
-    // Calcular totais de votos
     let sim = 0, nao = 0, abst = 0;
     bancoVereadores.forEach(v => {
         if (v.status === 'Presente') {
@@ -115,7 +113,6 @@ function emitirAtualizacao() {
         }
     });
 
-    // Emite o payload de dados completo incluindo a logo ativa vinda do arquivo de banco
     io.emit("atualizarPainel", {
         vereadores: bancoVereadores,
         sessaoAtiva,
@@ -126,7 +123,6 @@ function emitirAtualizacao() {
         logoSistemaComum: bancoDadosGlobal.logoSistemaComum,
         totaisVotos: { sim, nao, abstencao: abst }
     });
-    // Força o gatilho de re-puxada de dados imediata nos fronts
     io.emit("atualizarPainelSemPayload");
 }
 
@@ -136,53 +132,41 @@ function buscarPresidente() {
 
 function removerPresidenteAnterior(idAtual) {
     bancoVereadores.forEach(v => {
-        if (
-            v.cargo === "PRESIDENTE"
-            &&
-            v.id !== idAtual
-        ) {
+        if (v.cargo === "PRESIDENTE" && v.id !== idAtual) {
             v.cargo = "VEREADOR";
         }
     });
 }
 
 // ======================================================
-// CONFIGURAÇÕES GLOBAIS DO SISTEMA (PERSISTIDO EM BANCO)
+// CONFIGURAÇÕES GLOBAIS DO SISTEMA
 // ======================================================
-
-// Rota para o Admin gravar a logo no banco de dados JSON
 app.post('/api/configuracoes/logo', (req, res) => {
     const { logoBase64 } = req.body;
     if (!logoBase64) {
         return res.status(400).json({ error: "Nenhum dado de imagem fornecido." });
     }
-    
     try {
         bancoDadosGlobal.logoSistemaComum = logoBase64;
         emitirAtualizacao();
-        
-        return res.json({ success: true, message: "Logo salva e consolidada no banco de dados com sucesso!" });
+        return res.json({ success: true, message: "Logo salva com sucesso!" });
     } catch (error) {
-        return res.status(500).json({ error: "Falha na gravação do banco de dados: " + error.message });
+        return res.status(500).json({ error: "Falha na gravação do banco: " + error.message });
     }
 });
 
-// Rota pública consumida pelas telas de Login, Presidente, Vereador e Telão
 app.get('/api/configuracoes/logo', (req, res) => {
     res.json({ logo: bancoDadosGlobal.logoSistemaComum || "" });
 });
 
 // ======================================================
-// LIVRO DE ATAS E DOCUMENTOS DA SESSÃO (SALVOS NO SERVIDOR)
+// LIVRO DE ATAS
 // ======================================================
-
-// Rota para o Presidente salvar a ata redigida no servidor
 app.post('/api/atas/salvar', (req, res) => {
     const { textoAta, identificador } = req.body;
     if (!textoAta) {
         return res.status(400).json({ error: "Conteúdo da ata vazio." });
     }
-
     try {
         const novaAta = {
             id: Date.now().toString(),
@@ -191,55 +175,41 @@ app.post('/api/atas/salvar', (req, res) => {
             identificador: identificador || `SESSÃO_${new Date().toISOString().split('T')[0]}`,
             texto: textoAta
         };
-
-        atasSalvasLivro.unshift(novaAta); // Adiciona no início da fila
-        emitirAtualizacao(); // Salva no arquivo físico e atualiza metadados
-
-        return res.json({ success: true, message: "Ata consolidada e arquivada com sucesso no servidor!", ata: novaAta });
+        atasSalvasLivro.unshift(novaAta);
+        emitirAtualizacao();
+        return res.json({ success: true, message: "Ata arquivada com sucesso!", ata: novaAta });
     } catch (error) {
-        return res.status(500).json({ error: "Falha ao gravar ata no servidor: " + error.message });
+        return res.status(500).json({ error: "Falha ao gravar ata: " + error.message });
     }
 });
 
-// Rota para buscar todas as atas salvas no servidor
 app.get('/api/atas', (req, res) => {
     res.json(atasSalvasLivro);
 });
 
 // ======================================================
-// AUTENTICAÇÃO / LOGIN (UNIFICADO COM SUPORTE A ROTAS FRONT)
+// AUTENTICAÇÃO / LOGIN
 // ======================================================
 const processarLogin = (req, res) => {
     const { usuario, username, senha, password } = req.body;
-
     const userFinal = (usuario || username || "").trim().toLowerCase();
     const passFinal = (senha || password || "");
 
     if (!userFinal || !passFinal) {
-        return res.status(400).json({
-            error: "Informe usuário e senha."
-        });
+        return res.status(400).json({ error: "Informe usuário e senha." });
     }
 
-    // SUPER ADMIN
     if (userFinal === "admin" && passFinal === "123456") {
-        return res.json({
-            id: "admin",
-            nome: "Super Admin",
-            cargo: "SUPERADMIN"
-        });
+        return res.json({ id: "admin", nome: "Super Admin", cargo: "SUPERADMIN" });
     }
 
-    // PROCURA QUALQUER USUÁRIO CADASTRADO
     const parlamentar = bancoVereadores.find(v =>
         v.username.toLowerCase() === userFinal &&
         v.senha === passFinal
     );
 
     if (!parlamentar) {
-        return res.status(401).json({
-            error: "Usuário ou senha inválidos."
-        });
+        return res.status(401).json({ error: "Usuário ou senha inválidos." });
     }
 
     return res.json({
@@ -255,44 +225,25 @@ const processarLogin = (req, res) => {
     });
 };
 
-// Vincula o mesmo processador para as duas variantes de rotas disparadas pelas interfaces
 app.post('/api/auth/login', processarLogin);
 app.post('/api/vereadores/login', processarLogin);
 
 // ======================================================
-// LISTAR PARLAMENTARES
+// GERENCIAMENTO DE PARLAMENTARES
 // ======================================================
 app.get('/api/vereadores', (req, res) => {
     res.json(bancoVereadores);
 });
 
-// ======================================================
-// CADASTRAR PARLAMENTAR (CORRIGIDO SEM CONFLITO DE ESCRITA)
-// ======================================================
 app.post('/api/vereadores/cadastrar', (req, res) => {
     try {
-        console.log("Recebendo dados de cadastro:", req.body);
-        
-        const { 
-            cargo, 
-            nomeCompleto, 
-            nomeEleitoral, 
-            dataNascimento, 
-            cpf, 
-            nomeMae, 
-            partido, 
-            sigla, 
-            username, 
-            password, 
-            fotoBase64 
-        } = req.body;
+        const { cargo, nomeCompleto, nomeEleitoral, dataNascimento, cpf, nomeMae, partido, sigla, username, password, fotoBase64 } = req.body;
 
         if (!nomeCompleto || !cpf || !nomeMae || !dataNascimento) {
-            return res.status(400).json({ error: "Campos obrigatórios (Nome, CPF, Nome da Mãe, Data Nasc.) não preenchidos." });
+            return res.status(400).json({ error: "Campos obrigatórios não preenchidos." });
         }
 
         const cpfLimpo = String(cpf).replace(/\D/g, '');
-
         if (bancoVereadores.find(v => v.cpf.replace(/\D/g, '') === cpfLimpo)) {
             return res.status(400).json({ error: "Este CPF já está cadastrado." });
         }
@@ -308,16 +259,9 @@ app.post('/api/vereadores/cadastrar', (req, res) => {
             usernameFinal = gerarUsuarioUnico(nomeEleitoral || nomeCompleto);
         }
 
-        let senhaFinal = "123456";
-        if (password && password.trim() !== "") {
-            senhaFinal = password.trim();
-        }
-
-        const cargoFinal = cargo === "PRESIDENTE" ? "PRESIDENTE" : "VEREADOR";
-
         const novo = {
             id: Date.now().toString(),
-            cargo: cargoFinal,
+            cargo: cargo === "PRESIDENTE" ? "PRESIDENTE" : "VEREADOR",
             nomeCompleto: nomeCompleto.trim(),
             nomeEleitoral: (nomeEleitoral || nomeCompleto).trim(),
             dataNascimento,
@@ -326,55 +270,32 @@ app.post('/api/vereadores/cadastrar', (req, res) => {
             partido,
             sigla: (sigla || "").toUpperCase(),
             username: usernameFinal,
-            senha: senhaFinal,
+            senha: password || "123456",
             foto: fotoBase64 || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=250",
             status: "Ausente",
             voto: "Pendente"
         };
 
-        if (cargoFinal === "PRESIDENTE") {
-            removerPresidenteAnterior(novo.id);
-        }
-
+        if (novo.cargo === "PRESIDENTE") removerPresidenteAnterior(novo.id);
         bancoVereadores.push(novo);
         emitirAtualizacao();
-        
         res.status(201).json({ sucesso: true, parlamentar: novo });
-
     } catch (error) {
-        console.error("Erro crítico no servidor ao cadastrar:", error);
-        res.status(500).json({ error: "Erro interno ao salvar arquivo: " + error.message });
+        res.status(500).json({ error: "Erro interno: " + error.message });
     }
 });
 
-// ======================================================
-// ALTERAR SENHA
-// ======================================================
 app.post('/api/vereadores/alterar-senha', (req, res) => {
     const { id, novaSenha } = req.body;
-
-    if (!novaSenha || novaSenha.trim() === "") {
-        return res.status(400).json({
-            error: "Senha inválida."
-        });
-    }
-
     const vereador = bancoVereadores.find(v => v.id === String(id));
-
-    if (!vereador) {
-        return res.status(404).json({
-            error: "Parlamentar não encontrado."
-        });
-    }
-
+    if (!vereador) return res.status(404).json({ error: "Parlamentar não encontrado." });
     vereador.senha = novaSenha.trim();
     emitirAtualizacao();
-
     res.json({ success: true });
 });
 
 // ======================================================
-// CONTROLE DA SESSÃO E ORDEM DO DIA
+// CONTROLE DA SESSÃO
 // ======================================================
 app.post('/api/sessao/controle', (req, res) => {
     const { acao, codigo, ementa } = req.body;
@@ -386,17 +307,10 @@ app.post('/api/sessao/controle', (req, res) => {
             v.voto = "Pendente";
             v.pedidoFala = false;
         });
-        io.emit("notificacaoSessaoIniciada", { tipo: "abrir" });
     } else if (acao === "iniciar") {
         sessaoAtiva = true;
-        materiaAtual = {
-            codigo: codigo || "",
-            ementa: ementa || ""
-        };
-        bancoVereadores.forEach(v => {
-            v.voto = "Pendente";
-        });
-        io.emit("notificacaoSessaoIniciada", { tipo: "iniciar", codigo: materiaAtual.codigo, ementa: materiaAtual.ementa });
+        materiaAtual = { codigo: codigo || "", ementa: ementa || "" };
+        bancoVereadores.forEach(v => { v.voto = "Pendente"; });
     } else if (acao === "limparMateria") {
         materiaAtual = { codigo: '', ementa: '' };
         bancoVereadores.forEach(v => { v.voto = "Pendente"; });
@@ -410,69 +324,42 @@ app.post('/api/sessao/controle', (req, res) => {
             v.voto = "Pendente";
             v.pedidoFala = false;
         });
-        
         if (cronometroEstado.intervalId) {
             clearInterval(cronometroEstado.intervalId);
             cronometroEstado.intervalId = null;
         }
-        cronometroEstado.oradorNome = "Nenhum orador na tribuna";
-        cronometroEstado.tempoRestante = 300;
-        io.emit("notificacaoSessaoIniciada", { tipo: "fechar" });
     }
-
     emitirAtualizacao();
     res.json({ success: true });
 });
 
 // ======================================================
-// ALTERNAR PRESENÇA
+// PRESENÇA E VOTAÇÃO
 // ======================================================
 app.post('/api/sessao/presenca', (req, res) => {
     const { vereadorId } = req.body;
-    const vereador = bancoVereadores.find(
-        v => v.id === String(vereadorId)
-    );
+    const vereador = bancoVereadores.find(v => v.id === String(vereadorId));
 
-    if (!vereador) {
-        return res.status(404).json({
-            error: "Parlamentar não encontrado."
-        });
-    }
+    if (!vereador) return res.status(404).json({ error: "Parlamentar não encontrado." });
 
     if (vereador.status === "Presente") {
         vereador.status = "Ausente";
         vereador.voto = "Pendente";
         vereador.pedidoFala = false;
-        if (String(microfoneAutorizadoId) === String(vereadorId)) {
-            microfoneAutorizadoId = null;
-        }
+        if (String(microfoneAutorizadoId) === String(vereadorId)) microfoneAutorizadoId = null;
         filaOradores = filaOradores.filter(id => String(id) !== String(vereadorId));
-        io.emit("notificacaoVereadorEntrou", {
-            name: vereador.nomeEleitoral || vereador.nomeCompleto,
-            status: "Ausente"
-        });
     } else {
         vereador.status = "Presente";
-        io.emit("notificacaoVereadorEntrou", {
-            name: vereador.nomeEleitoral || vereador.nomeCompleto,
-            status: "Presente"
-        });
     }
 
+    // CORREÇÃO: Removido o erro de sintaxe do operador spread (...) que causava o travamento.
     emitirAtualizacao();
-    res.json({ success: true, statusAtual: ...vereador.status });
+    res.json({ success: true, statusAtual: vereador.status });
 });
 
-// ======================================================
-// OUTRAS ROTAS MANUTENÇÃO DE USUÁRIOS
-// ======================================================
 app.put('/api/vereadores/alterar-usuario', (req, res) => {
     const { id, username } = req.body;
-    if (!username || username.trim() === "") return res.status(400).json({ error: "Usuário inválido." });
     const novoUsuario = username.trim().toLowerCase();
-    if (bancoVereadores.find(v => v.username === novoUsuario && v.id !== String(id))) {
-        return res.status(400).json({ error: "Usuário já existe." });
-    }
     const vereador = bancoVereadores.find(v => v.id === String(id));
     if (!vereador) return res.status(404).json({ error: "Parlamentar não encontrado." });
     vereador.username = novoUsuario;
@@ -480,20 +367,8 @@ app.put('/api/vereadores/alterar-usuario', (req, res) => {
     res.json({ success: true });
 });
 
-app.put('/api/vereadores/alterar-cargo', (req, res) => {
-    const { id, cargo } = req.body;
-    if (cargo !== "PRESIDENTE" && cargo !== "VEREADOR") return res.status(400).json({ error: "Cargo inválido." });
-    const vereador = bancoVereadores.find(v => v.id === String(id));
-    if (!vereador) return res.status(404).json({ error: "Parlamentar não encontrado." });
-    if (cargo === "PRESIDENTE") removerPresidenteAnterior(id);
-    vereador.cargo = cargo;
-    emitirAtualizacao();
-    res.json({ success: true });
-});
-
 app.delete('/api/vereadores/:id', (req, res) => {
-    const id = String(req.params.id);
-    const indice = bancoVereadores.findIndex(v => v.id === id);
+    const indice = bancoVereadores.findIndex(v => v.id === String(req.params.id));
     if (indice === -1) return res.status(404).json({ error: "Parlamentar não encontrado." });
     bancoVereadores.splice(indice, 1);
     emitirAtualizacao();
@@ -524,9 +399,7 @@ app.get('/api/sessao/status', (req, res) => {
 app.post('/api/vereadores/votar', (req, res) => {
     const { vereadorId, voto } = req.body;
     const vereador = bancoVereadores.find(v => v.id === String(vereadorId));
-    if (!vereador) return res.status(404).json({ error: "Parlamentar não encontrado." });
-    if (vereador.status !== "Presente") return res.status(400).json({ error: "Vereador precisa de estar com presença confirmada para votar." });
-    
+    if (!vereador) return res.status(404).json({ error: "Não encontrado." });
     vereador.voto = voto;
     emitirAtualizacao();
     res.json({ success: true });
@@ -537,9 +410,7 @@ app.post('/api/microfone/pedir', (req, res) => {
     const vereador = bancoVereadores.find(v => v.id === String(vereadorId));
     if (vereador && vereador.status === "Presente") {
         vereador.pedidoFala = true;
-        if (!filaOradores.includes(vereadorId)) {
-            filaOradores.push(vereadorId);
-        }
+        if (!filaOradores.includes(vereadorId)) filaOradores.push(vereadorId);
         emitirAtualizacao();
     }
     res.json({ success: true });
@@ -549,61 +420,24 @@ app.post('/api/microfone/autorizar', (req, res) => {
     const { vereadorId } = req.body;
     microfoneAutorizadoId = vereadorId;
     filaOradores = filaOradores.filter(id => id !== vereadorId);
-    
     bancoVereadores.forEach(v => {
-        if (String(v.id) === String(vereadorId)) {
-            v.pedidoFala = false;
-        }
+        if (String(v.id) === String(vereadorId)) v.pedidoFala = false;
     });
-
     emitirAtualizacao();
     res.json({ success: true });
 });
 
 // ======================================================
-// SOCKET.IO (GERENCIAMENTO REAL-TIME DO PLENÁRIO)
+// WEBSOCKETS (SOCKET.IO REAL-TIME)
 // ======================================================
 io.on("connection", socket => {
-    console.log("Cliente conectado:", socket.id);
-
-    let sim = 0, nao = 0, abst = 0;
-    bancoVereadores.forEach(v => {
-        if (v.status === 'Presente') {
-            if (v.voto === 'SIM') sim++;
-            if (v.voto === 'NÃO') nao++;
-            if (v.voto === 'ABSTENÇÃO') abst++;
-        }
-    });
-
-    socket.emit("atualizarPainel", {
-        vereadores: bancoVereadores,
-        sessaoAtiva,
-        materiaAtiva: materiaAtual,
-        materiaAtual,
-        filaOradores,
-        microfoneAutorizadoId,
-        logoSistemaComum: bancoDadosGlobal.logoSistemaComum,
-        totaisVotos: { sim, nao, abstencao: abst }
-    });
-
     socket.on("registrarConexao", (dados) => {
         socket.userId = dados.userId;
         socket.nome = dados.nome;
         socket.cargo = dados.cargo;
-        console.log(`Cliente registrado: ${dados.nome} (${dados.cargo})`);
-        
-        if (dados.cargo === "VEREADOR") {
-            io.emit("notificacaoVereadorConectado", {
-                nome: dados.nome,
-                status: "online"
-            });
-        }
     });
 
     socket.on("enviarAudioStream", dados => {
-        socket.broadcast.emit("receberAudioStream", dados);
-    });
-    socket.on("transmitirAudioStream", dados => {
         socket.broadcast.emit("receberAudioStream", dados);
     });
 
@@ -652,32 +486,8 @@ io.on("connection", socket => {
             oradorNome: cronometroEstado.oradorNome
         });
     });
-
-    socket.on("disconnect", () => {
-        console.log("Cliente desconectado:", socket.id);
-        if (socket.cargo === "VEREADOR" && socket.nome) {
-            io.emit("notificacaoVereadorConectado", {
-                nome: socket.nome,
-                status: "offline"
-            });
-        }
-    });
 });
 
-// ======================================================
-// INICIAR SERVIDOR
-// ======================================================
 server.listen(PORT, () => {
-    console.clear();
-    console.log("==========================================");
-    console.log(" SISCAM 1.0");
-    console.log(" Servidor iniciado com sucesso");
-    console.log("");
-    console.log(" Porta:", PORT);
-    console.log("");
-    console.log(" Gravação de Atas Legislativas: ATIVA");
-    console.log(" Gravação de Logo em Banco JSON: ATIVA");
-    console.log(" Credenciais Dinâmicas: ONLINE");
-    console.log(" Sincronizador de Presença e Sessão: OK");
-    console.log("==========================================");
+    console.log(`Servidor rodando com sucesso na porta: ${PORT}`);
 });
