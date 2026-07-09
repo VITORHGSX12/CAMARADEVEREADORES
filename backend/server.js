@@ -11,7 +11,7 @@ const PORT = process.env.PORT || 3000;
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
-// CABEÇALHOS DE SEGURANÇA CORS COMPLETO PARA PRODUÇÃO (VERCEL)
+// Configuração manual e robusta de CORS para dar bypass nas travas do Vercel
 app.use((req, res, next) => {
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
@@ -184,7 +184,7 @@ app.get('/api/atas', (req, res) => {
     res.json(atasSalvasLivro);
 });
 
-// AUTENTICAÇÃO / LOGIN
+// AUTENTICAÇÃO / LOGIN SEGURO
 const processarLogin = (req, res) => {
     try {
         const { usuario, username, senha, password } = req.body;
@@ -333,7 +333,6 @@ app.post('/api/sessao/controle', (req, res) => {
 
 app.post('/api/sessao/presenca', (req, res) => {
     const { vereadorId } = req.body;
-    // CORRIGIDO: Removida a desestruturação inválida { vereador } que causava o travamento e erro 500/Connection Refused
     const vereador = bancoVereadores.find(v => v && v.id === String(vereadorId));
 
     if (!vereador) return res.status(404).json({ error: "Parlamentar não encontrado." });
@@ -395,9 +394,9 @@ app.get('/api/sessao/status', (req, res) => {
 
 app.post('/api/vereadores/votar', (req, res) => {
     const { vereadorId, voto } = req.body;
-    const vereador = bancoVereadores.find(v => v && v.id === String(vereadorId));
-    if (!vereador) return res.status(404).json({ error: "Não encontrado." });
-    vereador.voto = voto;
+    const ver = bancoVereadores.find(v => v && v.id === String(vereadorId));
+    if (!ver) return res.status(404).json({ error: "Não encontrado." });
+    ver.voto = voto;
     emitirAtualizacao();
     res.json({ success: true });
 });
