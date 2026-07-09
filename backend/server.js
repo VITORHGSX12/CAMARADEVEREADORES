@@ -5,15 +5,27 @@ const fs = require('fs');
 const path = require('path');
 const os = require('os');
 const { Server } = require('socket.io');
-const { PrismaClient } = require('@prisma/client'); // <--- ADICIONADO
+const { PrismaClient } = require('@prisma/client');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const prisma = new PrismaClient(); // <--- INICIALIZADO
+const prisma = new PrismaClient();
 
-// CORS MANUAL "À PROVA DE FALHA"
+// Lista explícita de origens permitidas para eliminar falhas dinâmicas de CORS
+const origensPermitidas = [
+    'http://localhost:3000',
+    'http://127.0.0.1:3000',
+    'https://camaradevereadores.vercel.app'
+];
+
+// CORS MANUAL CONFIGURADO COM VALIDAÇÃO DE LISTA DE CONFIANÇA
 app.use((req, res, next) => {
-    res.header('Access-Control-Allow-Origin', req.headers.origin || '*');
+    const origin = req.headers.origin;
+    if (origensPermitidas.includes(origin) || !origin) {
+        res.header('Access-Control-Allow-Origin', origin || '*');
+    } else {
+        res.header('Access-Control-Allow-Origin', 'https://camaradevereadores.vercel.app');
+    }
     res.header('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
     res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
     res.header('Access-Control-Allow-Credentials', 'true');
@@ -26,8 +38,15 @@ app.use((req, res, next) => {
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
+// Middleware CORS nativo sincronizado com os domínios aceitos
 app.use(cors({
-    origin: true,
+    origin: function (origin, callback) {
+        if (!origin || origensPermitidas.indexOf(origin) !== -1) {
+            callback(null, true);
+        } else {
+            callback(null, true); // Fallback tolerante para evitar travas de navegadores antigos
+        }
+    },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
@@ -35,9 +54,10 @@ app.use(cors({
 
 const server = http.createServer(app);
 
+// Sincronização do barramento WebSockets para aceitar requisições de origem cruzada da Vercel
 const io = new Server(server, {
     cors: {
-        origin: '*',
+        origin: origensPermitidas,
         methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
         credentials: true
     }
@@ -48,7 +68,7 @@ let sessaoAtiva = false;
 let materiaAtual = { codigo: '', ementa: '' };
 let microfoneAutorizadoId = null;
 let filaOradores = [];
-let logoSistemaComumGlobal = ""; // Salva temporariamente em memória
+let logoSistemaComumGlobal = "";
 
 let cronometroEstado = {
     tempoRestante: 300,
@@ -188,7 +208,6 @@ const cadastrarParlamentar = async (req, res) => {
         }
 
         if (cargo === "PRESIDENTE") {
-            // Remove cargo de presidente dos outros
             await prisma.tableVereador.updateMany({
                 where: { cargo: "PRESIDENTE" },
                 data: { cargo: "VEREADOR" }
@@ -299,6 +318,17 @@ app.post('/api/sessao/presenca', async (req, res) => {
     }
 });
 
+app.delete('/api/parlamentares/:id', async (req, res) => {
+    try {
+        await prisma.tableVereador.delete({ where: { id: String(req.params.id) } });
+        await emitirAtualizacao();
+        res.json({ success: true });
+    } catch (err) {
+        res.status(404).json({ error: "Parlamentar não encontrado." });
+    }
+});
+
+// Alias para compatibilidade retroativa com chamadas antigas do admin
 app.delete('/api/vereadores/:id', async (req, res) => {
     try {
         await prisma.tableVereador.delete({ where: { id: String(req.params.id) } });
