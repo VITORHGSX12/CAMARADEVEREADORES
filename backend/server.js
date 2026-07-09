@@ -3,6 +3,7 @@ const cors = require('cors');
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
+const os = require('os');
 const { Server } = require('socket.io');
 
 const app = express();
@@ -33,14 +34,19 @@ const io = new Server(server, {
     }
 });
 
-const BANCO = path.join(__dirname, 'banco_vereadores.json');
+// ALTERAÇÃO CRÍTICA: Salvando o arquivo de banco na pasta temporária gravável da hospedagem
+const BANCO = path.join(os.tmpdir(), 'banco_vereadores.json');
 
 function carregarBanco() {
     if (!fs.existsSync(BANCO)) {
-        fs.writeFileSync(
-            BANCO,
-            JSON.stringify({ logoSistemaComum: "", vereadores: [], atasSalvas: [] }, null, 4)
-        );
+        try {
+            fs.writeFileSync(
+                BANCO,
+                JSON.stringify({ logoSistemaComum: "", vereadores: [], atasSalvas: [] }, null, 4)
+            );
+        } catch (err) {
+            console.error("Erro ao criar arquivo inicial de banco:", err);
+        }
     }
     try {
         const dados = JSON.parse(fs.readFileSync(BANCO, 'utf8'));
@@ -51,16 +57,20 @@ function carregarBanco() {
         if (!dados.logoSistemaComum) dados.logoSistemaComum = "";
         if (!dados.atasSalvas) dados.atasSalvas = [];
         return dados;
-    } catch {
+    } catch (e) {
         return { logoSistemaComum: "", vereadores: [], atasSalvas: [] };
     }
 }
 
 function salvarBanco() {
-    fs.writeFileSync(
-        BANCO,
-        JSON.stringify(bancoDadosGlobal, null, 4)
-    );
+    try {
+        fs.writeFileSync(
+            BANCO,
+            JSON.stringify(bancoDadosGlobal, null, 4)
+        );
+    } catch (err) {
+        console.error("Erro ao salvar arquivo físico de banco:", err);
+    }
 }
 
 let bancoDadosGlobal = carregarBanco();
@@ -184,7 +194,7 @@ app.get('/api/atas', (req, res) => {
     res.json(atasSalvasLivro);
 });
 
-// AUTENTICAÇÃO / LOGIN SEGURO
+// AUTENTICAÇÃO / LOGIN
 const processarLogin = (req, res) => {
     try {
         const { usuario, username, senha, password } = req.body;
@@ -196,7 +206,6 @@ const processarLogin = (req, res) => {
             return res.status(400).json({ error: "Informe usuário e senha." });
         }
 
-        // Credencial master do Administrador
         if (userFinal === "admin" && passFinal === "123456") {
             return res.json({ id: "admin", nome: "Super Admin", cargo: "SUPERADMIN" });
         }
@@ -334,7 +343,7 @@ app.post('/api/sessao/controle', (req, res) => {
 
 app.post('/api/sessao/presenca', (req, res) => {
     const { vereadorId } = req.body;
-    const vereador = bancoVereadores.find(v => v && v.id === String(vereadorId));
+    const { vereador } = bancoVereadores.find(v => v && v.id === String(vereadorId));
 
     if (!vereador) return res.status(404).json({ error: "Parlamentar não encontrado." });
 
@@ -356,7 +365,7 @@ app.put('/api/vereadores/alterar-usuario', (req, res) => {
     const { id, username } = req.body;
     const novoUsuario = username.trim().toLowerCase();
     const vereador = bancoVereadores.find(v => v && v.id === String(id));
-    if (!vereador) return res.status(404).json({ error: "Parlamentar não encontrado." });
+    if (!vera) return res.status(404).json({ error: "Parlamentar não encontrado." });
     vereador.username = novoUsuario;
     emitirAtualizacao();
     res.json({ success: true });
