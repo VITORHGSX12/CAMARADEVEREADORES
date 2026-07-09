@@ -13,15 +13,15 @@
                 extend: {
                     colors: {
                         centaurea: {
-                            DEFAULT: '#2563eb', // Azul Royal Moderno
+                            DEFAULT: '#2563eb', 
                             hover: '#1d4ed8',
                             light: '#eff6ff',
                             border: '#bfdbfe'
                         },
                         plenario: {
-                            bg: '#f0f4f8',      // Fundo claro azulado refinado
-                            card: '#ffffff',    // Cards brancos de alto contraste
-                            border: '#cbd5e1'   // Divisórias cinza-azuladas
+                            bg: '#f0f4f8',      
+                            card: '#ffffff',    
+                            border: '#cbd5e1'   
                         }
                     }
                 }
@@ -29,7 +29,6 @@
         }
     </script>
     <style>
-        /* Efeito de onda/pulso estilo Discord adaptado para o tema azul */
         @keyframes azulPulse {
             0% { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.6); }
             70% { box-shadow: 0 0 0 15px rgba(37, 99, 235, 0); }
@@ -51,7 +50,6 @@
             </div>
             <div>
                 <h1 class="font-black text-base lg:text-lg tracking-wide text-slate-900 leading-tight">CÂMARA MUNICIPAL DE GONÇALVES DIAS</h1>
-                <!-- Espaço dinâmico para o tema e pauta da sessão -->
                 <p id="pauta-telao-sub" class="text-xs text-centaurea font-bold uppercase tracking-wider mt-0.5">Sessão Plenária Ordinária — Painel de Cédulas Dinâmico</p>
             </div>
         </div>
@@ -169,20 +167,19 @@
         }, 1000);
 
         const BACKEND_RAILWAY = 'https://camaradevereadores-production.up.railway.app';
-        const LOCAL_HOST = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.protocol === 'file:';
+        const LOCAL_HOST = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
         const BACKEND_URL = LOCAL_HOST ? 'http://localhost:3000' : BACKEND_RAILWAY;
         
         const socket = io(BACKEND_URL);
         const grid = document.getElementById('meet-grid');
         const cardPresidente = document.getElementById('card-presidente');
-        const VEREADOR_ID = localStorage.getItem('siscam_user_id'); // Id recuperado para permitir voto no telão
+        const VEREADOR_ID = localStorage.getItem('siscam_user_id'); 
         
         let audioMutadoPorSeguranca = false;
         let ultimoOradorId = null;
         let tempoSegundos = 300; 
         let intervaloCronometro = null;
 
-        // RECEBIMENTO E SAÍDA DE ÁUDIO REALTIME VIA PCM INT16 (MICROFONES DO SERVIDOR)
         let audioCtx = null;
         let scheduledTime = 0;
 
@@ -257,33 +254,6 @@
             }
         }
 
-        function gerenciarCronometroOrador(oradorId) {
-            if (!oradorId) {
-                clearInterval(intervaloCronometro);
-                intervaloCronometro = null;
-                ultimoOradorId = null;
-                document.getElementById('banner-orador-ativo').classList.add('hidden');
-                return;
-            }
-
-            if (oradorId !== ultimoOradorId) {
-                clearInterval(intervaloCronometro);
-                ultimoOradorId = oradorId;
-                
-                intervaloCronometro = setInterval(() => {
-                    if (tempoSegundos <= 0) {
-                        clearInterval(intervaloCronometro);
-                        document.getElementById('cronometro-orador').innerText = "00:00";
-                        return;
-                    }
-                    tempoSegundos--;
-                    const min = String(Math.floor(tempoSegundos / 60)).padStart(2, '0');
-                    const seg = String(tempoSegundos % 60).padStart(2, '0');
-                    document.getElementById('cronometro-orador').innerText = `${min}:${seg}`;
-                }, 1000);
-            }
-        }
-
         async function carregarDadosTelao() {
             try {
                 const resposta = await fetch(`${BACKEND_URL}/api/sessao/status`);
@@ -301,7 +271,6 @@
             }
         }
 
-        // CONTROLADOR DO BOTÃO DE VOTAÇÃO EMBUTIDO INTERNO DO TELÃO
         async function registrarVotoTelao(opcao) {
             if (!VEREADOR_ID) return alert("Erro: ID de parlamentar não identificado localmente.");
             try {
@@ -313,24 +282,22 @@
                 if(res.ok) {
                     document.getElementById('painel-votacao-embutido').classList.add('hidden');
                     socket.emit('atualizarPainel');
-                    carregarDadosTelao();
                 }
             } catch(e) { alert("Falha na rede de votação."); }
         }
 
         function processarDadosTelao(status) {
             const pnlVoto = document.getElementById('painel-votacao-embutido');
+            const bannerOrador = document.getElementById('banner-orador-ativo');
             
-            // Renderiza o Tema/Pauta da Sessão Obrigatória no Cabeçalho
-            if (status.sessaoAtiva && status.materiaAtual?.codigo) {
-                document.getElementById('pauta-telao-sub').innerText = `ORDEM DO DIA: ${status.materiaAtual.codigo} — ${status.materiaAtual.ementa}`;
+            if (status.sessaoAtiva && status.materiaAtiva?.codigo) {
+                document.getElementById('pauta-telao-sub').innerText = `ORDEM DO DIA: ${status.materiaAtiva.codigo} — ${status.materiaAtiva.ementa}`;
                 
-                // Gerenciador do botão de votação embutido para o Vereador logado
                 const eu = status.vereadores?.find(v => v.id === String(VEREADOR_ID) && v.cargo === 'VEREADOR');
-                if (eu && eu.status === 'Presente' && eu.voto === 'Pendente') {
+                if (eu && eu.status === 'Presente' && (eu.voto === 'Pendente' || eu.voto === 'Aguardando')) {
                     pnlVoto.classList.remove('hidden');
-                    document.getElementById('voto-embutido-titulo').innerText = `CÉDULA ATIVA: ${status.materiaAtual.codigo}`;
-                    document.getElementById('voto-embutido-ementa').innerText = status.materiaAtual.ementa;
+                    document.getElementById('voto-embutido-titulo').innerText = `CÉDULA ATIVA: ${status.materiaAtiva.codigo}`;
+                    document.getElementById('voto-embutido-ementa').innerText = status.materiaAtiva.ementa;
                 } else {
                     pnlVoto.classList.add('hidden');
                 }
@@ -339,14 +306,17 @@
                 pnlVoto.classList.add('hidden');
             }
 
-            // Atualização do Placar Geral de Apuração
             if (status.totaisVotos) {
                 document.getElementById('total-sim').querySelector('div:nth-child(2)').innerText = status.totaisVotos.sim || 0;
                 document.getElementById('total-nao').querySelector('div:nth-child(2)').innerText = status.totaisVotos.nao || 0;
                 document.getElementById('total-abstencao').querySelector('div:nth-child(2)').innerText = status.totaisVotos.abstencao || 0;
             }
 
-            // Tratamento da Fila Lateral de Oradores Inscritos
+            // Oculta por padrão o banner superior do cronômetro se ninguém estiver autorizado
+            if (!status.microfoneAutorizadoId) {
+                bannerOrador.classList.add('hidden');
+            }
+
             const filaContainer = document.getElementById('lista-pedidos-fala');
             const totalFilaTxt = document.getElementById('total-pedidos-fala');
             if (filaContainer) {
@@ -354,7 +324,7 @@
                 totalFilaTxt.innerText = `${inscritos.length} pedidos`;
                 
                 if (inscritos.length === 0) {
-                    filaContainer.innerHTML = `<div class="text-slate-400 text-xs italic">Nenhuma solicitação de fala ativa.</div>`;
+                    filaContainer.innerHTML = `<div class="text-slate-400 text-xs italic">Nenhuma solicitação de fala activa.</div>`;
                 } else {
                     filaContainer.innerHTML = '';
                     inscritos.forEach(v => {
@@ -393,25 +363,24 @@
             }
 
             const presidente = vereadores.find(p => p.cargo === 'PRESIDENTE');
-            const listaVereadores = vereadores.filter(p => p.cargo !== 'PRESIDENTE');
+            const listaVereadores = vereadores.filter(p => p.cargo !== 'PRESIDENTE' && p.cargo !== 'SUPERADMIN');
 
-            // 1. CARD EXCLUSIVO DO PRESIDENTE COM ANIMAÇÃO DE FALA
             if (presidente) {
                 cardPresidente.classList.remove('hidden');
                 cardPresidente.classList.add('flex');
                 
-                const nomePres = presidente.nomeEleitoral || presidente.nome || 'Presidente';
-                const siglaPres = presidente.sigla || 'S/P';
+                const nomePres = presidente.nomeEleitoral || presidente.nomeCompleto;
+                const siglaPres = presidente.sigla || 'MESA';
                 
                 const estaComAPalavra = microfoneAutorizadoId && String(presidente.id) === String(microfoneAutorizadoId);
-                let badgeStatus = `<span class="text-slate-400 font-mono text-[10px] font-bold uppercase bg-slate-100 px-2.5 py-1 rounded-lg border border-slate-200">Aguardando</span>`;
+                let badgeStatus = `<span class="text-slate-400 font-mono text-[10px] font-bold uppercase bg-slate-100 px-2.5 py-1 rounded-lg border border-slate-200">Conectado</span>`;
                 
                 if (estaComAPalavra) {
                     badgeStatus = `<span class="text-white font-mono text-[10px] font-black uppercase tracking-wider bg-blue-600 px-2.5 py-1 rounded-lg flex items-center gap-1 animate-bounce"><i data-lucide="mic" class="w-3 h-3"></i> No uso da palavra</span>`;
                     document.getElementById('banner-orador-ativo').classList.remove('hidden');
                     document.getElementById('txt-nome-orador').innerText = nomePres.toUpperCase();
                     document.getElementById('txt-partido-orador').innerText = `PRESIDENTE DA CÂMARA — ${siglaPres}`;
-                } else if (presidente.voto && presidente.voto !== "Pendente") {
+                } else if (presidente.voto && presidente.voto !== "Aguardando" && presidente.voto !== "Pendente") {
                     badgeStatus = `<span class="text-blue-600 font-mono text-[10px] font-bold uppercase tracking-wider bg-blue-50 px-2.5 py-1 rounded-lg border border-blue-100">Cédula: ${presidente.voto}</span>`;
                 }
 
@@ -432,12 +401,11 @@
                 `;
             }
 
-            // 2. GRID PARLAMENTAR COMPLETO COM COR AZUL/BRANCO E PULSO DE FALA
             listaVereadores.forEach(p => {
                 const card = document.createElement('div');
                 const estaComAPalavra = microfoneAutorizadoId && String(p.id) === String(microfoneAutorizadoId);
                 
-                const nomeVer = p.nomeEleitoral || p.nome || 'Parlamentar';
+                const nomeVer = p.nomeEleitoral || p.nomeCompleto;
                 const siglaVer = p.sigla || 'S/P';
 
                 if (estaComAPalavra) {

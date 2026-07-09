@@ -99,12 +99,11 @@
     <script>
         lucide.createIcons();
 
-        // Configuração Inteligente Dinâmica do Backend
         const BACKEND_RAILWAY = 'https://camaradevereadores-production.up.railway.app';
         const LOCAL_HOST = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
         
-        // Mantém a porta 3000 localmente, mas remove-a dinamicamente em produção para evitar erros
-        const API_URL = LOCAL_HOST ? 'http://localhost:3000/api/vereadores/login' : `${BACKEND_RAILWAY}/api/vereadores/login`;
+        // Aponta dinamicamente para a rota unificada /api/auth/login configurada no server.js
+        const API_URL = LOCAL_HOST ? 'http://localhost:3000/api/auth/login' : `${BACKEND_RAILWAY}/api/auth/login`;
 
         async function manipularLogin(event) {
             event.preventDefault();
@@ -116,13 +115,11 @@
                 const res = await fetch(API_URL, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ username: usernameInput, password: passwordInput })
+                    body: JSON.stringify({ username: usernameInput, senha: passwordInput })
                 });
 
                 if (res.ok) {
                     const dados = await res.json();
-
-                    // Normaliza strings de cargo eliminando espaços extras ou diferenças de caixa alta/baixa
                     const cargoTratado = dados.cargo ? String(dados.cargo).toUpperCase().trim() : '';
 
                     localStorage.setItem('siscam_user_id', dados.id || '');
@@ -133,10 +130,10 @@
                     localStorage.setItem('siscam_user_partido', dados.sigla || dados.partido || 'MESA');
                     localStorage.setItem('siscam_user_foto', dados.foto || '');
 
-                    // Redirecionamento blindado contra pequenas variações textuais do banco
+                    // Redirecionamento baseado nos cargos do banco de dados real
                     if (cargoTratado === 'SUPERADMIN') {
                         window.location.href = './index.html';
-                    } else if (cargoTratado === 'PRESIDENTE' || cargoTratado.includes('PRESIDENTE')) {
+                    } else if (cargoTratado === 'PRESIDENTE') {
                         window.location.href = './presidente.html';
                     } else {
                         window.location.href = './vereador.html';

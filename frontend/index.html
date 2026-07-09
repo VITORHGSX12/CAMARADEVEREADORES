@@ -98,14 +98,9 @@
                 <h2 id="titulo-topbar" class="font-bold text-xl text-clarencia-text">Painel de Controle Geral</h2>
                 <p id="subtitulo-topbar" class="text-xs text-clarencia-sub">Controle de utilizadores, logs e credenciais parlamentares</p>
             </div>
-            
-            <div class="flex items-center gap-3">
-                <button onclick="abrirModalSessao()" id="btn-acao-sessao" class="bg-amber-600 hover:bg-amber-500 text-slate-950 font-bold text-xs px-4 py-2.5 rounded-xl flex items-center gap-2 transition-all shadow-lg">
-                    <i data-lucide="play" class="w-4 h-4 fill-slate-950"></i> Iniciar Nova Sessão
-                </button>
-            </div>
         </header>
 
+        <!-- ABA 1: DASHBOARD -->
         <div id="secao-dashboard" class="p-8 space-y-6 secao-conteudo no-print">
             <div class="bg-gradient-to-r from-slate-950 via-slate-900 to-indigo-950 rounded-3xl p-8 text-white shadow-xl border border-slate-800">
                 <h2 class="text-3xl font-black tracking-tight">Bem-vindo ao <span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-300 font-extrabold">SISCAM</span></h2>
@@ -142,7 +137,56 @@
             </div>
         </div>
 
+        <!-- ABA 2: CADASTRO E LISTA DE PARLAMENTARES -->
         <div id="secao-vereadores" class="p-8 space-y-6 secao-conteudo hidden no-print">
+            <section class="bg-white border border-clarencia-border rounded-2xl p-6 shadow-sm space-y-4">
+                <h3 class="font-bold text-base text-clarencia-text flex items-center gap-2">
+                    <i data-lucide="user-plus" class="text-centaurea w-5 h-5"></i> Novo Cadastro de Parlamentar
+                </h3>
+                <form id="form-cadastrar-parlamentar" onsubmit="salvarParlamentar(event)" class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs font-semibold">
+                    <div>
+                        <label class="block mb-1 text-clarencia-sub">Nome Completo *</label>
+                        <input type="text" id="cad-nomeCompleto" class="w-full border rounded-xl p-2.5 bg-slate-50 focus:outline-none focus:border-centaurea" required>
+                    </div>
+                    <div>
+                        <label class="block mb-1 text-clarencia-sub">Nome Eleitoral *</label>
+                        <input type="text" id="cad-nomeEleitoral" class="w-full border rounded-xl p-2.5 bg-slate-50 focus:outline-none focus:border-centaurea" required>
+                    </div>
+                    <div>
+                        <label class="block mb-1 text-clarencia-sub">Cargo Legis. *</label>
+                        <select id="cad-cargo" class="w-full border rounded-xl p-2.5 bg-slate-50 focus:outline-none focus:border-centaurea">
+                            <option value="VEREADOR">VEREADOR</option>
+                            <option value="PRESIDENTE">PRESIDENTE</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block mb-1 text-clarencia-sub">CPF *</label>
+                        <input type="text" id="cad-cpf" placeholder="000.000.000-00" class="w-full border rounded-xl p-2.5 bg-slate-50 focus:outline-none focus:border-centaurea" required>
+                    </div>
+                    <div>
+                        <label class="block mb-1 text-clarencia-sub">Partido</label>
+                        <input type="text" id="cad-partido" class="w-full border rounded-xl p-2.5 bg-slate-50 focus:outline-none focus:border-centaurea">
+                    </div>
+                    <div>
+                        <label class="block mb-1 text-clarencia-sub">Sigla Partido</label>
+                        <input type="text" id="cad-sigla" class="w-full border rounded-xl p-2.5 bg-slate-50 focus:outline-none focus:border-centaurea">
+                    </div>
+                    <div>
+                        <label class="block mb-1 text-clarencia-sub">Usuário de Acesso (Username)</label>
+                        <input type="text" id="cad-username" placeholder="Deixe em branco p/ gerar auto" class="w-full border rounded-xl p-2.5 bg-slate-50 focus:outline-none focus:border-centaurea">
+                    </div>
+                    <div>
+                        <label class="block mb-1 text-clarencia-sub">Senha de Acesso</label>
+                        <input type="password" id="cad-password" value="123456" class="w-full border rounded-xl p-2.5 bg-slate-50 focus:outline-none focus:border-centaurea">
+                    </div>
+                    <div class="md:col-span-3 flex justify-end pt-2">
+                        <button type="submit" class="bg-centaurea hover:bg-centaurea-hover text-white px-6 py-2.5 rounded-xl font-bold transition-all shadow-md">
+                            Salvar Parlamentar
+                        </button>
+                    </div>
+                </form>
+            </section>
+
             <section class="bg-white border border-clarencia-border rounded-2xl overflow-hidden shadow-sm">
                 <div class="overflow-x-auto">
                     <table class="w-full text-left border-collapse">
@@ -161,9 +205,62 @@
             </section>
         </div>
         
-        <div id="secao-sessoes" class="p-8 space-y-6 secao-conteudo hidden"></div>
-        <div id="secao-projetos" class="p-8 space-y-6 secao-conteudo hidden"></div>
+        <!-- ABA 3: SESSÕES & ATAS -->
+        <div id="secao-sessoes" class="p-8 space-y-6 secao-conteudo hidden">
+            <section class="bg-white border border-clarencia-border rounded-2xl p-6 shadow-sm space-y-4">
+                <h3 class="font-bold text-base text-clarencia-text flex items-center gap-2">
+                    <i data-lucide="play" class="text-amber-600 w-5 h-5"></i> Gerenciador da Sessão Plenária
+                </h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="border p-4 rounded-xl space-y-2 bg-slate-50/50">
+                        <span class="text-xs font-bold text-clarencia-sub block uppercase tracking-wide">Comandos da Mesa</span>
+                        <div class="flex flex-wrap gap-2 pt-1">
+                            <button onclick="controlarSessaoBackend('abrir')" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-4 py-2.5 rounded-xl transition-all shadow">Abrir Painel Presença</button>
+                            <button onclick="controlarSessaoBackend('fechar')" class="bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs px-4 py-2.5 rounded-xl transition-all shadow">Fechar/Encerrar Sessão</button>
+                        </div>
+                    </div>
+                    <div class="border p-4 rounded-xl space-y-3 bg-slate-50/50">
+                        <span class="text-xs font-bold text-clarencia-sub block uppercase tracking-wide">Lançar Matéria para Votação</span>
+                        <div class="grid grid-cols-3 gap-2">
+                            <input type="text" id="sessao-materia-codigo" placeholder="Ex: PL 02/2026" class="col-span-1 border rounded-xl p-2 text-xs focus:outline-none">
+                            <input type="text" id="sessao-materia-ementa" placeholder="Ementa do projeto..." class="col-span-2 border rounded-xl p-2 text-xs focus:outline-none">
+                        </div>
+                        <button onclick="lancarMateriaVotacao()" class="w-full bg-amber-600 hover:bg-amber-500 text-slate-950 font-black text-xs py-2.5 rounded-xl transition-all shadow">Enviar Matéria ao Plenário</button>
+                    </div>
+                </div>
+            </section>
+        </div>
 
+        <!-- ABA 4: GERENCIAR PROJETOS -->
+        <div id="secao-projetos" class="p-8 space-y-6 secao-conteudo hidden">
+            <section class="bg-white border border-clarencia-border rounded-2xl p-6 shadow-sm space-y-4">
+                <h3 class="font-bold text-base text-clarencia-text flex items-center gap-2">
+                    <i data-lucide="folder-open" class="text-indigo-500 w-5 h-5"></i> Novo Projeto de Lei / Matéria
+                </h3>
+                <form id="form-cadastrar-projeto" onsubmit="salvarProjetoLocal(event)" class="grid grid-cols-1 md:grid-cols-4 gap-4 text-xs font-semibold">
+                    <div>
+                        <label class="block mb-1 text-clarencia-sub">Código da Matéria *</label>
+                        <input type="text" id="proj-codigo" placeholder="Ex: PL 04/2026" class="w-full border rounded-xl p-2.5 bg-slate-50 focus:outline-none" required>
+                    </div>
+                    <div class="md:col-span-3">
+                        <label class="block mb-1 text-clarencia-sub">Ementa / Descrição Completa *</label>
+                        <input type="text" id="proj-ementa" placeholder="Dispõe sobre as diretrizes orçamentárias..." class="w-full border rounded-xl p-2.5 bg-slate-50 focus:outline-none" required>
+                    </div>
+                    <div class="md:col-span-4 flex justify-end">
+                        <button type="submit" class="bg-indigo-600 hover:bg-indigo-500 text-white px-6 py-2.5 rounded-xl font-bold transition-all shadow-md">
+                            Protocolar Projeto
+                        </button>
+                    </div>
+                </form>
+            </section>
+
+            <section class="bg-white border border-clarencia-border rounded-2xl p-5 shadow-sm space-y-3">
+                <h4 class="font-bold text-xs uppercase tracking-wider text-clarencia-sub">Banco de Matérias Cadastradas</h4>
+                <div id="lista-projetos-banco" class="divide-y text-xs"></div>
+            </section>
+        </div>
+
+        <!-- ABA 5: TRANSPARÊNCIA -->
         <div id="secao-transparencia" class="flex-1 min-h-0 w-full secao-conteudo hidden no-print">
             <div class="w-full h-full p-4">
                 <iframe src="https://cmgoncalvesdias.ma.gov.br/transparencia" class="w-full h-full rounded-2xl border border-clarencia-border bg-white" allowfullscreen></iframe>
@@ -175,15 +272,12 @@
         lucide.createIcons();
         document.getElementById('nome-usuario-logado').innerText = localStorage.getItem('siscam_user_nome') || 'Administrador';
         
-        // Configuração inteligente de ambiente
         const BACKEND_RAILWAY = 'https://camaradevereadores-production.up.railway.app';
         const LOCAL_HOST = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
         
-        // Se estiver local, conecta no localhost:3000. Se estiver online (Railway), conecta sem fixar a porta 3000
-        const API_URL = LOCAL_HOST ? 'http://localhost:3000/api/vereadores' : `${BACKEND_RAILWAY}/api/vereadores`;
-        const API_SESSAO_URL = LOCAL_HOST ? 'http://localhost:3000/api/sessao' : `${BACKEND_RAILWAY}/api/sessao`;
+        const API_URL = LOCAL_HOST ? 'http://localhost:3000/api/parlamentares' : `${BACKEND_RAILWAY}/api/parlamentares`;
+        const API_SESSAO_URL = LOCAL_HOST ? 'http://localhost:3000/api/sessao/controle' : `${BACKEND_RAILWAY}/api/sessao/controle`;
 
-        let sessaoEstaAtivaGlobal = false;
         let projetosMemoriaLocal = JSON.parse(localStorage.getItem('siscam_projetos_salvos')) || [];
 
         function navegarAba(nomeAba) {
@@ -195,7 +289,6 @@
 
         async function sincronizarDadosGerais() {
             try {
-                console.log("Tentando conectar em: ", API_URL);
                 const res = await fetch(API_URL);
                 if (!res.ok) throw new Error(`HTTP erro! Status: ${res.status}`);
                 
@@ -204,9 +297,10 @@
                 document.getElementById('card-qtd-projetos').innerText = projetosMemoriaLocal.length;
                 
                 renderizarCardsDashboard(dados);
+                renderizarTabelaGerenciamento(dados);
+                renderizarProjetos();
             } catch(e) { 
                 console.error("Erro detalhado de conexão com o backend:", e); 
-                // Evita alertas excessivos em loops de renderização, apenas registra a falha estruturada
             }
         }
 
@@ -230,6 +324,128 @@
                         </div>
                     </div>`;
             });
+        }
+
+        function renderizarTabelaGerenciamento(dados) {
+            const tbody = document.getElementById('tabela-vereadores-banco');
+            if(!tbody) return;
+            tbody.innerHTML = '';
+
+            if(!dados || dados.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="p-6 text-center text-clarencia-sub text-xs">Nenhum parlamentar cadastrado no banco PostgreSQL.</td></tr>`;
+                return;
+            }
+
+            dados.forEach(p => {
+                tbody.innerHTML += `
+                    <tr class="hover:bg-slate-50/80 transition-all">
+                        <td class="py-3 px-6"><img src="${p.foto}" class="w-9 h-9 rounded-full object-cover border"></td>
+                        <td class="py-3 px-6 font-bold text-clarencia-text">${p.nomeCompleto} <span class="text-xs font-normal text-clarencia-sub">(${p.nomeEleitoral})</span></td>
+                        <td class="py-3 px-6 text-xs font-semibold text-slate-600">${p.cargo}</td>
+                        <td class="py-3 px-6 text-xs text-clarencia-sub">${p.partido || 'Sem partido'} - ${p.sigla || 'N/A'}</td>
+                        <td class="py-3 px-6 text-right">
+                            <button onclick="deletarParlamentar('${p.id}')" class="text-rose-600 hover:text-white hover:bg-rose-500 border border-rose-200 hover:border-transparent font-bold text-[10px] px-3 py-1.5 rounded-lg transition-all">Excluir</button>
+                        </td>
+                    </tr>`;
+            });
+        }
+
+        async function salvarParlamentar(event) {
+            event.preventDefault();
+            const bodyData = {
+                nomeCompleto: document.getElementById('cad-nomeCompleto').value,
+                nomeEleitoral: document.getElementById('cad-nomeEleitoral').value,
+                cargo: document.getElementById('cad-cargo').value,
+                cpf: document.getElementById('cad-cpf').value,
+                partido: document.getElementById('cad-partido').value,
+                sigla: document.getElementById('cad-sigla').value,
+                username: document.getElementById('cad-username').value,
+                password: document.getElementById('cad-password').value,
+                dataNascimento: "1990-01-01",
+                nomeMae: "Mãe Legislativa"
+            };
+
+            try {
+                const res = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(bodyData)
+                });
+                if(!res.ok) { const err = await res.json(); throw new Error(err.error || "Falha no cadastro"); }
+                alert("Parlamentar salvo no banco de dados!");
+                document.getElementById('form-cadastrar-parlamentar').reset();
+                sincronizarDadosGerais();
+            } catch(err) { alert("Erro ao salvar: " + err.message); }
+        }
+
+        async function deletarParlamentar(id) {
+            if(!confirm("Tem certeza que deseja excluir este parlamentar?")) return;
+            const urlDelete = LOCAL_HOST ? `http://localhost:3000/api/vereadores/${id}` : `${BACKEND_RAILWAY}/api/vereadores/${id}`;
+            try {
+                const res = await fetch(urlDelete, { method: 'DELETE' });
+                if(res.ok) { alert("Removido com sucesso!"); sincronizarDadosGerais(); }
+            } catch(e) { alert("Erro ao deletar."); }
+        }
+
+        async function controlarSessaoBackend(acao) {
+            try {
+                await fetch(API_SESSAO_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ acao })
+                });
+                alert(`Comando de sessão [${acao.toUpperCase()}] enviado!`);
+            } catch(e) { alert("Erro na comunicação da sessão."); }
+        }
+
+        async function lancarMateriaVotacao() {
+            const codigo = document.getElementById('sessao-materia-codigo').value;
+            const ementa = document.getElementById('sessao-materia-ementa').value;
+            if(!codigo || !ementa) return alert("Preencha o código e a ementa da matéria.");
+            try {
+                await fetch(API_SESSAO_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ acao: 'iniciar', codigo, ementa })
+                });
+                alert("Matéria enviada para votação!");
+            } catch(e) { alert("Falha ao lançar votação."); }
+        }
+
+        function salvarProjetoLocal(e) {
+            e.preventDefault();
+            const proj = {
+                id: Date.now().toString(),
+                codigo: document.getElementById('proj-codigo').value,
+                ementa: document.getElementById('proj-ementa').value
+            };
+            projetosMemoriaLocal.unshift(proj);
+            localStorage.setItem('siscam_projetos_salvos', JSON.stringify(projetosMemoriaLocal));
+            document.getElementById('form-cadastrar-projeto').reset();
+            sincronizarDadosGerais();
+        }
+
+        function renderizarProjetos() {
+            const list = document.getElementById('lista-projetos-banco');
+            if(!list) return;
+            list.innerHTML = '';
+            if(projetosMemoriaLocal.length === 0) {
+                list.innerHTML = `<p class="py-4 text-center text-clarencia-sub">Nenhum projeto em pauta.</p>`;
+                return;
+            }
+            projetosMemoriaLocal.forEach(p => {
+                list.innerHTML += `
+                    <div class="py-3 flex justify-between items-center hover:bg-slate-50">
+                        <div><span class="font-bold text-centaurea block">${p.codigo}</span><p class="text-clarencia-text">${p.ementa}</p></div>
+                        <button onclick="removerProjeto('${p.id}')" class="text-rose-500 font-semibold px-2 hover:underline">Remover</button>
+                    </div>`;
+            });
+        }
+
+        function removerProjeto(id) {
+            projetosMemoriaLocal = projetosMemoriaLocal.filter(p => p.id !== id);
+            localStorage.setItem('siscam_projetos_salvos', JSON.stringify(projetosMemoriaLocal));
+            sincronizarDadosGerais();
         }
 
         function fazerLogout() { localStorage.clear(); window.location.href = './login.html'; }
