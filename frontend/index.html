@@ -44,9 +44,6 @@
             .print-page { display: block !important; background: white !important; color: black !important; padding: 0 !important; border: none !important; box-shadow: none !important; }
             .page-break { page-break-before: always; }
         }
-        .text-shadow-stroke {
-            text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;
-        }
     </style>
 </head>
 <body class="bg-clarencia-bg text-clarencia-text font-sans flex h-screen overflow-hidden">
@@ -86,17 +83,9 @@
                     <i data-lucide="eye" class="w-4 h-4"></i> Transparência Câmara
                 </button>
             </nav>
-            
-            <div class="px-4 py-2 mx-4 mt-2 bg-white/50 border border-clarencia-border rounded-xl space-y-1.5 shadow-inner">
-                <label class="text-[10px] font-bold text-clarencia-sub uppercase tracking-wider flex items-center gap-1"><i data-lucide="image" class="w-3 h-3 text-centaurea"></i> Logo Institucional</label>
-                <input type="file" id="admin-upload-logo-global" accept="image/*" onchange="salvarLogoGlobal(event)" class="text-[10px] text-slate-500 w-full file:mr-2 file:py-0.5 file:px-2 file:rounded-md file:border-0 file:text-[10px] file:font-bold file:bg-centaurea/10 file:text-centaurea hover:file:bg-centaurea/20 cursor-pointer">
-            </div>
         </div>
 
         <div class="p-4 border-t border-clarencia-border bg-white flex flex-col items-center justify-center gap-3">
-            <div class="w-full flex justify-center items-center">
-                <img id="logo-sidebar-global" src="" class="max-h-12 object-contain hidden opacity-80 select-none">
-            </div>
             <button onclick="fazerLogout()" class="w-full flex items-center justify-center gap-2 bg-rose-500/10 hover:bg-rose-500 text-rose-600 hover:text-white font-semibold py-2.5 px-4 rounded-xl border border-rose-500/10 transition-all text-sm shadow-md">
                 <i data-lucide="log-out" class="w-4 h-4"></i> Sair do Painel
             </button>
@@ -110,49 +99,36 @@
                 <p id="subtitulo-topbar" class="text-xs text-clarencia-sub">Controle de utilizadores, logs e credenciais parlamentares</p>
             </div>
             
-            <div class="flex items-center gap-4">
-                <img id="logo-topbar-global" src="" class="max-h-10 object-contain hidden border-r pr-4 border-clarencia-border select-none">
-                
-                <div class="flex items-center gap-3">
-                    <button onclick="abrirModalSessao()" id="btn-acao-sessao" class="bg-amber-600 hover:bg-amber-500 text-slate-950 font-bold text-xs px-4 py-2.5 rounded-xl flex items-center gap-2 transition-all shadow-lg">
-                        <i data-lucide="play" class="w-4 h-4 fill-slate-950"></i> Iniciar Nova Sessão
-                    </button>
-                    <button onclick="window.open('./telao.html', '_blank')" class="bg-white hover:bg-slate-50 text-clarencia-text font-medium text-xs px-4 py-2.5 rounded-xl flex items-center gap-2 transition-all border border-clarencia-border shadow-sm">
-                        <i data-lucide="tv" class="w-4 h-4 text-centaurea"></i> Abrir Telão TV
-                    </button>
-                </div>
+            <div class="flex items-center gap-3">
+                <button onclick="abrirModalSessao()" id="btn-acao-sessao" class="bg-amber-600 hover:bg-amber-500 text-slate-950 font-bold text-xs px-4 py-2.5 rounded-xl flex items-center gap-2 transition-all shadow-lg">
+                    <i data-lucide="play" class="w-4 h-4 fill-slate-950"></i> Iniciar Nova Sessão
+                </button>
             </div>
         </header>
 
         <div id="secao-dashboard" class="p-8 space-y-6 secao-conteudo no-print">
-            <div class="bg-gradient-to-r from-slate-950 via-slate-900 to-indigo-950 rounded-3xl p-8 text-white shadow-xl border border-slate-800 relative overflow-hidden">
-                <div class="absolute right-0 top-0 opacity-5 translate-x-10 -translate-y-10 pointer-events-none">
-                    <i data-lucide="gavel" class="w-72 h-72"></i>
-                </div>
-                <div class="relative z-10 max-w-3xl">
-                    <span class="bg-centaurea/20 text-blue-300 font-bold tracking-widest uppercase text-[10px] px-3 py-1 rounded-full border border-blue-400/20">Painel Administrativo Principal</span>
-                    <h2 class="text-3xl font-black mt-3 tracking-tight">Bem-vindo ao <span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-300 font-extrabold tracking-normal">SISCAM</span></h2>
-                    <p class="text-slate-300 text-sm mt-1.5 leading-relaxed">Gerencie cadastros legislativos, controle sessões plenárias virtuais, verifique ementas e acompanhe a transparência pública municipal de forma centralizada.</p>
-                </div>
+            <div class="bg-gradient-to-r from-slate-950 via-slate-900 to-indigo-950 rounded-3xl p-8 text-white shadow-xl border border-slate-800">
+                <h2 class="text-3xl font-black tracking-tight">Bem-vindo ao <span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-300 font-extrabold">SISCAM</span></h2>
+                <p class="text-slate-300 text-sm mt-1.5">Gerencie cadastros legislativos, controle sessões plenárias virtuais e monitore dados institucionais.</p>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
-                <div class="bg-white border border-clarencia-border p-5 rounded-2xl flex items-center justify-between shadow-sm hover:shadow-md transition-shadow">
-                    <div class="space-y-1">
+                <div class="bg-white border border-clarencia-border p-5 rounded-2xl flex items-center justify-between shadow-sm">
+                    <div>
                         <span class="text-[11px] font-bold uppercase tracking-wider text-clarencia-sub block">Parlamentares Cadastrados</span>
                         <p id="card-qtd-vereadores" class="text-3xl font-black text-clarencia-text">0</p>
                     </div>
                     <div class="p-3.5 bg-blue-50 text-centaurea rounded-xl"><i data-lucide="users" class="w-6 h-6"></i></div>
                 </div>
-                <div class="bg-white border border-clarencia-border p-5 rounded-2xl flex items-center justify-between shadow-sm hover:shadow-md transition-shadow">
-                    <div class="space-y-1">
+                <div class="bg-white border border-clarencia-border p-5 rounded-2xl flex items-center justify-between shadow-sm">
+                    <div>
                         <span class="text-[11px] font-bold uppercase tracking-wider text-clarencia-sub block">Projetos Protocolados</span>
                         <p id="card-qtd-projetos" class="text-3xl font-black text-clarencia-text">0</p>
                     </div>
                     <div class="p-3.5 bg-indigo-50 text-indigo-500 rounded-xl"><i data-lucide="file-text" class="w-6 h-6"></i></div>
                 </div>
-                <div class="bg-white border border-clarencia-border p-5 rounded-2xl flex items-center justify-between shadow-sm hover:shadow-md transition-shadow">
-                    <div class="space-y-1">
+                <div class="bg-white border border-clarencia-border p-5 rounded-2xl flex items-center justify-between shadow-sm">
+                    <div>
                         <span class="text-[11px] font-bold uppercase tracking-wider text-clarencia-sub block">Status do Plenário</span>
                         <p id="card-status-sessao" class="text-lg font-black text-rose-600 uppercase tracking-wide">Sessão Fechada</p>
                     </div>
@@ -161,554 +137,102 @@
             </div>
 
             <div class="space-y-4 pt-2">
-                <h3 class="font-bold text-clarencia-text text-base flex items-center gap-2"><i data-lucide="award" class="text-centaurea w-5 h-5"></i> Candidatos & Parlamentares Cadastrados</h3>
-                <div id="grid-parlamentares-dashboard" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-                    </div>
+                <h3 class="font-bold text-clarencia-text text-base flex items-center gap-2"><i data-lucide="award" class="text-centaurea w-5 h-5"></i> Corpo Parlamentar Ativo</h3>
+                <div id="grid-parlamentares-dashboard" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4"></div>
             </div>
         </div>
 
         <div id="secao-vereadores" class="p-8 space-y-6 secao-conteudo hidden no-print">
-            <div class="bg-white border border-clarencia-border p-6 rounded-2xl space-y-4 shadow-sm">
-                <h3 class="font-bold text-clarencia-text text-base flex items-center gap-2"><i data-lucide="file-text" class="text-centaurea"></i> Ficha Cadastral do Parlamentar</h3>
-                
-                <form id="form-cadastro-vereador" onsubmit="cadastrarVereador(event)" class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div class="space-y-1">
-                        <label class="text-[11px] font-bold text-clarencia-sub uppercase tracking-wider">Cargo Legislativo <span class="text-rose-500">*</span></label>
-                        <select id="cad-cargo-parlamentar" required class="w-full bg-slate-50 border border-clarencia-border rounded-xl px-4 py-2 text-sm text-clarencia-text focus:outline-none focus:border-centaurea transition-colors cursor-pointer">
-                            <option value="VEREADOR" selected>VEREADOR</option>
-                            <option value="PRESIDENTE">PRESIDENTE DA CÂMARA</option>
-                        </select>
-                    </div>
-                    <div class="space-y-1">
-                        <label class="text-[11px] font-bold text-clarencia-sub uppercase tracking-wider">Nome Completo <span class="text-rose-500">*</span></label>
-                        <input type="text" id="cad-nome-completo" required class="w-full bg-slate-50 border border-clarencia-border rounded-xl px-4 py-2 text-sm text-clarencia-text focus:outline-none focus:border-centaurea transition-colors">
-                    </div>
-                    <div class="space-y-1">
-                        <label class="text-[11px] font-bold text-clarencia-sub uppercase tracking-wider">Nome Eleitoral (Nome de Urna)</label>
-                        <input type="text" id="cad-nome-eleitoral" class="w-full bg-slate-50 border border-clarencia-border rounded-xl px-4 py-2 text-sm text-clarencia-text focus:outline-none focus:border-centaurea transition-colors">
-                    </div>
-                    <div class="space-y-1">
-                        <label class="text-[11px] font-bold text-clarencia-sub uppercase tracking-wider">Data de Nascimento <span class="text-rose-500">*</span></label>
-                        <input type="date" id="cad-data-nascimento" required class="w-full bg-slate-50 border border-clarencia-border rounded-xl px-4 py-2 text-sm text-clarencia-text focus:outline-none focus:border-centaurea transition-colors">
-                    </div>
-                    <div class="space-y-1">
-                        <label class="text-[11px] font-bold text-clarencia-sub uppercase tracking-wider">CPF <span class="text-rose-500">*</span></label>
-                        <input type="text" id="cad-cpf" placeholder="000.000.000-00" maxlength="14" oninput="mascararCPF(this)" required class="w-full bg-slate-50 border border-clarencia-border rounded-xl px-4 py-2 text-sm text-clarencia-text focus:outline-none focus:border-centaurea transition-colors">
-                    </div>
-                    <div class="space-y-1 flex flex-col justify-end">
-                        <label class="text-[11px] font-bold text-clarencia-sub uppercase tracking-wider mb-1">Nome da Mãe <span class="text-rose-500">*</span></label>
-                        <input type="text" id="cad-nome-mae" required class="w-full bg-slate-50 border border-clarencia-border rounded-xl px-4 py-2 text-sm text-clarencia-text focus:outline-none focus:border-centaurea transition-colors">
-                    </div>
-                    <div class="space-y-1">
-                        <label class="text-[11px] font-bold text-clarencia-sub uppercase tracking-wider">Nome da Agremiação (Partido)</label>
-                        <input type="text" id="cad-partido-nome" placeholder="Ex: Partido do Movimento" class="w-full bg-slate-50 border border-clarencia-border rounded-xl px-4 py-2 text-sm text-clarencia-text focus:outline-none focus:border-centaurea transition-colors">
-                    </div>
-                    <div class="space-y-1">
-                        <label class="text-[11px] font-bold text-clarencia-sub uppercase tracking-wider">Sigla do Partido</label>
-                        <input type="text" id="cad-partido-sigla" placeholder="Ex: MDB" class="w-full bg-slate-50 border border-clarencia-border rounded-xl px-4 py-2 text-sm text-clarencia-text focus:outline-none focus:border-centaurea transition-colors">
-                    </div>
-                    <div class="space-y-1">
-                        <label class="text-[11px] font-bold text-clarencia-sub uppercase tracking-wider">Foto do Parlamentar (PNG/JPEG)</label>
-                        <input type="file" id="cad-arquivo-foto" accept="image/png, image/jpeg" class="w-full bg-slate-50 border border-clarencia-border rounded-xl px-4 py-1.5 text-xs text-clarencia-sub file:mr-4 file:py-1 file:px-2.5 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-slate-200 file:text-clarencia-text hover:file:bg-slate-300 cursor-pointer">
-                    </div>
-
-                    <div class="p-4 bg-slate-50 border border-clarencia-border rounded-xl md:col-span-3 grid grid-cols-1 md:grid-cols-2 gap-4 my-2">
-                        <div class="space-y-1">
-                            <label class="text-[11px] font-bold text-centaurea uppercase tracking-wider flex items-center gap-1"><i data-lucide="user" class="w-3.5 h-3.5"></i> Nome de Usuário (Login Online) <span class="text-rose-500">*</span></label>
-                            <input type="text" id="cad-username" placeholder="Ex: amaro.vereador" required class="w-full bg-white border border-clarencia-border rounded-xl px-4 py-2 text-sm text-clarencia-text focus:outline-none focus:border-centaurea transition-colors">
-                        </div>
-                        <div class="space-y-1">
-                            <label class="text-[11px] font-bold text-centaurea uppercase tracking-wider flex items-center gap-1"><i data-lucide="key-round" class="w-3.5 h-3.5"></i> Senha Customizada de Acesso <span class="text-rose-500">*</span></label>
-                            <input type="password" id="cad-senha" placeholder="Defina uma senha segura" required class="w-full bg-white border border-clarencia-border rounded-xl px-4 py-2 text-sm text-clarencia-text focus:outline-none focus:border-centaurea transition-colors">
-                        </div>
-                    </div>
-
-                    <button type="submit" class="md:col-span-3 bg-centaurea hover:bg-centaurea-hover text-white font-bold py-2.5 px-4 rounded-xl transition-all flex items-center justify-center gap-2 shadow-sm mt-2 text-sm">
-                        <i data-lucide="user-check" class="w-4 h-4"></i> Finalizar Cadastro & Gerar Acesso Dinâmico
-                    </button>
-                </form>
-            </div>
-
             <section class="bg-white border border-clarencia-border rounded-2xl overflow-hidden shadow-sm">
-                <div class="p-6 border-b border-clarencia-border bg-slate-50">
-                    <h3 class="font-bold text-lg text-clarencia-text">Gerenciador Geral de Credenciais</h3>
-                </div>
                 <div class="overflow-x-auto">
                     <table class="w-full text-left border-collapse">
                         <thead>
-                            <tr class="border-b border-clarencia-border text-clarencia-sub text-xs font-semibold uppercase tracking-wider bg-slate-50">
+                            <tr class="border-b bg-slate-50 text-xs font-semibold uppercase tracking-wider text-clarencia-sub">
                                 <th class="py-4 px-6">Foto</th>
-                                <th class="py-4 px-6">Nome Parlamentar</th>
+                                <th class="py-4 px-6">Nome</th>
                                 <th class="py-4 px-6">Cargo</th>
                                 <th class="py-4 px-6">Partido</th>
-                                <th class="py-4 px-6">Usuário</th>
-                                <th class="py-4 px-6">Senha</th>
                                 <th class="py-4 px-6 text-right">Ações</th>
                             </tr>
                         </thead>
-                        <tbody id="tabela-vereadores-banco" class="divide-y divide-clarencia-border text-sm"></tbody>
+                        <tbody id="tabela-vereadores-banco" class="divide-y text-sm"></tbody>
                     </table>
                 </div>
             </section>
         </div>
-
-        <div id="secao-sessoes" class="p-8 space-y-6 secao-conteudo hidden">
-            <div class="bg-white border border-clarencia-border p-6 rounded-2xl space-y-4 shadow-sm no-print-area">
-                <h3 class="font-bold text-clarencia-text text-base flex items-center gap-2"><i data-lucide="edit-3" class="text-amber-500"></i> Redigir Corpo do Documento Administrativo</h3>
-                <textarea id="ata-texto-input" rows="8" placeholder="Digite aqui os acontecimentos e o andamento institucional detalhado da sessão..." class="w-full bg-slate-50 border border-clarencia-border rounded-xl px-4 py-3 text-sm text-clarencia-text focus:outline-none focus:border-centaurea font-sans"></textarea>
-                
-                <div class="flex items-center gap-3 justify-end">
-                    <button onclick="gerarAtaDocumento()" class="bg-blue-600 hover:bg-blue-500 text-white font-bold py-2.5 px-5 rounded-xl text-sm transition-all flex items-center gap-2 shadow-md">
-                        <i data-lucide="file-check" class="w-4 h-4"></i> Compilar e Visualizar Ata
-                    </button>
-                    <button onclick="window.print()" id="btn-imprimir-ata" disabled class="bg-slate-100 text-slate-400 font-bold py-2.5 px-5 rounded-xl text-sm cursor-not-allowed flex items-center gap-2 border border-clarencia-border">
-                        <i data-lucide="printer" class="w-4 h-4"></i> Imprimir Documento Físico
-                    </button>
-                </div>
-            </div>
-
-            <div id="container-ata-impressao" class="bg-white text-slate-950 p-12 border border-slate-300 rounded-2xl shadow-2xl max-w-4xl mx-auto hidden print-page font-serif leading-relaxed text-justify"></div>
-        </div>
-
-        <div id="secao-projetos" class="p-8 space-y-6 secao-conteudo hidden no-print">
-            <div class="bg-white border border-clarencia-border p-6 rounded-2xl space-y-4 shadow-sm">
-                <h3 class="font-bold text-clarencia-text text-base flex items-center gap-2"><i data-lucide="folder-open" class="text-blue-500"></i> Protocolar Projeto de Lei / Matéria</h3>
-                
-                <form id="form-protocolo-projeto" onsubmit="protocolarProjeto(event)" class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div class="space-y-1">
-                        <label class="text-[11px] font-bold text-clarencia-sub uppercase tracking-wider">Código/Número do Projeto</label>
-                        <input type="text" id="proj-codigo" placeholder="Ex: PL Nº 12/2026" required class="w-full bg-slate-50 border border-clarencia-border rounded-xl px-4 py-2 text-sm text-clarencia-text focus:outline-none focus:border-blue-500 transition-colors">
-                    </div>
-                    <div class="space-y-1 md:col-span-2">
-                        <label class="text-[11px] font-bold text-clarencia-sub uppercase tracking-wider">Ementa / Descrição Completa</label>
-                        <input type="text" id="proj-ementa" placeholder="Dispõe sobre..." required class="w-full bg-slate-50 border border-clarencia-border rounded-xl px-4 py-2 text-sm text-clarencia-text focus:outline-none focus:border-blue-500 transition-colors">
-                    </div>
-                    <button type="submit" class="md:col-span-3 bg-blue-600 hover:bg-blue-500 text-white font-bold py-2.5 px-4 rounded-xl transition-all flex items-center justify-center gap-2 shadow-md text-sm">
-                        <i data-lucide="plus" class="w-4 h-4"></i> Adicionar ao Livro de Arquivos
-                    </button>
-                </form>
-            </div>
-
-            <section class="bg-white border border-clarencia-border rounded-2xl overflow-hidden shadow-sm">
-                <div class="p-6 border-b border-clarencia-border bg-slate-50">
-                    <h4 class="font-bold text-clarencia-text">Livro Oficial de Matérias Protocoladas</h4>
-                </div>
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left border-collapse">
-                        <thead>
-                            <tr class="border-b border-clarencia-border text-clarencia-sub text-xs font-semibold uppercase tracking-wider bg-slate-50">
-                                <th class="py-4 px-6 w-1/4">Código</th>
-                                <th class="py-4 px-6 w-3/4">Ementa / Texto da Lei</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tabela-projetos-lista" class="divide-y divide-clarencia-border text-sm">
-                            <tr><td colspan="2" class="p-6 text-center text-clarencia-sub">Nenhum projeto lançado em arquivo.</td></tr>
-                        </tbody>
-                    </table>
-                </div>
-            </section>
-        </div>
+        
+        <div id="secao-sessoes" class="p-8 space-y-6 secao-conteudo hidden"></div>
+        <div id="secao-projetos" class="p-8 space-y-6 secao-conteudo hidden"></div>
 
         <div id="secao-transparencia" class="flex-1 min-h-0 w-full secao-conteudo hidden no-print">
             <div class="w-full h-full p-4">
-                <iframe src="https://cmgoncalvesdias.ma.gov.br/transparencia" class="w-full h-full rounded-2xl border border-clarencia-border shadow-md bg-white" allowfullscreen></iframe>
+                <iframe src="https://cmgoncalvesdias.ma.gov.br/transparencia" class="w-full h-full rounded-2xl border border-clarencia-border bg-white" allowfullscreen></iframe>
             </div>
         </div>
     </main>
-
-    <div id="modal-sessao" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 backdrop-blur-sm no-print">
-        <div class="bg-white border border-clarencia-border w-full max-w-lg p-6 rounded-2xl shadow-2xl space-y-4 animate-in fade-in zoom-in-95 duration-150">
-            <div class="flex items-center justify-between border-b border-clarencia-border pb-3">
-                <h3 class="font-bold text-clarencia-text text-lg flex items-center gap-2"><i data-lucide="play-circle" class="text-amber-600"></i> Configurar Sessão Solene</h3>
-                <button onclick="fecharModalSessao()" class="text-clarencia-sub hover:text-clarencia-text"><i data-lucide="x" class="w-5 h-5"></i></button>
-            </div>
-            <form onsubmit="dispararControleSessao(event)" class="space-y-4">
-                <div class="space-y-1">
-                    <label class="text-[11px] font-bold text-clarencia-sub uppercase tracking-wider">Código da Ordem do Dia</label>
-                    <input type="text" id="modal-sessao-codigo" placeholder="Ex: PLC Nº 04/2026" required class="w-full bg-slate-50 border border-clarencia-border rounded-xl px-4 py-2.5 text-sm text-clarencia-text focus:outline-none focus:border-centaurea">
-                </div>
-                <div class="space-y-1">
-                    <label class="text-[11px] font-bold text-clarencia-sub uppercase tracking-wider">Ementa de Leitura Obrigatória</label>
-                    <textarea id="modal-sessao-ementa" rows="3" placeholder="Dispõe sobre as diretrizes..." required class="w-full bg-slate-50 border border-clarencia-border rounded-xl px-4 py-2.5 text-sm text-clarencia-text focus:outline-none focus:border-centaurea resize-none"></textarea>
-                </div>
-                <div class="flex justify-end gap-3 pt-2">
-                    <button type="button" onclick="fecharModalSessao()" class="bg-slate-100 hover:bg-slate-200 text-clarencia-sub font-semibold px-4 py-2 rounded-xl text-xs border border-clarencia-border">Cancelar</button>
-                    <button type="submit" class="bg-amber-600 hover:bg-amber-500 text-slate-950 font-bold px-5 py-2 rounded-xl text-xs shadow-lg">Abrir Plenário Virtual</button>
-                </div>
-            </form>
-        </div>
-    </div>
 
     <script>
         lucide.createIcons();
         document.getElementById('nome-usuario-logado').innerText = localStorage.getItem('siscam_user_nome') || 'Administrador';
         
+        // Configuração inteligente de ambiente
         const BACKEND_RAILWAY = 'https://camaradevereadores-production.up.railway.app';
         const LOCAL_HOST = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
         
-        // Corrigido para garantir que as rotas batam exatamente com o que seu backend espera receber
+        // Se estiver local, conecta no localhost:3000. Se estiver online (Railway), conecta sem fixar a porta 3000
         const API_URL = LOCAL_HOST ? 'http://localhost:3000/api/vereadores' : `${BACKEND_RAILWAY}/api/vereadores`;
         const API_SESSAO_URL = LOCAL_HOST ? 'http://localhost:3000/api/sessao' : `${BACKEND_RAILWAY}/api/sessao`;
 
         let sessaoEstaAtivaGlobal = false;
-        
-        // Memória local exclusiva para os projetos protocolados de modo a persistir sem resetar
         let projetosMemoriaLocal = JSON.parse(localStorage.getItem('siscam_projetos_salvos')) || [];
-
-        function carregarLogoSincronizada() {
-            const logoSalva = localStorage.getItem('siscam_logo_comum');
-            const imgSidebar = document.getElementById('logo-sidebar-global');
-            const imgTopbar = document.getElementById('logo-topbar-global');
-            
-            if (logoSalva) {
-                if(imgSidebar) { imgSidebar.src = logoSalva; imgSidebar.classList.remove('hidden'); }
-                if(imgTopbar) { imgTopbar.src = logoSalva; imgTopbar.classList.remove('hidden'); }
-            }
-        }
-
-        function salvarLogoGlobal(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-
-            const reader = new FileReader();
-            reader.onload = function() {
-                const base64 = reader.result;
-                localStorage.setItem('siscam_logo_comum', base64);
-                carregarLogoSincronizada();
-            }
-            reader.readAsDataURL(file);
-        }
-
-        carregarLogoSincronizada();
-
-        function mascararCPF(input) {
-            let v = input.value.replace(/\D/g, "");
-            if (v.length > 11) v = v.substring(0, 11);
-            v = v.replace(/(\d{3})(\d)/, "$1.$2");
-            v = v.replace(/(\d{3})(\d)/, "$1.$2");
-            v = v.replace(/(\d{3})(\d{1,2})$/, "$1-$2");
-            input.value = v;
-        }
 
         function navegarAba(nomeAba) {
             document.querySelectorAll('.secao-conteudo').forEach(el => el.classList.add('hidden'));
-            document.getElementById(`secao-${nomeAba}`).classList.remove('hidden');
-            
-            document.querySelectorAll('nav button').forEach(btn => {
-                btn.className = "w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-clarencia-sub hover:bg-white hover:text-clarencia-text rounded-xl transition-all text-left";
-            });
-            const btnAtivo = document.getElementById(`btn-${nomeAba}`);
-            if(btnAtivo) btnAtivo.className = "w-full flex items-center gap-3 px-4 py-3 text-sm font-semibold rounded-xl bg-centaurea/10 text-centaurea border border-centaurea/10 text-left";
-            
-            const titulos = {
-                dashboard: ["Painel de Controle Geral", "Controle de utilizadores, logs e credenciais parlamentares"],
-                vereadores: ["Gestão de Parlamentares", "Cadastre fotos, cargos, partidos e gere usuários automáticos"],
-                sessoes: ["Ata Oficial da Sessão", "Redação, compilação e exportação de relatórios em papel timbrado"],
-                projetos: ["Lançamento de Matérias", "Protocolar arquivos de texto e ementas dos Projetos de Lei"],
-                transparencia: ["Portal de Transparência", "Consulta integrada em tempo real aos dados públicos da Câmara"]
-            };
-            if(titulos[nomeAba]) {
-                document.getElementById('titulo-topbar').innerText = titulos[nomeAba][0];
-                document.getElementById('subtitulo-topbar').innerText = titulos[nomeAba][1];
-            }
-
+            const secao = document.getElementById(`secao-${nomeAba}`);
+            if(secao) secao.classList.remove('hidden');
             sincronizarDadosGerais();
         }
 
         async function sincronizarDadosGerais() {
             try {
+                console.log("Tentando conectar em: ", API_URL);
                 const res = await fetch(API_URL);
+                if (!res.ok) throw new Error(`HTTP erro! Status: ${res.status}`);
+                
                 const dados = await res.json();
                 document.getElementById('card-qtd-vereadores').innerText = dados.length;
                 document.getElementById('card-qtd-projetos').innerText = projetosMemoriaLocal.length;
                 
-                renderizarTabelaVereadores(dados);
                 renderizarCardsDashboard(dados);
-                renderizarTabelaProjetos();
-
-                const resStatus = await fetch(`${API_SESSAO_URL}/status`);
-                const status = await resStatus.json();
-                sessaoEstaAtivaGlobal = status.sessaoAtiva;
-
-                const txtStatus = document.getElementById('card-status-sessao');
-                const btnSessao = document.getElementById('btn-acao-sessao');
-
-                if (status.sessaoAtiva) {
-                    txtStatus.innerText = "SESSÃO ONLINE";
-                    txtStatus.className = "text-lg font-black text-emerald-600 uppercase tracking-wide animate-pulse";
-                    btnSessao.innerHTML = `<i data-lucide="stop-circle" class="w-4 h-4 fill-white"></i> Encerrar Sessão`;
-                    btnSessao.className = "bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs px-4 py-2.5 rounded-xl flex items-center gap-2 transition-all shadow-lg";
-                } else {
-                    txtStatus.innerText = "Sessão Fechada";
-                    txtStatus.className = "text-lg font-black text-rose-600 uppercase tracking-wide";
-                    btnSessao.innerHTML = `<i data-lucide="play" class="w-4 h-4 fill-slate-950"></i> Iniciar Nova Sessão`;
-                    btnSessao.className = "bg-amber-600 hover:bg-amber-500 text-slate-950 font-bold text-xs px-4 py-2.5 rounded-xl flex items-center gap-2 transition-all shadow-lg";
-                }
-                lucide.createIcons();
-            } catch(e) { console.error("Erro na sincronização de dados:", e); }
+            } catch(e) { 
+                console.error("Erro detalhado de conexão com o backend:", e); 
+                // Evita alertas excessivos em loops de renderização, apenas registra a falha estruturada
+            }
         }
 
         function renderizarCardsDashboard(dados) {
             const container = document.getElementById('grid-parlamentares-dashboard');
+            if(!container) return;
             container.innerHTML = '';
             
-            if(dados.length === 0) {
-                container.innerHTML = `<p class="text-xs text-clarencia-sub col-span-full py-6 text-center bg-white border border-dashed rounded-xl">Nenhum candidato ou parlamentar listado no sistema temporariamente.</p>`;
+            if(!dados || dados.length === 0) {
+                container.innerHTML = `<p class="text-xs text-clarencia-sub col-span-full py-4 text-center bg-white border border-dashed rounded-xl">Nenhum parlamentar ativo retornado do servidor.</p>`;
                 return;
             }
 
             dados.forEach(p => {
-                const card = document.createElement('div');
-                card.className = "bg-white border border-clarencia-border p-4 rounded-2xl flex items-center gap-3 shadow-sm hover:shadow transition-shadow";
-                card.innerHTML = `
-                    <img src="${p.foto || 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=80'}" class="w-11 h-11 rounded-full object-cover border border-slate-200 shadow-inner shrink-0">
-                    <div class="min-w-0">
-                        <p class="font-bold text-xs text-clarencia-text truncate">${p.nomeEleitoral || p.nomeCompleto}</p>
-                        <span class="text-[9px] px-2 py-0.5 font-bold uppercase tracking-wide rounded-full ${p.cargo === 'PRESIDENTE' ? 'bg-amber-500/10 text-amber-700' : 'bg-slate-100 text-slate-600'} block w-max mt-0.5">${p.cargo}</span>
-                        <span class="text-[10px] font-medium text-clarencia-sub block truncate mt-0.5">${p.sigla || 'Sem Partido'}</span>
-                    </div>
-                `;
-                container.appendChild(card);
-            });
-        }
-
-        function renderizarTabelaVereadores(dados) {
-            const tabela = document.getElementById('tabela-vereadores-banco');
-            tabela.innerHTML = '';
-            if(dados.length === 0) {
-                tabela.innerHTML = `<tr><td colspan="7" class="p-6 text-center text-clarencia-sub">Nenhum parlamentar cadastrado no sistema.</td></tr>`;
-                return;
-            }
-            dados.forEach(p => {
-                const cargoTexto = p.cargo === 'PRESIDENTE' ? '👑 Presidente' : '🏛️ Vereador';
-                const tr = document.createElement('tr');
-                tr.className = "hover:bg-slate-50 transition-colors border-b border-clarencia-border";
-                tr.innerHTML = `
-                    <td class="py-3 px-6"><img src="${p.foto || 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=80'}" class="w-10 h-10 rounded-full object-cover border border-clarencia-border shadow-sm"></td>
-                    <td class="py-3 px-6 font-bold text-clarencia-text">${p.nomeEleitoral} <span class="text-xs text-clarencia-sub font-normal block">${p.nomeCompleto}</span></td>
-                    <td class="py-3 px-6"><span class="text-xs font-bold px-2 py-1 rounded-full ${p.cargo === 'PRESIDENTE' ? 'bg-amber-500/10 text-amber-700 border border-amber-500/20' : 'bg-slate-100 text-clarencia-sub'}">${cargoTexto}</span></td>
-                    <td class="py-3 px-6 font-mono text-centaurea font-bold">${p.sigla || 'S/P'}</td>
-                    <td class="py-3 px-6 font-mono text-emerald-600 font-bold">${p.username}</td>
-                    <td class="py-3 px-6 font-mono text-clarencia-sub bg-slate-50 px-2 rounded">${p.senha || p.senhaExibivel || '******'}</td>
-                    <td class="py-3 px-6 text-right flex items-center justify-end gap-2 h-16">
-                        <button onclick="editarUsuarioPrompt('${p.id}', '${p.username}')" class="text-xs bg-slate-100 hover:bg-slate-200 font-semibold px-2.5 py-1.5 rounded-lg border border-clarencia-border text-centaurea transition-all">Editar User</button>
-                        <button onclick="alterarSenhaPrompt('${p.id}', '${p.nomeEleitoral}')" class="text-xs bg-slate-100 hover:bg-slate-200 font-semibold px-2.5 py-1.5 rounded-lg border border-clarencia-border text-amber-600 transition-all">Mudar Senha</button>
-                        <button onclick="removerUsuario('${p.id}', '${p.nomeEleitoral}')" class="p-1.5 text-rose-500 hover:text-white bg-transparent hover:bg-rose-500 rounded-lg transition-all border border-transparent hover:border-rose-600 shrink-0"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
-                    </td>
-                `;
-                tabela.appendChild(tr);
-            });
-            lucide.createIcons();
-        }
-
-        async function editarUsuarioPrompt(id, usernameAtual) {
-            const novoUsername = prompt(`Digite o novo nome de usuário (Login) para este parlamentar:`, usernameAtual);
-            if (novoUsername === null) return;
-            if (novoUsername.trim() === "") { alert("O nome de usuário não pode ser vazio."); return; }
-            
-            try {
-                const res = await fetch(`${API_URL}/alterar-usuario`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ id, username: novoUsername.trim() })
-                });
-                if (res.ok) { 
-                    alert("Nome de usuário atualizado com sucesso!"); 
-                    sincronizarDadosGerais(); 
-                } else { 
-                    alert("Erro ao atualizar usuário."); 
-                }
-            } catch(e) { alert("Erro de rede ao conectar ao servidor."); }
-        }
-
-        async function removerUsuario(id, nome) {
-            if (!confirm(`ATENÇÃO: Deseja realmente excluir permanentemente o parlamentar ${nome}?`)) return;
-            try {
-                const res = await fetch(`${API_URL}/${id}`, { method: 'DELETE' });
-                if (res.ok) {
-                    alert(`Parlamentar ${nome} removido.`);
-                    sincronizarDadosGerais();
-                } else { alert("Erro ao remover do servidor."); }
-            } catch(e) { alert("Erro na requisição."); }
-        }
-
-        function abrirModalSessao() {
-            if (sessaoEstaAtivaGlobal) {
-                if(confirm("Deseja realmente encerrar a sessão atual?")) { dispararFechamentoSessao(); }
-            } else {
-                document.getElementById('modal-sessao').classList.remove('hidden');
-            }
-        }
-        function fecharModalSessao() { document.getElementById('modal-sessao').classList.add('hidden'); }
-
-        async function dispararControleSessao(event) {
-            event.preventDefault();
-            const payload = {
-                acao: 'iniciar',
-                codigo: document.getElementById('modal-sessao-codigo').value,
-                menta: document.getElementById('modal-sessao-ementa').value
-            };
-            const res = await fetch(`${API_SESSAO_URL}/controle`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
-            if(res.ok) {
-                fecharModalSessao();
-                document.getElementById('modal-sessao-codigo').value = '';
-                document.getElementById('modal-sessao-ementa').value = '';
-                sincronizarDadosGerais();
-            }
-        }
-
-        async function dispararFechamentoSessao() {
-            await fetch(`${API_SESSAO_URL}/controle`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ acao: 'encerrar' })
-            });
-            sincronizarDadosGerais();
-        }
-
-        function protocolarProjeto(event) {
-            event.preventDefault();
-            const codigo = document.getElementById('proj-codigo').value;
-            const ementa = document.getElementById('proj-ementa').value;
-
-            projetosMemoriaLocal.push({ codigo, ementa });
-            localStorage.setItem('siscam_projetos_salvos', JSON.stringify(projetosMemoriaLocal));
-            
-            document.getElementById('form-protocolo-projeto').reset();
-            sincronizarDadosGerais();
-        }
-
-        function renderizarTabelaProjetos() {
-            const tabela = document.getElementById('tabela-projetos-lista');
-            tabela.innerHTML = '';
-            if(projetosMemoriaLocal.length === 0) {
-                tabela.innerHTML = `<tr><td colspan="2" class="p-6 text-center text-clarencia-sub">Nenhum projeto lançado em arquivo.</td></tr>`;
-                return;
-            }
-            projetosMemoriaLocal.forEach(p => {
-                const tr = document.createElement('tr');
-                tr.className = "hover:bg-slate-50 transition-colors border-b border-clarencia-border";
-                tr.innerHTML = `<td class="py-3 px-6 font-mono text-centaurea font-bold">${p.codigo}</td><td class="py-3 px-6 text-clarencia-text">${p.ementa}</td>`;
-                tabela.appendChild(tr);
-            });
-        }
-
-        async function gerarAtaDocumento() {
-            const textoCorpo = document.getElementById('ata-texto-input').value.trim();
-            if(!textoCorpo) { alert("Por favor, preencha o andamento da sessão."); return; }
-
-            try {
-                const res = await fetch(`${API_SESSAO_URL}/status`);
-                const status = await res.json();
-                const container = document.getElementById('container-ata-impressao');
-                container.classList.remove('hidden');
-
-                const dataAtual = new Date();
-                let htmlAta = `
-                    <div class="border-b-4 border-slate-950 pb-4 mb-6 flex items-center gap-6 text-left">
-                        <div class="w-16 h-16 bg-slate-100 border border-slate-300 rounded-xl flex items-center justify-center text-slate-900 shrink-0"><i data-lucide="gavel" class="w-10 h-10"></i></div>
-                        <div>
-                            <h1 class="text-xl font-black uppercase text-slate-950">ESTADO DO MARANHÃO</h1>
-                            <h2 class="text-lg font-bold uppercase text-slate-900">Câmara Municipal de Gonçalves Dias</h2>
-                            <p class="text-xs font-mono text-slate-600 uppercase mt-0.5">SISCAM 1.0</p>
+                container.innerHTML += `
+                    <div class="bg-white border border-clarencia-border p-4 rounded-2xl flex items-center gap-3 shadow-sm">
+                        <img src="${p.foto || 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=80'}" class="w-11 h-11 rounded-full object-cover border shrink-0">
+                        <div class="min-w-0">
+                            <p class="font-bold text-xs text-clarencia-text truncate">${p.nomeEleitoral || p.nomeCompleto}</p>
+                            <span class="text-[9px] px-2 py-0.5 font-bold uppercase rounded-full bg-slate-100 text-slate-600 block w-max mt-0.5">${p.cargo}</span>
                         </div>
-                    </div>
-                    <div class="text-center font-bold text-lg uppercase my-6 underline">Ata Oficial da Sessão Plenária</div>
-                    <div class="bg-slate-50 border border-slate-200 rounded-xl p-4 mb-6 text-xs space-y-1 text-slate-800">
-                        <p><strong>Identificador:</strong> <span class="font-mono font-bold">${status.materiaAtual ? status.materiaAtual.codigo : 'EXPEDIENTE ORDINÁRIO'}</span></p>
-                        <p><strong>Ementa:</strong> <span>${status.materiaAtual ? status.materiaAtual.ementa : 'Deliberações gerais.'}</span></p>
-                    </div>
-                    <div class="text-slate-900 text-sm whitespace-pre-wrap min-h-[150px] text-justify font-serif">${textoCorpo}</div>
-                    <div class="mt-8 space-y-6">
-                        <table class="w-full text-left text-xs">
-                            <thead>
-                                <tr class="border-b border-slate-400 bg-slate-50 font-bold uppercase">
-                                    <th class="py-2 px-3">Parlamentar</th>
-                                    <th class="py-2 px-3">Partido</th>
-                                    <th class="py-2 px-3 text-right">Voto</th>
-                                </tr>
-                            </thead>
-                            <tbody>`;
-
-                if(status.vereadores && status.vereadores.length > 0) {
-                    status.vereadores.forEach(v => {
-                        htmlAta += `
-                            <tr class="border-b text-slate-900">
-                                <td class="py-2 px-3 font-bold">${v.nomeEleitoral}</td>
-                                <td class="py-2 px-3 uppercase">${v.sigla || ''}</td>
-                                <td class="py-2 px-3 text-right font-bold">${v.voto}</td>
-                            </tr>`;
-                    });
-                }
-                htmlAta += `</tbody></table></div>`;
-                container.innerHTML = htmlAta;
-                
-                const btnPrint = document.getElementById('btn-imprimir-ata');
-                btnPrint.disabled = false;
-                btnPrint.className = "bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2.5 px-5 rounded-xl text-sm cursor-pointer";
-                lucide.createIcons();
-            } catch(e) { alert("Erro ao sincronizar dados."); }
-        }
-
-        function cadastrarVereador(event) {
-            event.preventDefault();
-            const fileInput = document.getElementById('cad-arquivo-foto');
-            const file = fileInput.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onloadend = function () { enviarDadosCadastro(reader.result); };
-                reader.readAsDataURL(file);
-            } else { enviarDadosCadastro(null); }
-        }
-
-        async function enviarDadosCadastro(fotoBase64) {
-            const payload = {
-                cargo: document.getElementById('cad-cargo-parlamentar').value,
-                nomeCompleto: document.getElementById('cad-nome-completo').value,
-                nomeEleitoral: document.getElementById('cad-nome-eleitoral').value,
-                dataNascimento: document.getElementById('cad-data-nascimento').value,
-                cpf: document.getElementById('cad-cpf').value,
-                nomeMae: document.getElementById('cad-nome-mae').value,
-                partido: document.getElementById('cad-partido-nome').value,
-                sigla: document.getElementById('cad-partido-sigla').value,
-                username: document.getElementById('cad-username').value.trim(),
-                password: document.getElementById('cad-senha').value,
-                fotoBase64: fotoBase64
-            };
-            try {
-                const res = await fetch(`${API_URL}/cadastrar`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-                if (res.ok) {
-                    document.getElementById('form-cadastro-vereador').reset();
-                    document.getElementById('cad-cargo-parlamentar').value = 'VEREADOR';
-                    sincronizarDadosGerais();
-                    alert("Parlamentar criado com sucesso!");
-                } else { alert("Erro ao cadastrar."); }
-            } catch(e) { alert("Erro na conexão."); }
-        }
-
-        async function alterarSenhaPrompt(id, nome) {
-            const novaSenha = prompt(`Digite a nova senha para ${nome}:`);
-            if (!novaSenha) return;
-            try {
-                const res = await fetch(`${API_URL}/alterar-senha`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ id, novaSenha })
-                });
-                if (res.ok) { alert("Senha alterada!"); sincronizarDadosGerais(); }
-            } catch (e) { alert("Erro de rede."); }
+                    </div>`;
+            });
         }
 
         function fazerLogout() { localStorage.clear(); window.location.href = './login.html'; }
-        
         sincronizarDadosGerais();
     </script>
 </body>

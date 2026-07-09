@@ -12,13 +12,13 @@
                 extend: {
                     colors: {
                         centaurea: {
-                            DEFAULT: '#4f46e5', // Azul Indigo Moderno
+                            DEFAULT: '#4f46e5', 
                             hover: '#4338ca'
                         },
                         clarencia: {
                             bg: '#f8fafc',
                             card: '#ffffff',
-                            text: '#334155', // Grafite para excelente leitura
+                            text: '#334155', 
                             sub: '#64748b'
                         }
                     }
@@ -27,7 +27,6 @@
         }
     </script>
     <style>
-        /* Corte diagonal perfeito na divisão das telas */
         .diagonal-split {
             clip-path: polygon(15% 0, 100% 0, 100% 100%, 0% 100%);
         }
@@ -35,122 +34,120 @@
 </head>
 <body class="bg-clarencia-bg text-clarencia-text font-sans h-screen flex items-center justify-center overflow-hidden">
 
-    <div class="w-full h-full flex flex-col md:flex-row bg-white relative">
+    <div class="w-full h-full flex flex-col md:flex-row">
         
-        <div class="w-full md:w-[45%] flex flex-col justify-between p-8 md:p-16 h-full z-10 bg-white relative">
+        <div class="w-full md:w-[45%] bg-white flex flex-col justify-between p-8 lg:p-12 z-10 shadow-2xl relative">
             <div class="flex items-center gap-3">
                 <div class="w-10 h-10 bg-indigo-50 border border-indigo-100 rounded-xl flex items-center justify-center text-centaurea shadow-sm">
-                    <i data-lucide="shield-check" class="w-6 h-6"></i>
+                    <i data-lucide="gavel" class="w-5 h-5"></i>
                 </div>
                 <div>
-                    <h1 class="font-black text-xl tracking-wide text-slate-900 leading-none">SISCAM 1.0</h1>
-                    <span class="text-[10px] text-centaurea font-bold uppercase tracking-widest block mt-0.5">Plenário Virtual Protegido</span>
+                    <span class="text-xs font-bold uppercase tracking-widest text-clarencia-sub block leading-none">Câmara Municipal</span>
+                    <h1 class="font-black text-base text-slate-900 tracking-tight mt-0.5">SISCAM 1.0</h1>
                 </div>
             </div>
 
-            <div class="max-w-md w-full mx-auto my-auto space-y-6">
-                <div class="space-y-1">
-                    <h2 class="text-3xl font-black text-slate-900 tracking-tight">Portal Legislativo</h2>
-                    <p class="text-sm text-clarencia-sub">Insira suas credenciais institucionais para acessar o terminal operacional.</p>
+            <div class="max-w-md w-full mx-auto my-auto py-8">
+                <div class="space-y-2 mb-8 text-center md:text-left">
+                    <h2 class="text-2xl font-black text-slate-900 tracking-tight lg:text-3xl">Portal de Autenticação</h2>
+                    <p class="text-sm text-clarencia-sub font-medium">Insira as suas credenciais para aceder ao plenário ou administração.</p>
                 </div>
 
-                <form onsubmit="executarLogin(event); return false;" class="space-y-4">
-                    <div class="space-y-1.5">
-                        <label class="text-xs font-bold uppercase tracking-wider text-clarencia-sub">Usuário de Acesso</label>
-                        <div class="relative flex items-center">
-                            <i data-lucide="user" class="absolute left-4 w-4 h-4 text-clarencia-sub"></i>
-                            <input type="text" id="login-username" placeholder="Ex: nome.vereador" required class="w-full bg-slate-50 border border-slate-200 focus:border-centaurea focus:bg-white rounded-xl pl-11 pr-4 py-3 text-sm transition-all focus:outline-none text-slate-900 font-medium">
-                        </div>
+                <form onsubmit="manipularLogin(event)" class="space-y-5">
+                    <div class="space-y-1.5 relative">
+                        <label class="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+                            <i data-lucide="user" class="w-3.5 h-3.5 text-centaurea"></i> Nome de Utilizador
+                        </label>
+                        <input type="text" id="login-username" required placeholder="exemplo.parlamentar" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-900 focus:outline-none focus:border-centaurea focus:bg-white transition-all shadow-inner">
                     </div>
 
-                    <div class="space-y-1.5">
-                        <label class="text-xs font-bold uppercase tracking-wider text-clarencia-sub">Senha Eletrônica</label>
-                        <div class="relative flex items-center">
-                            <i data-lucide="lock" class="absolute left-4 w-4 h-4 text-clarencia-sub"></i>
-                            <input type="password" id="login-senha" placeholder="••••••••••••" required class="w-full bg-slate-50 border border-slate-200 focus:border-centaurea focus:bg-white rounded-xl pl-11 pr-4 py-3 text-sm transition-all focus:outline-none text-slate-900 font-mono">
-                        </div>
+                    <div class="space-y-1.5 relative">
+                        <label class="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+                            <i data-lucide="key-round" class="w-3.5 h-3.5 text-centaurea"></i> Senha de Acesso
+                        </label>
+                        <input type="password" id="login-password" required placeholder="••••••••" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-900 focus:outline-none focus:border-centaurea focus:bg-white transition-all shadow-inner">
                     </div>
 
-                    <button type="button" onclick="executarLogin(event)" class="w-full bg-centaurea hover:bg-centaurea-hover text-white font-bold py-3.5 px-4 rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-indigo-600/10 text-sm tracking-wide mt-2">
-                        <i data-lucide="log-in" class="w-4 h-4"></i> Autenticar no Terminal
+                    <button type="submit" class="w-full bg-centaurea hover:bg-centaurea-hover text-white font-bold py-3 px-4 rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg hover:shadow-indigo-500/20 active:scale-[0.99] mt-2 text-sm tracking-wide">
+                        <i data-lucide="log-in" class="w-4 h-4"></i> Validar Credenciais & Entrar
                     </button>
                 </form>
             </div>
 
-            <div class="text-center md:text-left text-[11px] text-clarencia-sub font-mono">
-                &copy; 2026 SISCAM - Todos os direitos reservados.
+            <div class="text-center md:text-left border-t border-slate-100 pt-4 flex flex-col sm:flex-row items-center justify-between gap-2">
+                <span class="text-[11px] text-clarencia-sub font-medium">© 2026 Sistema Legislativo Integrado.</span>
+                <span class="text-[10px] bg-slate-100 text-slate-600 font-bold uppercase tracking-wider px-2.5 py-1 rounded-md border border-slate-200/60 shadow-sm">v1.0.4 - Estável</span>
             </div>
         </div>
 
-        <div class="hidden md:block flex-1 relative h-full overflow-hidden select-none diagonal-split -ml-16 bg-slate-950">
+        <div class="hidden md:flex flex-1 bg-slate-950 relative items-center justify-center overflow-hidden">
+            <div class="absolute inset-0 bg-gradient-to-br from-indigo-950/80 via-slate-950/95 to-slate-950 z-10"></div>
+            <div class="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_var(--tw-gradient-stops))] from-indigo-600/20 via-transparent to-transparent pointer-events-none"></div>
             
-            <img src="data:image/jpeg;base64,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" class="absolute inset-0 w-full h-full object-cover opacity-35 scale-100 transition-transform duration-700 hover:scale-105">
-            
-            <div class="absolute top-[-20%] left-[-10%] w-[70%] h-[70%] bg-gradient-to-br from-indigo-500/20 to-purple-500/0 rounded-full blur-3xl"></div>
-            <div class="absolute bottom-[-10%] right-[-10%] w-[60%] h-[60%] bg-gradient-to-tr from-indigo-500/30 to-emerald-500/0 rounded-full blur-3xl"></div>
-            
-            <div class="absolute inset-0 flex flex-col justify-center items-center p-12 text-center bg-slate-950/40 backdrop-blur-[1px]">
-                <div class="max-w-md space-y-4 bg-slate-900/75 p-8 rounded-2xl border border-white/10 shadow-2xl backdrop-blur-md">
-                    <div class="w-12 h-12 rounded-full bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center mx-auto text-indigo-400">
-                        <i data-lucide="landmark" class="w-6 h-6"></i>
-                    </div>
-                    <h3 class="text-xl font-extrabold text-white tracking-wide">Sessões Plenárias e Votações</h3>
-                    <p class="text-xs text-slate-400 leading-relaxed">Painel integrado de alta performance para controle de pautas, gerenciamento de tempo regimental e apuração eletrônica nominal.</p>
-                    <div class="pt-2 flex items-center justify-center gap-4 text-[10px] font-mono text-slate-500">
-                        <span class="flex items-center gap-1"><span class="w-1.5 h-1.5 bg-emerald-500 rounded-full"></span> SSL Ativo</span>
-                        <span class="flex items-center gap-1"><span class="w-1.5 h-1.5 bg-indigo-500 rounded-full"></span> WebSockets</span>
-                    </div>
+            <img src="https://images.unsplash.com/photo-1589829545856-d10d557cf95f?q=80&w=1200" class="absolute inset-0 w-full h-full object-cover opacity-20 diagonal-split select-none" alt="Fundo Legislativo">
+
+            <div class="relative z-20 text-center px-12 max-w-lg space-y-4 animate-in fade-in slide-in-from-bottom-6 duration-700">
+                <div class="w-16 h-16 bg-white/5 rounded-2xl border border-white/10 flex items-center justify-center text-indigo-400 mx-auto shadow-2xl backdrop-blur-md">
+                    <i data-lucide="shield-check" class="w-8 h-8"></i>
                 </div>
+                <h3 class="text-white text-2xl font-black tracking-tight lg:text-3xl">Conexão Segura Ativa</h3>
+                <p class="text-slate-400 text-sm leading-relaxed font-medium">As transmissões de dados e as contagens de votos digitais deste plenário são auditadas, criptografadas e protegidas em conformidade legal.</p>
             </div>
         </div>
-        
     </div>
 
     <script>
         lucide.createIcons();
 
+        // Configuração Inteligente Dinâmica do Backend
         const BACKEND_RAILWAY = 'https://camaradevereadores-production.up.railway.app';
         const LOCAL_HOST = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
         
-        const API_LOGIN_URL = LOCAL_HOST ? 'http://localhost:3000/api/auth/login' : `${BACKEND_RAILWAY}/api/auth/login`;
+        // Mantém a porta 3000 localmente, mas remove-a dinamicamente em produção para evitar erros
+        const API_URL = LOCAL_HOST ? 'http://localhost:3000/api/vereadores/login' : `${BACKEND_RAILWAY}/api/vereadores/login`;
 
-        async function executarLogin(event) {
-            if (event) event.preventDefault();
-            const user = document.getElementById('login-username').value.trim();
-            const pass = document.getElementById('login-senha').value;
+        async function manipularLogin(event) {
+            event.preventDefault();
+            
+            const usernameInput = document.getElementById('login-username').value.trim();
+            const passwordInput = document.getElementById('login-password').value;
 
             try {
-                const res = await fetch(API_LOGIN_URL, {
+                const res = await fetch(API_URL, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ usuario: user, senha: pass })
+                    body: JSON.stringify({ username: usernameInput, password: passwordInput })
                 });
 
                 if (res.ok) {
                     const dados = await res.json();
-                    
-                    localStorage.setItem('siscam_user_id', dados.id);
-                    localStorage.setItem('siscam_user_nome', dados.nome);
-                    localStorage.setItem('siscam_user_nome_urna', dados.nomeEleitoral || dados.nome);
-                    localStorage.setItem('siscam_user_nome_completo', dados.nomeCompleto || dados.nome);
-                    localStorage.setItem('siscam_user_cargo', dados.cargo);
+
+                    // Normaliza strings de cargo eliminando espaços extras ou diferenças de caixa alta/baixa
+                    const cargoTratado = dados.cargo ? String(dados.cargo).toUpperCase().trim() : '';
+
+                    localStorage.setItem('siscam_user_id', dados.id || '');
+                    localStorage.setItem('siscam_user_nome', dados.nome || dados.nomeEleitoral || 'Usuário');
+                    localStorage.setItem('siscam_user_nome_urna', dados.nomeEleitoral || dados.nome || 'Usuário');
+                    localStorage.setItem('siscam_user_nome_completo', dados.nomeCompleto || dados.nome || 'Usuário');
+                    localStorage.setItem('siscam_user_cargo', cargoTratado);
                     localStorage.setItem('siscam_user_partido', dados.sigla || dados.partido || 'MESA');
                     localStorage.setItem('siscam_user_foto', dados.foto || '');
 
-                    if (dados.cargo === 'SUPERADMIN') {
+                    // Redirecionamento blindado contra pequenas variações textuais do banco
+                    if (cargoTratado === 'SUPERADMIN') {
                         window.location.href = './index.html';
-                    } else if (dados.cargo === 'PRESIDENTE') {
+                    } else if (cargoTratado === 'PRESIDENTE' || cargoTratado.includes('PRESIDENTE')) {
                         window.location.href = './presidente.html';
                     } else {
                         window.location.href = './vereador.html';
                     }
                 } else {
                     const errData = await res.json().catch(() => ({}));
-                    alert(errData.error || "Usuário ou senha inválidos. Verifique suas credenciais.");
+                    alert(errData.error || "Utilizador ou senha inválidos. Verifique as suas credenciais.");
                 }
             } catch (e) {
-                console.error("Erro de comunicação com a API:", e);
-                alert("Erro ao conectar com o servidor do SISCAM. Certifique-se de que o back-end está ativo no Railway.");
+                console.error("Erro na ligação ao endpoint:", e);
+                alert("Erro ao conectar com o servidor do SISCAM. Verifique se o back-end está ativo no Railway.");
             }
         }
     </script>
