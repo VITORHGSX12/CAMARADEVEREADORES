@@ -179,6 +179,13 @@
                         <label class="block mb-1 text-clarencia-sub">Senha de Acesso</label>
                         <input type="password" id="cad-password" value="123456" class="w-full border rounded-xl p-2.5 bg-slate-50 focus:outline-none focus:border-centaurea">
                     </div>
+                    
+                    <!-- REINTEGRADO: Campo de Seleção de Foto Oficial -->
+                    <div>
+                        <label class="block mb-1 text-clarencia-sub">Foto do Parlamentar (URL ou Link)</label>
+                        <input type="text" id="cad-foto" placeholder="https://linkdafoto.com/foto.jpg" class="w-full border rounded-xl p-2.5 bg-slate-50 focus:outline-none focus:border-centaurea">
+                    </div>
+
                     <div class="md:col-span-3 flex justify-end pt-2">
                         <button type="submit" class="bg-centaurea hover:bg-centaurea-hover text-white px-6 py-2.5 rounded-xl font-bold transition-all shadow-md">
                             Salvar Parlamentar
@@ -294,7 +301,7 @@
                 
                 const dados = await res.json();
                 document.getElementById('card-qtd-vereadores').innerText = dados.length;
-                document.getElementById('card-qtd-projetos').innerText = projetosMemoriaLocal.length;
+                document.getElementById('card-qtd-projetos').innerText = proyectosMemoriaLocal.length;
                 
                 renderizarCardsDashboard(dados);
                 renderizarTabelaGerenciamento(dados);
@@ -315,9 +322,10 @@
             }
 
             dados.forEach(p => {
+                const fotoExibicao = p.foto || 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=80';
                 container.innerHTML += `
                     <div class="bg-white border border-clarencia-border p-4 rounded-2xl flex items-center gap-3 shadow-sm">
-                        <img src="${p.foto || 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=80'}" class="w-11 h-11 rounded-full object-cover border shrink-0">
+                        <img src="${fotoExibicao}" class="w-11 h-11 rounded-full object-cover border shrink-0">
                         <div class="min-w-0">
                             <p class="font-bold text-xs text-clarencia-text truncate">${p.nomeEleitoral || p.nomeCompleto}</p>
                             <span class="text-[9px] px-2 py-0.5 font-bold uppercase rounded-full bg-slate-100 text-slate-600 block w-max mt-0.5">${p.cargo}</span>
@@ -337,9 +345,10 @@
             }
 
             dados.forEach(p => {
+                const fotoExibicao = p.foto || 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=80';
                 tbody.innerHTML += `
                     <tr class="hover:bg-slate-50/80 transition-all">
-                        <td class="py-3 px-6"><img src="${p.foto}" class="w-9 h-9 rounded-full object-cover border"></td>
+                        <td class="py-3 px-6"><img src="${fotoExibicao}" class="w-9 h-9 rounded-full object-cover border"></td>
                         <td class="py-3 px-6 font-bold text-clarencia-text">${p.nomeCompleto} <span class="text-xs font-normal text-clarencia-sub">(${p.nomeEleitoral})</span></td>
                         <td class="py-3 px-6 text-xs font-semibold text-slate-600">${p.cargo}</td>
                         <td class="py-3 px-6 text-xs text-clarencia-sub">${p.partido || 'Sem partido'} - ${p.sigla || 'N/A'}</td>
@@ -352,6 +361,13 @@
 
         async function salvarParlamentar(event) {
             event.preventDefault();
+            
+            // Captura o link inserido ou define um avatar padrão estável
+            let fotoLink = document.getElementById('cad-foto').value.trim();
+            if(!fotoLink) {
+                fotoLink = 'https://images.unsplash.com/photo-1560250097-0b93528c311a?q=80&w=256';
+            }
+
             const bodyData = {
                 nomeCompleto: document.getElementById('cad-nomeCompleto').value,
                 nomeEleitoral: document.getElementById('cad-nomeEleitoral').value,
@@ -361,6 +377,7 @@
                 sigla: document.getElementById('cad-sigla').value,
                 username: document.getElementById('cad-username').value,
                 password: document.getElementById('cad-password').value,
+                foto: fotoLink,
                 dataNascimento: "1990-01-01",
                 nomeMae: "Mãe Legislativa"
             };
@@ -372,7 +389,7 @@
                     body: JSON.stringify(bodyData)
                 });
                 if(!res.ok) { const err = await res.json(); throw new Error(err.error || "Falha no cadastro"); }
-                alert("Parlamentar salvo no banco de dados!");
+                alert("Parlamentar salvo no banco de dados com sucesso!");
                 document.getElementById('form-cadastrar-parlamentar').reset();
                 sincronizarDadosGerais();
             } catch(err) { alert("Erro ao salvar: " + err.message); }
@@ -380,7 +397,7 @@
 
         async function deletarParlamentar(id) {
             if(!confirm("Tem certeza que deseja excluir este parlamentar?")) return;
-            const urlDelete = LOCAL_HOST ? `http://localhost:3000/api/vereadores/${id}` : `${BACKEND_RAILWAY}/api/vereadores/${id}`;
+            const urlDelete = LOCAL_HOST ? `http://localhost:3000/api/parlamentares/${id}` : `${BACKEND_RAILWAY}/api/parlamentares/${id}`;
             try {
                 const res = await fetch(urlDelete, { method: 'DELETE' });
                 if(res.ok) { alert("Removido com sucesso!"); sincronizarDadosGerais(); }
@@ -443,7 +460,7 @@
         }
 
         function removerProjeto(id) {
-            projetosMemoriaLocal = projetosMemoriaLocal.filter(p => p.id !== id);
+            projectsMemoriaLocal = projetosMemoriaLocal.filter(p => p.id !== id);
             localStorage.setItem('siscam_projetos_salvos', JSON.stringify(projetosMemoriaLocal));
             sincronizarDadosGerais();
         }
