@@ -146,9 +146,14 @@
                         <p id="mic-status-texto" class="text-xs text-slate-400 [html.light_&]:text-slate-500">Você está em modo de escuta. Peça permissão para falar.</p>
                     </div>
                 </div>
-                <button onclick="solicitarPalavra()" id="btn-pedir-fala" class="bg-blue-600 hover:bg-blue-500 text-white font-bold py-2.5 px-5 rounded-xl text-sm transition-all flex items-center gap-2 shadow-lg shrink-0">
-                    <i data-lucide="message-square-plus" class="w-4 h-4"></i> Solicitar Permissão de Fala
-                </button>
+                <div class="flex items-center gap-2 shrink-0">
+                    <button onclick="alternarMicrofone()" id="btn-toggle-mic" class="hidden bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2.5 px-5 rounded-xl text-sm transition-all items-center gap-2 shadow-lg">
+                        <i data-lucide="mic" class="w-4 h-4"></i> <span id="txt-toggle-mic">Microfone Ativo</span>
+                    </button>
+                    <button onclick="solicitarPalavra()" id="btn-pedir-fala" class="bg-blue-600 hover:bg-blue-500 text-white font-bold py-2.5 px-5 rounded-xl text-sm transition-all flex items-center gap-2 shadow-lg">
+                        <i data-lucide="message-square-plus" class="w-4 h-4"></i> Solicitar Permissão de Fala
+                    </button>
+                </div>
             </div>
 
             <div id="painel-votacao-nominal" class="bg-slate-950/60 dark:bg-slate-950/60 border border-amber-500/20 p-6 rounded-2xl space-y-4 hidden [html.light_&]:bg-white [html.light_&]:border-amber-500/30 shadow-xl">
@@ -387,6 +392,7 @@
         let scriptProcessor = null;
         let micSource = null;
         let audioContextSender = null;
+        let microfoneMudado = false;
 
         let bancoDeProjetos = JSON.parse(localStorage.getItem('siscam_projetos_gabinete')) || [
             { codigo: "PL Nº 18/2026", ementa: "Dispõe sobre a installation de cisternas para captação de água nas escolas da rede municipal.", corpo: "Art. 1º Fica instituído o programa..." },
@@ -612,13 +618,22 @@
             const icone = document.getElementById('mic-status-icone');
             const texto = document.getElementById('mic-status-texto');
             const btn = document.getElementById('btn-pedir-fala');
+            const btnMic = document.getElementById('btn-toggle-mic');
 
             if (String(autorizadoId) === String(VEREADOR_ID)) {
+                microfoneMudado = false;
+                btnMic.classList.remove('hidden');
+                btnMic.classList.add('flex');
+                atualizarBotaoMic();
+
                 icone.className = "w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 flex items-center justify-center animate-pulse";
                 icone.innerHTML = `<i data-lucide="mic" class="w-5 h-5"></i>`;
                 texto.innerHTML = `<span class="text-emerald-400 font-bold uppercase tracking-wider block text-[11px]">Sua fala está ativa</span> Seu microfone está captando áudio diretamente para a TV do Plenário.`;
                 activarCapturaMicrofone();
             } else {
+                btnMic.classList.add('hidden');
+                btnMic.classList.remove('flex');
+
                 icone.className = "w-12 h-12 rounded-xl bg-slate-900 border border-slate-800 text-slate-500 flex items-center justify-center";
                 icone.innerHTML = `<i data-lucide="mic-off" class="w-5 h-5"></i>`;
                 texto.innerText = "Você está em modo de escuta. Peça permissão para falar.";
@@ -633,6 +648,43 @@
             lucide.createIcons();
         }
 
+        // Liga/desliga o envio de áudio sem abrir mão da palavra (mudo temporário)
+        function alternarMicrofone() {
+            microfoneMudado = !microfoneMudado;
+            atualizarBotaoMic();
+
+            const icone = document.getElementById('mic-status-icone');
+            const texto = document.getElementById('mic-status-texto');
+
+            if (microfoneMudado) {
+                icone.className = "w-12 h-12 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-400 flex items-center justify-center";
+                icone.innerHTML = `<i data-lucide="mic-off" class="w-5 h-5"></i>`;
+                texto.innerHTML = `<span class="text-amber-400 font-bold uppercase tracking-wider block text-[11px]">Microfone silenciado</span> Você continua com a palavra, mas seu áudio não está sendo enviado.`;
+            } else {
+                icone.className = "w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 flex items-center justify-center animate-pulse";
+                icone.innerHTML = `<i data-lucide="mic" class="w-5 h-5"></i>`;
+                texto.innerHTML = `<span class="text-emerald-400 font-bold uppercase tracking-wider block text-[11px]">Sua fala está ativa</span> Seu microfone está captando áudio diretamente para a TV do Plenário.`;
+            }
+            lucide.createIcons();
+        }
+
+        function atualizarBotaoMic() {
+            const btnMic = document.getElementById('btn-toggle-mic');
+            const txtMic = document.getElementById('txt-toggle-mic');
+            const iconeBtn = btnMic.querySelector('i');
+
+            if (microfoneMudado) {
+                btnMic.className = "flex bg-slate-700 hover:bg-slate-600 text-white font-bold py-2.5 px-5 rounded-xl text-sm transition-all items-center gap-2 shadow-lg";
+                txtMic.innerText = "Microfone Mudo";
+                iconeBtn.setAttribute('data-lucide', 'mic-off');
+            } else {
+                btnMic.className = "flex bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2.5 px-5 rounded-xl text-sm transition-all items-center gap-2 shadow-lg";
+                txtMic.innerText = "Microfone Ativo";
+                iconeBtn.setAttribute('data-lucide', 'mic');
+            }
+            lucide.createIcons();
+        }
+
         async function activarCapturaMicrofone() {
             if (audioStream) return;
             try {
@@ -642,7 +694,7 @@
                 
                 scriptProcessor = audioContextSender.createScriptProcessor(4096, 1, 1);
                 scriptProcessor.onaudioprocess = (e) => {
-                    if (!socket.connected) return;
+                    if (!socket.connected || microfoneMudado) return;
                     const inputData = e.inputBuffer.getChannelData(0);
                     const pcmData = new Int16Array(inputData.length);
                     for (let i = 0; i < inputData.length; i++) {
@@ -658,6 +710,7 @@
         }
 
         function desativarCapturaMicrofone() {
+            microfoneMudado = false;
             if (scriptProcessor) {
                 scriptProcessor.disconnect();
                 scriptProcessor.onaudioprocess = null;
