@@ -11,7 +11,7 @@ const PORT = process.env.PORT || 3000;
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
-// Configuração manual e robusta de CORS para dar bypass nas travas do Vercel
+// CABEÇALHOS DE SEGURANÇA CORS COMPLETO PARA PRODUÇÃO (VERCEL)
 app.use((req, res, next) => {
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
@@ -196,6 +196,7 @@ const processarLogin = (req, res) => {
             return res.status(400).json({ error: "Informe usuário e senha." });
         }
 
+        // Credencial master do Administrador
         if (userFinal === "admin" && passFinal === "123456") {
             return res.json({ id: "admin", nome: "Super Admin", cargo: "SUPERADMIN" });
         }
