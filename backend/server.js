@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const http = require('http'); 
@@ -133,7 +134,9 @@ const processarLogin = async (req, res) => {
             return res.status(400).json({ error: "Informe usuário e senha." });
         }
 
-        if (userFinal === "admin" && passFinal === "123456") {
+        const adminUser = (process.env.ADMIN_USER || "admin").toLowerCase();
+        const adminPass = process.env.ADMIN_PASS || "123456";
+        if (userFinal === adminUser && passFinal === adminPass) {
             return res.json({ id: "admin", nome: "Super Admin", cargo: "SUPERADMIN" });
         }
 

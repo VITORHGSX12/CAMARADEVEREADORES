@@ -2,10 +2,10 @@
   "name": "siscam-backend",
   "version": "1.0.0",
   "description": "Backend do SISCAM 1.0 - Portal Legislativo",
-  "main": "server.js",
+  "main": "backend/server.js",
   "scripts": {
-    "start": "node server.js",
-    "build": "echo 'Sem build necessario'"
+    "start": "npx prisma migrate deploy --schema=backend/prisma/schema.prisma && node backend/server.js",
+    "build": "npx prisma generate --schema=backend/prisma/schema.prisma"
   },
   "keywords": [],
   "author": "",
@@ -13,6 +13,11 @@
   "dependencies": {
     "cors": "^2.8.5",
     "express": "^4.18.2",
-    "socket.io": "^4.7.2"
+    "socket.io": "^4.7.2",
+    "@prisma/client": "^5.22.0",
+    "dotenv": "^16.4.5"
+  },
+  "devDependencies": {
+    "prisma": "^5.22.0"
   }
 }
