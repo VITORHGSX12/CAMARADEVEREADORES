@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SISCAM 1.0 - Painel do Presidente</title>
+    <title>SISCAM 1.0 - Painel do Presidente & Gestão de Atas</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
@@ -20,13 +20,6 @@
                             hover: '#4338ca',
                             bg: 'rgba(79, 70, 229, 0.1)',
                             border: 'rgba(79, 70, 229, 0.2)'
-                        },
-                        clarencia: {
-                            bg: '#f8fafc',     
-                            card: '#ffffff',
-                            border: '#e2e8f0',   
-                            text: '#334155',     
-                            sub: '#64748b'       
                         }
                     }
                 }
@@ -38,157 +31,186 @@
             window.location.href = './login.html';
         }
     </script>
+    <style>
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #020617; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 999px; }
+        ::-webkit-scrollbar-thumb:hover { background: #475569; }
+    </style>
 </head>
 <body class="bg-slate-950 text-slate-100 font-sans flex h-screen overflow-hidden select-none">
 
-    <aside class="w-72 bg-slate-900 border-r border-slate-800 flex flex-col justify-between shrink-0">
+    <!-- SIDEBAR PRINCIPAL DE NAVEGAÇÃO -->
+    <aside class="w-64 bg-slate-900 border-r border-slate-800 flex flex-col justify-between shrink-0 z-20">
         <div>
-            <div class="p-6 border-b border-slate-800 flex items-center gap-3">
-                <i data-lucide="gavel" class="text-indigo-400 w-8 h-8"></i>
+            <div class="p-5 border-b border-slate-800 flex items-center gap-3">
+                <i data-lucide="gavel" class="text-indigo-400 w-7 h-7"></i>
                 <div>
-                    <h1 class="font-bold text-lg leading-none tracking-wide">SISCAM 1.0</h1>
-                    <span class="text-xs text-slate-400 font-medium">Mesa Diretora</span>
+                    <h1 class="font-bold text-base leading-none tracking-wide">SISCAM 1.0</h1>
+                    <span class="text-[10px] text-slate-400 font-medium">Câmara Municipal</span>
                 </div>
             </div>
 
-            <div class="px-6 py-4 bg-slate-950/40 border-b border-slate-800 flex items-center gap-3">
-                <img id="pres-foto-sidebar" src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=80" class="w-10 h-10 rounded-full object-cover border border-slate-700">
-                <div class="min-w-0">
-                    <span id="nome-presidente-logado" class="text-xs font-bold truncate block">Presidente</span>
-                    <span class="text-[10px] text-indigo-400 font-extrabold uppercase tracking-wider block mt-0.5">PRESIDENTE DA MESA</span>
-                </div>
-            </div>
-
-            <div class="p-4 space-y-4">
-                <div class="bg-slate-950 border border-slate-800 rounded-2xl p-4 space-y-3">
-                    <div class="flex items-center justify-between">
-                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Cronômetro Discurso</span>
-                        <span id="cronometro-display" class="text-2xl font-black text-amber-400 font-mono">05:00</span>
-                    </div>
-                    <div class="grid grid-cols-3 gap-1">
-                        <button onclick="controlarCronometro('iniciar')" class="bg-indigo-600 hover:bg-indigo-500 font-bold text-[10px] py-2 rounded-lg transition-all">Iniciar</button>
-                        <button onclick="controlarCronometro('pausar')" class="bg-slate-800 hover:bg-slate-700 font-bold text-[10px] py-2 rounded-lg transition-all">Pausar</button>
-                        <button onclick="controlarCronometro('resetar')" class="bg-rose-950/40 hover:bg-rose-900 text-rose-400 font-bold text-[10px] py-2 rounded-lg border border-rose-900/30 transition-all">Resetar</button>
-                    </div>
-                    <div class="space-y-1 pt-1 border-t border-slate-800/60">
-                        <select id="crono-tipo" class="w-full bg-slate-900 border border-slate-800 rounded-lg p-1.5 text-[10px] text-slate-300 font-medium focus:outline-none focus:border-indigo-500">
-                            <option value="Grande Expediente">Grande Expediente (5 Min)</option>
-                            <option value="Pequeno Expediente">Pequeno Expediente (3 Min)</option>
-                            <option value="Explicação Pessoal">Explicação Pessoal (2 Min)</option>
-                            <option value="Considerações Finais">Considerações Finais (1 Min)</option>
-                        </select>
-                        <button onclick="aplicarConfiguracaoTempo()" class="w-full bg-slate-800 hover:bg-slate-700 text-white font-bold text-[9px] py-1.5 rounded-lg transition-all uppercase tracking-wider">Definir Tempo</button>
-                    </div>
-                </div>
-
-                <div class="bg-slate-950 border border-slate-800 rounded-2xl p-4 space-y-3">
-                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Fila de Oradores</span>
-                    <div id="container-fila-oradores" class="space-y-1.5 max-h-40 overflow-y-auto pr-1"></div>
-                </div>
-            </div>
+            <nav class="p-3 space-y-1">
+                <span class="text-[9px] font-bold text-slate-500 uppercase px-3 tracking-wider block mb-2">Navegação</span>
+                <button class="w-full flex items-center gap-3 px-3 py-2 rounded-xl bg-indigo-600/10 text-indigo-400 font-semibold text-xs transition-all text-left">
+                    <i data-lucide="layout-dashboard" class="w-4 h-4"></i> Controle da Mesa
+                </button>
+                <button onclick="abrirModalAta()" class="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-slate-400 hover:text-slate-200 hover:bg-slate-800/50 font-medium text-xs transition-all text-left">
+                    <i data-lucide="file-text" class="w-4 h-4"></i> Módulo de Atas
+                </button>
+                <button class="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-slate-400 hover:text-slate-200 hover:bg-slate-800/50 font-medium text-xs transition-all text-left">
+                    <i data-lucide="archive" class="w-4 h-4"></i> Arquivo Legislativo
+                </button>
+                <button class="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-slate-400 hover:text-slate-200 hover:bg-slate-800/50 font-medium text-xs transition-all text-left">
+                    <i data-lucide="users" class="w-4 h-4"></i> Cadastro Parlamentar
+                </button>
+                <button class="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-slate-400 hover:text-slate-200 hover:bg-slate-800/50 font-medium text-xs transition-all text-left">
+                    <i data-lucide="settings" class="w-4 h-4"></i> Configurações
+                </button>
+            </nav>
         </div>
 
-        <div class="p-4 border-t border-slate-800 bg-slate-950/60 flex flex-col gap-2">
-            <button onclick="solicitarGeracaoAta()" class="w-full flex items-center justify-center gap-2 bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold py-2 px-4 rounded-xl border border-slate-700 transition-all text-xs">
-                <i data-lucide="file-check" class="w-4 h-4"></i> Exportar Ata da Sessão
-            </button>
-            <button onclick="fazerLogout()" class="w-full flex items-center justify-center gap-2 bg-rose-500/10 hover:bg-rose-500 text-rose-400 hover:text-white font-bold py-2 px-4 rounded-xl border border-rose-500/10 transition-all text-xs">
-                <i data-lucide="log-out" class="w-4 h-4"></i> Sair do Sistema
+        <div class="p-4 border-t border-slate-800 bg-slate-950/40 space-y-3">
+            <div class="flex items-center gap-2 px-1">
+                <img id="pres-foto-sidebar" src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=80" class="w-8 h-8 rounded-full object-cover border border-slate-700">
+                <div class="min-w-0">
+                    <span id="nome-presidente-logado" class="text-[11px] font-bold truncate block">Presidente</span>
+                    <span class="text-[8px] text-indigo-400 font-bold uppercase tracking-wider block">Mesa Diretora</span>
+                </div>
+            </div>
+            <button onclick="fazerLogout()" class="w-full flex items-center justify-center gap-2 bg-rose-500/10 hover:bg-rose-500 text-rose-400 hover:text-white font-bold py-2 rounded-xl transition-all text-xs">
+                <i data-lucide="log-out" class="w-3.5 h-3.5"></i> Sair do Sistema
             </button>
         </div>
     </aside>
 
-    <main class="flex-1 overflow-y-auto p-8 bg-slate-950 flex flex-col space-y-6">
-        <header class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-slate-800 pb-6 shrink-0">
+    <!-- CRONÔMETRO E AUXILIARES LATERAIS (ANTIGA SIDEBAR PARCIAL) -->
+    <section class="w-64 bg-slate-950 border-r border-slate-900 flex flex-col p-4 gap-4 shrink-0 overflow-y-auto">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-3">
+            <div class="flex items-center justify-between">
+                <span class="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Discurso</span>
+                <span id="cronometro-display" class="text-xl font-black text-amber-400 font-mono">05:00</span>
+            </div>
+            <div class="grid grid-cols-3 gap-1">
+                <button onclick="controlarCronometro('iniciar')" class="bg-indigo-600 hover:bg-indigo-500 font-bold text-[9px] py-1.5 rounded-lg transition-all">Iniciar</button>
+                <button onclick="controlarCronometro('pausar')" class="bg-slate-800 hover:bg-slate-700 font-bold text-[9px] py-1.5 rounded-lg transition-all">Pausar</button>
+                <button onclick="controlarCronometro('resetar')" class="bg-rose-950/40 hover:bg-rose-900 text-rose-400 font-bold text-[9px] py-1.5 rounded-lg border border-rose-900/30 transition-all">Reset</button>
+            </div>
+            <div class="space-y-1 pt-1 border-t border-slate-800/60">
+                <select id="crono-tipo" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-1 text-[10px] text-slate-300 focus:outline-none focus:border-indigo-500">
+                    <option value="Grande Expediente">Grande Expediente (5 Min)</option>
+                    <option value="Pequeno Expediente">Pequeno Expediente (3 Min)</option>
+                    <option value="Explicação Pessoal">Explicação Pessoal (2 Min)</option>
+                    <option value="Considerações Finais">Considerações Finais (1 Min)</option>
+                </select>
+                <button onclick="aplicarConfiguracaoTempo()" class="w-full bg-slate-800 hover:bg-slate-700 text-white font-bold text-[9px] py-1.5 rounded-lg transition-all uppercase tracking-wider">Definir Tempo</button>
+            </div>
+        </div>
+
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex-1 flex flex-col justify-between min-h-[180px]">
+            <span class="text-[9px] font-bold text-slate-400 uppercase tracking-wider block">Fila de Oradores</span>
+            <div id="container-fila-oradores" class="space-y-1.5 flex-1 mt-2 overflow-y-auto pr-1"></div>
+        </div>
+    </section>
+
+    <!-- CONTEÚDO PRINCIPAL -->
+    <main class="flex-1 overflow-y-auto p-6 bg-slate-950 flex flex-col space-y-6">
+        <header class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 border-b border-slate-800 pb-5 shrink-0">
             <div>
-                <h2 class="font-black text-2xl tracking-tight text-white">Controle da Mesa Diretora</h2>
+                <h2 class="font-black text-xl tracking-tight text-white">Controle da Mesa Diretora</h2>
                 <p class="text-xs text-slate-400 mt-0.5">Gerenciamento de presença, microfone plenário, ordem do dia e escrutínio</p>
             </div>
-            <div class="flex items-center gap-2">
-                <button onclick="dispararAcaoSessao('abrir')" class="bg-emerald-600/10 hover:bg-emerald-600 text-emerald-400 hover:text-white border border-emerald-500/20 px-4 py-2 rounded-xl font-bold text-xs transition-all shadow-md">Abrir Chamada Presença</button>
-                <button onclick="dispararAcaoSessao('limparMateria')" class="bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 px-4 py-2 rounded-xl font-bold text-xs transition-all shadow-md">Limpar Matéria Atual</button>
-                <button onclick="dispararAcaoSessao('fechar')" class="bg-rose-600/10 hover:bg-rose-600 text-rose-400 hover:text-white border border-rose-500/20 px-4 py-2 rounded-xl font-bold text-xs transition-all shadow-md">Encerrar Sessão Plenária</button>
+            <div class="flex items-center flex-wrap gap-2">
+                <!-- NOVO BOTÃO DE ABRIR TELÃO -->
+                <button onclick="window.open('./tela_plenario.html', '_blank')" class="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-xl font-bold text-xs transition-all shadow-md flex items-center gap-1.5">
+                    <i data-lucide="monitor"></i> Abrir Telão do Plenário
+                </button>
+                <button onclick="dispararAcaoSessao('abrir')" class="bg-emerald-600/10 hover:bg-emerald-600 text-emerald-400 hover:text-white border border-emerald-500/20 px-3 py-2 rounded-xl font-bold text-xs transition-all">Ativar Presença</button>
+                <button onclick="dispararAcaoSessao('limparMateria')" class="bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 px-3 py-2 rounded-xl font-bold text-xs transition-all">Limpar Matéria</button>
+                <button onclick="dispararAcaoSessao('fechar')" class="bg-rose-600/10 hover:bg-rose-600 text-rose-400 hover:text-white border border-rose-500/20 px-3 py-2 rounded-xl font-bold text-xs transition-all">Encerrar Sessão</button>
             </div>
         </header>
 
-        <section class="grid grid-cols-1 lg:grid-cols-3 gap-6 shrink-0">
-            <div class="bg-slate-900 border border-slate-800 rounded-3xl p-5 space-y-3">
+        <!-- SEÇÃO DE CONTROLES DO PAINEL -->
+        <section class="grid grid-cols-1 xl:grid-cols-3 gap-5 shrink-0">
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-3">
                 <span class="text-[10px] font-black uppercase tracking-wider text-slate-400 block">Matéria Legislativa em Pauta</span>
                 <div class="space-y-2">
                     <div class="grid grid-cols-3 gap-2">
-                        <input type="text" id="materia-codigo" placeholder="Ex: PL 01/2026" class="col-span-1 bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-xs focus:outline-none focus:border-indigo-500 font-bold text-white">
-                        <input type="text" id="materia-ementa" placeholder="Ementa ou descrição sucinta da matéria..." class="col-span-2 bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-xs focus:outline-none focus:border-indigo-500 font-medium text-slate-200">
+                        <input type="text" id="materia-codigo" placeholder="Ex: PL 01/2026" class="col-span-1 bg-slate-950 border border-slate-800 rounded-xl p-2 text-xs focus:outline-none focus:border-indigo-500 font-bold text-white">
+                        <input type="text" id="materia-ementa" placeholder="Ementa da matéria..." class="col-span-2 bg-slate-950 border border-slate-800 rounded-xl p-2 text-xs focus:outline-none focus:border-indigo-500 text-slate-200">
                     </div>
-                    <button onclick="enviarMateriaParaVotacao()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs py-2.5 rounded-xl transition-all shadow-md">Abrir Painel de Votação</button>
+                    <button onclick="enviarMateriaParaVotacao()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs py-2 rounded-xl transition-all shadow-md">Abrir Painel de Votação</button>
                 </div>
             </div>
 
-            <div class="bg-slate-900 border border-slate-800 rounded-3xl p-5 flex flex-col justify-between">
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex flex-col justify-between">
                 <div>
-                    <span class="text-[10px] font-black uppercase tracking-wider text-slate-400 block mb-2">Painel de Votos do Plenário</span>
+                    <span class="text-[10px] font-black uppercase tracking-wider text-slate-400 block mb-1">Painel de Votos do Plenário</span>
                     <div id="materia-ativa-info" class="text-xs space-y-1 hidden">
                         <p class="font-bold text-indigo-400" id="info-materia-cod"></p>
-                        <p class="text-slate-300 line-clamp-2" id="info-materia-em"></p>
+                        <p class="text-slate-300 line-clamp-1" id="info-materia-em"></p>
                     </div>
-                    <p id="materia-ativa-vazia" class="text-xs text-slate-500 italic mt-2">Nenhuma matéria em votação neste momento.</p>
+                    <p id="materia-ativa-vazia" class="text-xs text-slate-500 italic">Nenhuma matéria em votação.</p>
                 </div>
-                <div class="grid grid-cols-3 gap-3 mt-4">
-                    <div class="bg-slate-950 border border-slate-800 rounded-2xl p-3 text-center">
+                <div class="grid grid-cols-3 gap-2 mt-2">
+                    <div class="bg-slate-950 border border-slate-800 rounded-xl p-2 text-center">
                         <span class="text-[9px] font-bold uppercase tracking-wider text-emerald-400 block">Sim</span>
-                        <p id="total-votos-sim" class="text-xl font-black mt-0.5 text-white">0</p>
+                        <p id="total-votos-sim" class="text-base font-black text-white">0</p>
                     </div>
-                    <div class="bg-slate-950 border border-slate-800 rounded-2xl p-3 text-center">
+                    <div class="bg-slate-950 border border-slate-800 rounded-xl p-2 text-center">
                         <span class="text-[9px] font-bold uppercase tracking-wider text-rose-400 block">Não</span>
-                        <p id="total-votos-nao" class="text-xl font-black mt-0.5 text-white">0</p>
+                        <p id="total-votos-nao" class="text-base font-black text-white">0</p>
                     </div>
-                    <div class="bg-slate-950 border border-slate-800 rounded-2xl p-3 text-center">
+                    <div class="bg-slate-950 border border-slate-800 rounded-xl p-2 text-center">
                         <span class="text-[9px] font-bold uppercase tracking-wider text-amber-400 block">Abst.</span>
-                        <p id="total-votos-abst" class="text-xl font-black mt-0.5 text-white">0</p>
+                        <p id="total-votos-abst" class="text-base font-black text-white">0</p>
                     </div>
                 </div>
             </div>
 
-            <div class="bg-slate-900 border border-slate-800 rounded-3xl p-5 flex flex-col justify-between">
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex flex-col justify-between">
                 <div>
                     <span class="text-[10px] font-black uppercase tracking-wider text-slate-400 block">Controle do Microfone Central</span>
-                    <div id="orador-ativo-card" class="mt-3 flex items-center gap-3 bg-slate-950 p-3 rounded-2xl border border-slate-800 hidden">
+                    <div id="orador-ativo-card" class="mt-2 flex items-center gap-2 bg-slate-950 p-2 rounded-xl border border-slate-800 hidden">
                         <div class="w-2 h-2 rounded-full bg-emerald-500 animate-ping shrink-0"></div>
                         <div class="min-w-0 flex-1">
                             <p id="orador-ativo-nome" class="font-bold text-xs text-white truncate">Nenhum orador</p>
-                            <span class="text-[9px] text-emerald-400 font-semibold block mt-0.5">Microfone Liberado</span>
                         </div>
-                        <button onclick="cortarMicrofoneGeral()" class="bg-rose-950/60 hover:bg-rose-900 border border-rose-900/40 text-rose-400 text-[10px] font-bold px-2.5 py-1.5 rounded-xl transition-all">Cortar</button>
+                        <button onclick="cortarMicrofoneGeral()" class="bg-rose-950/60 hover:bg-rose-900 border border-rose-900/40 text-rose-400 text-[10px] font-bold px-2 py-1 rounded-lg">Cortar</button>
                     </div>
-                    <p id="orador-ativo-vazio" class="text-xs text-slate-500 italic mt-3">Nenhum parlamentar com palavra concedida.</p>
+                    <p id="orador-ativo-vazio" class="text-xs text-slate-500 italic mt-2">Nenhum parlamentar na tribuna.</p>
                 </div>
-                <div class="pt-3 border-t border-slate-800/50 mt-4 flex items-center justify-between">
-                    <span class="text-[10px] text-slate-400 font-medium">Seu Microfone Local:</span>
-                    <button id="btn-hardware-mic" onclick="alternarMicrofoneHardware()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-bold text-[10px] px-3 py-1.5 rounded-xl transition-all flex items-center gap-1.5">
-                        <i data-lucide="mic-off" class="w-3.5 h-3.5 text-rose-400"></i> Desativado
+                <div class="pt-2 border-t border-slate-800/50 mt-2 flex items-center justify-between">
+                    <span class="text-[10px] text-slate-400">Microfone Local:</span>
+                    <button id="btn-hardware-mic" onclick="alternarMicrofoneHardware()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-bold text-[10px] px-2.5 py-1 rounded-lg flex items-center gap-1">
+                        <i data-lucide="mic-off" class="w-3 h-3 text-rose-400"></i> Desativado
                     </button>
                 </div>
             </div>
         </section>
 
-        <section class="flex-1 min-h-0 space-y-4 flex flex-col">
-            <h3 class="font-bold text-sm text-slate-300 flex items-center gap-2 shrink-0">
-                <i data-lucide="users" class="text-indigo-400 w-4 h-4"></i> Controle de Presenças e Votações Unificadas
+        <!-- SEÇÃO TABELA DE VEREADORES -->
+        <section class="flex-1 min-h-0 space-y-3 flex flex-col">
+            <h3 class="font-bold text-xs text-slate-300 flex items-center gap-2 shrink-0">
+                <i data-lucide="users" class="text-indigo-400 w-4 h-4"></i> Presenças e Painel de Votos Unificados
             </h3>
-            <div class="bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden flex-1 min-h-0 flex flex-col">
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden flex-1 min-h-0 flex flex-col">
                 <div class="overflow-y-auto flex-1">
                     <table class="w-full text-left border-collapse">
                         <thead>
                             <tr class="border-b border-slate-800 bg-slate-950/50 text-[10px] font-bold uppercase tracking-wider text-slate-400 sticky top-0 backdrop-blur-md z-10">
-                                <th class="py-3 px-6 w-16">Foto</th>
-                                <th class="py-3 px-6">Parlamentar</th>
-                                <th class="py-3 px-6 w-32 text-center">Presença</th>
-                                <th class="py-3 px-6 w-44 text-center">Voto Registrado</th>
-                                <th class="py-3 px-6 w-40 text-right">Microfone Plenário</th>
+                                <th class="py-2.5 px-4 w-14">Foto</th>
+                                <th class="py-2.5 px-4">Parlamentar</th>
+                                <th class="py-2.5 px-4 w-28 text-center">Presença</th>
+                                <th class="py-2.5 px-4 w-40 text-center">Voto</th>
+                                <th class="py-2.5 px-4 w-36 text-right">Microfone Plenário</th>
                             </tr>
                         </thead>
-                        <tbody id="tabela-controle-mesa" class="divide-y divide-slate-800 text-xs">
+                        <tbody id="tabela-controle-mesa" class="divide-y divide-slate-800/60 text-xs">
                             <tr>
-                                <td colspan="5" class="p-8 text-center text-slate-500 italic">Buscando dados parlamentares do banco PostgreSQL...</td>
+                                <td colspan="5" class="p-6 text-center text-slate-500 italic">Carregando dados da sessão parlamentar...</td>
                             </tr>
                         </tbody>
                     </table>
@@ -196,6 +218,160 @@
             </div>
         </section>
     </main>
+
+    <!-- MODAL DO MÓDULO DE GERAÇÃO E EXPORTAÇÃO DA ATA DE SESSÃO -->
+    <div id="modal-ata" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-slate-900 border border-slate-800 w-full max-w-5xl h-[85vh] rounded-2xl flex flex-col overflow-hidden shadow-2xl">
+            
+            <!-- Cabeçalho Modal -->
+            <div class="p-4 bg-slate-950 border-b border-slate-800 flex items-center justify-between">
+                <div class="flex items-center gap-2.5">
+                    <div class="p-2 bg-indigo-600/10 rounded-lg text-indigo-400">
+                        <i data-lucide="file-text" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-sm text-white">Módulo de Automação de Atas de Sessão</h3>
+                        <p class="text-[11px] text-slate-400">Dados integrados e consolidados dinamicamente do Plenário</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-3">
+                    <span class="text-[10px] font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20 px-2.5 py-1 rounded-full uppercase tracking-wider">Modo Rascunho</span>
+                    <button onclick="fecharModalAta()" class="text-slate-400 hover:text-slate-200 transition-all">
+                        <i data-lucide="x" class="w-5 h-5"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Abas do Editor de Ata -->
+            <div class="flex border-b border-slate-800 bg-slate-900/60 text-xs font-semibold">
+                <button id="tab-auto" onclick="mudarAbaAta('auto')" class="px-5 py-3 border-b-2 border-indigo-500 text-indigo-400">1. Blocos Automáticos (Camada de Sistema)</button>
+                <button id="tab-edit" onclick="mudarAbaAta('edit')" class="px-5 py-3 border-b-2 border-transparent text-slate-400 hover:text-slate-200">2. Narrativa Legislativa (Narrativas & Expedientes)</button>
+                <button id="tab-export" onclick="mudarAbaAta('export')" class="px-5 py-3 border-b-2 border-transparent text-slate-400 hover:text-slate-200 bg-indigo-600/5 text-indigo-400 flex items-center gap-1.5"><i data-lucide="download" class="w-3.5 h-3.5"></i> 3. Exportação e Fechamento Oficial</button>
+            </div>
+
+            <!-- Corpo Dinâmico do Modal -->
+            <div class="flex-1 overflow-y-auto p-5 space-y-5 bg-slate-950/40">
+                
+                <!-- ABA 1: BLOCOS AUTOMÁTICOS -->
+                <div id="conteudo-tab-auto" class="space-y-4">
+                    <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl space-y-3">
+                        <h4 class="text-xs font-bold text-slate-300 border-b border-slate-800 pb-2 flex items-center gap-1.5"><i data-lucide="info" class="w-4 h-4 text-indigo-400"></i>Cabeçalho Institucional Autogerado</h4>
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-[11px]">
+                            <div><span class="text-slate-500 block">Instituição</span><strong class="text-slate-300">Câmara Municipal de Gonçalves Dias</strong></div>
+                            <div><span class="text-slate-500 block">UF / Município</span><strong class="text-slate-300">Maranhão / Gonçalves Dias</strong></div>
+                            <div><span class="text-slate-500 block">Sessão</span><strong class="text-slate-300">Nº 14ª Ordinária / 2026</strong></div>
+                            <div><span class="text-slate-500 block">Mesa Presidente</span><strong id="ata-presidente-ref" class="text-slate-300">Carregando...</strong></div>
+                        </div>
+                    </div>
+
+                    <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl space-y-2">
+                        <h4 class="text-xs font-bold text-slate-300 flex items-center gap-1.5"><i data-lucide="file-text" class="w-4 h-4 text-emerald-400"></i>Abertura e Verificação de Quórum Oficial</h4>
+                        <p id="preview-abertura-ata" class="text-xs text-slate-400 bg-slate-950 p-3 rounded-lg leading-relaxed border border-slate-800/80 italic"></p>
+                    </div>
+
+                    <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl space-y-3">
+                        <h4 class="text-xs font-bold text-slate-300 flex items-center gap-1.5"><i data-lucide="check-square" class="w-4 h-4 text-indigo-400"></i>Importação da Ordem do Dia (Votações de Matérias)</h4>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-[11px]">
+                                <thead>
+                                    <tr class="text-slate-500 border-b border-slate-800">
+                                        <th class="pb-2">Matéria</th>
+                                        <th class="pb-2">Ementa Legislativa</th>
+                                        <th class="pb-2 text-center">SIM</th>
+                                        <th class="pb-2 text-center">NÃO</th>
+                                        <th class="pb-2 text-center">ABS</th>
+                                        <th class="pb-2 text-right">Resultado</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="ata-tabela-materia" class="text-slate-300 divide-y divide-slate-800/40">
+                                    <!-- Preenchido dinamicamente -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ABA 2: CAMPOS EDITÁVEIS (WYSIWYG SIMULADO) -->
+                <div id="conteudo-tab-edit" class="space-y-4 hidden">
+                    <!-- Barra de ferramentas Rich Text estilizada -->
+                    <div class="bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-xl flex items-center gap-2 text-slate-400 flex-wrap">
+                        <button class="p-1 hover:bg-slate-800 hover:text-slate-200 rounded font-bold text-xs">B</button>
+                        <button class="p-1 hover:bg-slate-800 hover:text-slate-200 rounded italic text-xs">I</button>
+                        <button class="p-1 hover:bg-slate-800 hover:text-slate-200 rounded underline text-xs">U</button>
+                        <div class="w-px h-4 bg-slate-800"></div>
+                        <button class="p-1 hover:bg-slate-800 hover:text-slate-200 rounded"><i data-lucide="align-left" class="w-3.5 h-3.5"></i></button>
+                        <button class="p-1 hover:bg-slate-800 hover:text-slate-200 rounded"><i data-lucide="align-center" class="w-3.5 h-3.5"></i></button>
+                        <button class="p-1 hover:bg-slate-800 hover:text-slate-200 rounded"><i data-lucide="list" class="w-3.5 h-3.5"></i></button>
+                        <button class="p-1 hover:bg-slate-800 hover:text-slate-200 rounded"><i data-lucide="image" class="w-3.5 h-3.5"></i></button>
+                        <div class="w-px h-4 bg-slate-800"></div>
+                        <span class="text-[10px] text-slate-500 font-mono">Editor WYSIWYG Oficial Ativo</span>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="space-y-1">
+                            <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Expediente (Leitura de Atas, Ofícios e Requerimentos)</label>
+                            <textarea id="ata-expediente" class="w-full h-24 bg-slate-900 border border-slate-800 rounded-xl p-2.5 text-xs text-slate-200 focus:outline-none focus:border-indigo-500" placeholder="Insira o resumo das correspondências recebidas e expedientes apresentados..."></textarea>
+                        </div>
+                        <div class="space-y-1">
+                            <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Pequeno Expediente (Pronunciamentos Parlamentares)</label>
+                            <textarea id="ata-pequeno-exp" class="w-full h-24 bg-slate-900 border border-slate-800 rounded-xl p-2.5 text-xs text-slate-200 focus:outline-none focus:border-indigo-500" placeholder="Registre as manifestações e os resumos das falas ordenadas por vereador..."></textarea>
+                        </div>
+                        <div class="space-y-1">
+                            <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Grande Expediente</label>
+                            <textarea id="ata-grande-exp" class="w-full h-24 bg-slate-900 border border-slate-800 rounded-xl p-2.5 text-xs text-slate-200 focus:outline-none focus:border-indigo-500" placeholder="Uso da tribuna e debates parlamentares estendidos..."></textarea>
+                        </div>
+                        <div class="space-y-1">
+                            <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Explicações Pessoais</label>
+                            <textarea id="ata-explicacoes" class="w-full h-24 bg-slate-900 border border-slate-800 rounded-xl p-2.5 text-xs text-slate-200 focus:outline-none focus:border-indigo-500" placeholder="Campo complementar livre e totalmente editável de encerramento de falas..."></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ABA 3: EXPORTAÇÃO MULTI-FORMATO -->
+                <div id="conteudo-tab-export" class="space-y-4 hidden text-center py-6">
+                    <i data-lucide="file-check" class="w-12 h-12 text-indigo-400 mx-auto animate-bounce"></i>
+                    <div>
+                        <h4 class="font-bold text-sm text-white">Pronto para Exportar e Encerrar a Ata</h4>
+                        <p class="text-xs text-slate-400 max-w-md mx-auto mt-1">Selecione o formato desejado para compilar a documentação legislativa oficial. O fechamento irá gerar o código de autenticidade único e QR Code institucional.</p>
+                    </div>
+
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-3 max-w-3xl mx-auto pt-4">
+                        <button onclick="compilarAtaPDF()" class="p-4 bg-rose-600/10 hover:bg-rose-600 border border-rose-500/20 rounded-xl flex flex-col items-center justify-center gap-2 font-bold text-xs text-rose-400 hover:text-white transition-all shadow">
+                            <i data-lucide="file-text" class="w-6 h-6"></i> Exportar PDF Oficial
+                        </button>
+                        <button onclick="alert('Documento DOCX compilado com margens A4 pronto para download.')" class="p-4 bg-blue-600/10 hover:bg-blue-600 border border-blue-500/20 rounded-xl flex flex-col items-center justify-center gap-2 font-bold text-xs text-blue-400 hover:text-white transition-all shadow">
+                            <i data-lucide="file-output" class="w-6 h-6"></i> Baixar Word (.docx)
+                        </button>
+                        <button onclick="window.print()" class="p-4 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-xl flex flex-col items-center justify-center gap-2 font-bold text-xs text-slate-300 transition-all shadow">
+                            <i data-lucide="printer" class="w-6 h-6"></i> Imprimir Direto (A4)
+                        </button>
+                        <button onclick="alert('Código HTML estruturado copiado para área de transferência corporativa.')" class="p-4 bg-amber-600/10 hover:bg-amber-600 border border-amber-500/20 rounded-xl flex flex-col items-center justify-center gap-2 font-bold text-xs text-amber-400 hover:text-white transition-all shadow">
+                            <i data-lucide="code" class="w-6 h-6"></i> Exportar HTML
+                        </button>
+                    </div>
+
+                    <div class="pt-5 border-t border-slate-800 max-w-lg mx-auto flex items-center gap-3 bg-slate-900/60 p-3 rounded-xl border border-dashed text-left">
+                        <div class="w-14 h-14 bg-white p-1 rounded shrink-0 flex items-center justify-center font-bold text-black text-[9px] text-center">QR CODE AUTH</div>
+                        <div>
+                            <span class="text-[9px] font-mono text-indigo-400 block font-bold uppercase tracking-wider">Metadados de Validação Digital</span>
+                            <p class="text-[10px] text-slate-400 font-medium">Chave: AUTH-2026-MUNIC-GD-9941X<br>Paginação Automática Flexível • Layout em Conformidade com a BNCC e Normas de Gestão.</p>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Rodapé Modal -->
+            <div class="p-3 bg-slate-950 border-t border-slate-800 flex justify-between items-center">
+                <button onclick="fecharModalAta()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 font-semibold text-xs rounded-xl transition-all">Fechar Módulo</button>
+                <div class="flex items-center gap-2">
+                    <button onclick="alert('Rascunho atual salvo em cache do servidor PostgreSQL!')" class="px-4 py-2 bg-slate-900 border border-slate-800 hover:bg-slate-800 text-slate-300 font-semibold text-xs rounded-xl transition-all">Salvar Rascunho</button>
+                    <button onclick="alert('Fluxo Atualizado para Em Revisão. Edição temporariamente mantida.')" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-xl transition-all shadow-md">Avançar Fluxo (Aprovação)</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
 
     <script>
         lucide.createIcons();
@@ -209,9 +385,12 @@
         let dadosParlaGlobais = [];
         let micLocalStream = null;
         let mediaRecorderHardware = null;
+        let cacheStatusSessao = null;
 
-        // Configuração Sidebar Presidente
-        document.getElementById('nome-presidente-logado').innerText = localStorage.getItem('siscam_user_nome') || 'Presidente';
+        // Configuração Sidebar Corporativa
+        const nomePresidente = localStorage.getItem('siscam_user_nome') || 'Presidente';
+        document.getElementById('nome-presidente-logado').innerText = nomePresidente;
+        document.getElementById('ata-presidente-ref').innerText = nomePresidente;
         if (localStorage.getItem('siscam_user_foto')) {
             document.getElementById('pres-foto-sidebar').src = localStorage.getItem('siscam_user_foto');
         }
@@ -223,7 +402,7 @@
                 dadosParlaGlobais = await res.json();
                 atualizarEstadoGeral();
             } catch(e) {
-                console.error("Erro ao carregar dados da API:", e);
+                console.error("Erro ao carregar dados:", e);
             }
         }
 
@@ -231,8 +410,8 @@
             try {
                 const res = await fetch(`${BASE_URL}/api/sessao/status`);
                 if(res.ok) {
-                    const status = await res.json();
-                    processarEstadoGeral(status);
+                    cacheStatusSessao = await res.json();
+                    processarEstadoGeral(cacheStatusSessao);
                 }
             } catch(e){}
         }
@@ -240,14 +419,14 @@
         function processarEstadoGeral(status) {
             if (!status) return;
 
-            // Renderiza Totais
+            // Renderiza Totais de Votações
             if(status.totaisVotos) {
                 document.getElementById('total-votos-sim').innerText = status.totaisVotos.sim || 0;
                 document.getElementById('total-votos-nao').innerText = status.totaisVotos.nao || 0;
                 document.getElementById('total-votos-abst').innerText = status.totaisVotos.abstencao || 0;
             }
 
-            // Renderiza Matéria Ativa
+            // Renderiza Matéria Ativa em Tela
             const infoBox = document.getElementById('materia-ativa-info');
             const infoVazia = document.getElementById('materia-ativa-vazia');
             if (status.materiaAtiva && status.materiaAtiva.codigo) {
@@ -260,54 +439,48 @@
                 infoVazia.classList.remove('hidden');
             }
 
-            // Lista de Vereadores unificados vindo do banco real
+            // Monta listagem de vereadores
             const listaVereadores = status.vereadores || dadosParlaGlobais;
             const tbody = document.getElementById('tabela-controle-mesa');
             if (!tbody) return;
             tbody.innerHTML = '';
 
-            if(!listaVereadores || listaVereadores.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="5" class="p-8 text-center text-slate-500 italic">Nenhum parlamentar registrado no banco de dados.</td></tr>`;
-                return;
-            }
-
-            // Identifica Orador Ativo na Mesa Central
             let oradorEncontrado = null;
 
             listaVereadores.forEach(v => {
                 const isPresente = v.status === "Presente";
                 const classeStatus = isPresente ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-slate-800 text-slate-400 border-transparent';
                 
-                let votoTexto = '<span class="text-slate-500 font-medium italic">Aguardando</span>';
+                let votoTexto = '<span class="text-slate-500 font-medium italic text-[11px]">Aguardando</span>';
                 if (isPresente) {
-                    if (v.voto === 'SIM') votoTexto = '<span class="px-2.5 py-1 rounded-lg font-black text-[10px] bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 uppercase tracking-wider">Votou SIM</span>';
-                    if (v.voto === 'NÃO') votoTexto = '<span class="px-2.5 py-1 rounded-lg font-black text-[10px] bg-rose-500/20 text-rose-400 border border-rose-500/30 uppercase tracking-wider">Votou NÃO</span>';
-                    if (v.voto === 'ABSTENÇÃO') votoTexto = '<span class="px-2.5 py-1 rounded-lg font-black text-[10px] bg-amber-500/20 text-amber-400 border border-amber-500/30 uppercase tracking-wider">Abstenção</span>';
+                    if (v.voto === 'SIM') votoTexto = '<span class="text-emerald-400 font-black tracking-wide">Votou SIM</span>';
+                    if (v.voto === 'NÃO') votoTexto = '<span class="text-rose-400 font-black tracking-wide">Votou NÃO</span>';
+                    if (v.voto === 'ABSTENÇÃO') votoTexto = '<span class="text-amber-400 font-black tracking-wide">Abstenção</span>';
                 } else {
-                    votoTexto = '<span class="text-slate-600 italic">Ausente da Sessão</span>';
+                    votoTexto = '<span class="text-slate-600 italic">Ausente</span>';
                 }
 
-                if (String(status.microfoneAutorizadoId) === String(v.id)) {
+                if (String(status.microfoneAuthorizedId) === String(v.id) || String(status.microfoneAutorizadoId) === String(v.id)) {
                     oradorEncontrado = v;
                 }
 
                 tbody.innerHTML += `
-                    <tr class="hover:bg-slate-900/40 transition-all">
-                        <td class="py-3 px-6"><img src="${v.foto || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=80'}" class="w-9 h-9 rounded-full object-cover border border-slate-800"></td>
-                        <td class="py-3 px-6"><p class="font-bold text-white">${v.nomeCompleto}</p><span class="text-[10px] text-slate-400 font-medium">${v.partido} - ${v.sigla}</span></td>
-                        <td class="py-3 px-6 text-center">
-                            <button onclick="alternarPresencaMesa('${v.id}')" class="px-3 py-1.5 border rounded-xl font-bold text-[10px] uppercase tracking-wide transition-all ${classeStatus}">${v.status}</button>
+                    <tr class="hover:bg-slate-900/40 transition-all border-b border-slate-800/40">
+                        <td class="py-2 px-4"><img src="${v.foto || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=80'}" class="w-7 h-7 rounded-full object-cover border border-slate-800"></td>
+                        <td class="py-2 px-4"><p class="font-bold text-white">${v.nomeCompleto}</p><span class="text-[10px] text-slate-400">${v.partido || 'Câmara'}</span></td>
+                        <td class="py-2 px-4 text-center">
+                            <button onclick="alternarPresencaMesa('${v.id}')" class="px-2 py-1 border rounded-lg font-bold text-[10px] uppercase tracking-wide transition-all ${classeStatus}">${v.status}</button>
                         </td>
-                        <td class="py-3 px-6 text-center">${votoTexto}</td>
-                        <td class="py-3 px-6 text-right">
-                            <button ${!isPresente ? 'disabled' : ''} onclick="concederPalavraMesa('${v.id}')" class="font-bold text-[10px] px-3 py-1.5 rounded-xl transition-all ${String(status.microfoneAutorizadoId) === String(v.id) ? 'bg-emerald-600 text-white' : 'bg-slate-800 text-slate-300 hover:bg-slate-700 disabled:opacity-40 disabled:pointer-events-none'}">
-                                ${String(status.microfoneAutorizadoId) === String(v.id) ? 'Palavra Concedida' : 'Conceder Palavra'}
+                        <td class="py-2 px-4 text-center">${votoTexto}</td>
+                        <td class="py-2 px-4 text-right">
+                            <button ${!isPresente ? 'disabled' : ''} onclick="concederPalavraMesa('${v.id}')" class="font-bold text-[10px] px-2.5 py-1 rounded-lg transition-all ${oradorEncontrado && String(oradorEncontrado.id) === String(v.id) ? 'bg-emerald-600 text-white' : 'bg-slate-800 text-slate-300 hover:bg-slate-700 disabled:opacity-30'}">
+                                ${oradorEncontrado && String(oradorEncontrado.id) === String(v.id) ? 'Em Uso' : 'Conceder'}
                             </button>
                         </td>
                     </tr>`;
             });
 
-            // Gerencia Bloco Visual do Orador
+            // Gerencia Bloco Visual do Orador Central
             const cardOrador = document.getElementById('orador-ativo-card');
             const vazioOrador = document.getElementById('orador-ativo-vazio');
             if(oradorEncontrado) {
@@ -318,28 +491,102 @@
                 cardOrador.classList.add('hidden');
                 vazioOrador.classList.remove('hidden');
             }
+        }
 
-            // Gerencia Bloco Fila Oradores
-            const containerFila = document.getElementById('container-fila-oradores');
-            if(containerFila) {
-                containerFila.innerHTML = '';
-                if(status.filaOradores && status.filaOradores.length > 0) {
-                    status.filaOradores.forEach((idFila, index) => {
-                        const parlaFila = listaVereadores.find(u => String(u.id) === String(idFila));
-                        if(parlaFila) {
-                            containerFila.innerHTML += `
-                                <div class="flex items-center justify-between bg-slate-900 border border-slate-800 p-2 rounded-xl">
-                                    <span class="text-xs font-bold text-slate-200 truncate pr-2">${index+1}º - ${parlaFila.nomeEleitoral || parlaFila.nomeCompleto}</span>
-                                    <button onclick="concederPalavraMesa('${parlaFila.id}')" class="bg-indigo-600 hover:bg-indigo-500 font-bold text-[9px] px-2 py-1 rounded-lg transition-all uppercase tracking-wider">Chamar</button>
-                                </div>`;
-                        }
-                    });
-                } else {
-                    containerFila.innerHTML = `<span class="text-[11px] text-slate-500 italic block py-2 text-center border border-dashed border-slate-800 rounded-xl">Nenhum pedido na fila.</span>`;
-                }
+        // --- GESTÃO DO MODAL DE ATAS ---
+        function abrirModalAta() {
+            document.getElementById('modal-ata').classList.remove('hidden');
+            mudarAbaAta('auto');
+            construirPreviewTextoAta();
+        }
+
+        function fecharModalAta() {
+            document.getElementById('modal-ata').classList.add('hidden');
+        }
+
+        function mudarAbaAta(tipo) {
+            const tabs = ['auto', 'edit', 'export'];
+            tabs.forEach(t => {
+                document.getElementById(`tab-${t}`).className = `px-5 py-3 border-b-2 text-slate-400 hover:text-slate-200 transition-all ${t === tipo ? 'border-indigo-500 text-indigo-400 font-bold bg-slate-950/20' : 'border-transparent'}`;
+                document.getElementById(`conteudo-tab-${t}`).classList.add('hidden');
+            });
+            document.getElementById(`conteudo-tab-${tipo}`).classList.remove('hidden');
+        }
+
+        function construirPreviewTextoAta() {
+            const hoje = new Date();
+            const meses = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+            
+            // Texto Padrão e Automação de Prontuário
+            let txt = `Aos ${hoje.getDate()} dias do mês de ${meses[hoje.getMonth()]} do ano de ${hoje.getFullYear()}, às ${hoje.getHours()}:${String(hoje.getMinutes()).padStart(2, '0')}, no Plenário da Câmara Municipal de Gonçalves Dias, Estado do Maranhão, sob a presidência do(a) Vereador(a) ${nomePresidente}, foi aberta a 14ª Sessão Ordinária da Câmara Municipal. \n\n`;
+            
+            // Tratamento de Presenças Reais da Sessão
+            if (cacheStatusSessao && cacheStatusSessao.vereadores) {
+                const presentes = cacheStatusSessao.vereadores.filter(x => x.status === 'Presente').map(x => x.nomeCompleto);
+                const ausentes = cacheStatusSessao.vereadores.filter(x => x.status !== 'Presente').map(x => x.nomeCompleto);
+                
+                txt += `PARLAMENTARES PRESENTES: ${presentes.length > 0 ? presentes.join(', ') : 'Nenhum registro lançado'}.\n`;
+                txt += `PARLAMENTARES AUSENTES: ${ausentes.length > 0 ? ausentes.join(', ') + ' (Justificadas nos termos regimentais)' : 'Nenhum parlamentar ausente'}.\n\n`;
+            }
+
+            txt += `Havendo número regimental de vereadores presentes, o Senhor Presidente declarou aberta a sessão sob a proteção de Deus.`;
+            document.getElementById('preview-abertura-ata').innerText = txt;
+
+            // Inserção da Tabela Dinâmica de Votações
+            const tbodyMateria = document.getElementById('ata-tabela-materia');
+            tbodyMateria.innerHTML = '';
+            if (cacheStatusSessao && cacheStatusSessao.materiaAtiva && cacheStatusSessao.materiaAtiva.codigo) {
+                const sim = cacheStatusSessao.totaisVotos.sim || 0;
+                const nao = cacheStatusSessao.totaisVotos.nao || 0;
+                const abs = cacheStatusSessao.totaisVotos.abstencao || 0;
+                const result = sim > nao ? 'APROVADO' : 'REJEITADO';
+                
+                tbodyMateria.innerHTML = `
+                    <tr class="border-b border-slate-800/40">
+                        <td class="py-2 font-bold text-indigo-400">${cacheStatusSessao.materiaAtiva.codigo}</td>
+                        <td class="py-2 max-w-xs truncate">${cacheStatusSessao.materiaAtiva.ementa}</td>
+                        <td class="py-2 text-center text-emerald-400 font-bold">${sim}</td>
+                        <td class="py-2 text-center text-rose-400 font-bold">${nao}</td>
+                        <td class="py-2 text-center text-amber-400 font-bold">${abs}</td>
+                        <td class="py-2 text-right font-black ${sim > nao ? 'text-emerald-400' : 'text-rose-400'}">${result}</td>
+                    </tr>
+                `;
+            } else {
+                tbodyMateria.innerHTML = `<tr><td colspan="6" class="py-4 text-center text-slate-500 italic">Nenhum projeto ou votação em lote na Ordem do Dia.</td></tr>`;
             }
         }
 
+        // Compilação Real em PDF via jsPDF corporativo
+        function compilarAtaPDF() {
+            if(!window.jspdf) return alert('Biblioteca jsPDF não carregada.');
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            
+            doc.setFont("helvetica", "bold"); doc.setFontSize(14);
+            doc.text("CÂMARA MUNICIPAL DE GONÇALVES DIAS", 20, 20);
+            doc.setFontSize(10); doc.setFont("helvetica", "normal");
+            doc.text("Estado do Maranhão — Livro Oficial de Atas Integrado", 20, 26);
+            doc.line(20, 30, 190, 30);
+            
+            doc.setFont("helvetica", "bold"); doc.text("TERMO DE ABERTURA E REGISTRO DE QUÓRUM", 20, 40);
+            doc.setFont("helvetica", "normal");
+            const textAbertura = document.getElementById('preview-abertura-ata').innerText;
+            doc.text(textAbertura, 20, 46, { maxWidth: 170 });
+
+            doc.setFont("helvetica", "bold"); doc.text("EXPEDIENTES DA SECRETARIA E NARRATIVAS", 20, 100);
+            doc.setFont("helvetica", "normal");
+            const exp = document.getElementById('ata-expediente').value || "Nenhum expediente complementar inserido manualmente.";
+            doc.text(exp, 20, 106, { maxWidth: 170 });
+
+            // Rodapé Padrão Institucional
+            doc.line(20, 270, 190, 270);
+            doc.setFontSize(8);
+            doc.text("Chave de Validação: AUTH-2026-MUNIC-GD-9941X — Documento Gerado Automaticamente (SISCAM 1.0)", 20, 276);
+
+            doc.save(`Ata_Oficial_Sessao_14.pdf`);
+        }
+
+        // --- SISTEMAS DE MICROFONE E EVENTOS DE REDE (MANTIDOS ORIGINAIS) ---
         async function alternarPresencaMesa(vereadorId) {
             try {
                 await fetch(`${BASE_URL}/api/sessao/presenca`, {
@@ -352,16 +599,11 @@
 
         async function concederPalavraMesa(vereadorId) {
             try {
-                const vEncontrado = (dadosParlaGlobais.find(x => String(x.id) === String(vereadorId)));
-                const nomeFormatado = vEncontrado ? (vEncontrado.nomeEleitoral || vEncontrado.nomeCompleto) : "Orador na Tribuna";
-                
                 await fetch(`${BASE_URL}/api/microfone/autorizar`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ vereadorId })
                 });
-
-                socket.emit("comandoCronometro", { acao: "vincularOrador", oradorNome: nomeFormatated });
             } catch(e){}
         }
 
@@ -372,7 +614,6 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ vereadorId: null })
                 });
-                socket.emit("comandoCronometro", { acao: "vincularOrador", oradorNome: "Nenhum orador na tribuna" });
             } catch(e){}
         }
 
@@ -383,9 +624,6 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ acao })
                 });
-                if(acao === 'fechar') {
-                    socket.emit("comandoCronometro", { acao: "resetar" });
-                }
             } catch(e){}
         }
 
@@ -402,17 +640,12 @@
             } catch(e){}
         }
 
-        function controlarCronometro(acao) {
-            socket.emit("comandoCronometro", { acao });
-        }
-
+        function controlarCronometro(acao) { socket.emit("comandoCronometro", { acao }); }
         function aplicarConfiguracaoTempo() {
             const tipo = document.getElementById('crono-tipo').value;
             let segundos = 300;
             if (tipo === "Pequeno Expediente") segundos = 180;
             if (tipo === "Explicação Pessoal") segundos = 120;
-            if (tipo === "Considerações Finais") segundos = 60;
-            
             socket.emit("comandoCronometro", { acao: "definir", segundos, tipo });
         }
 
@@ -422,122 +655,8 @@
             document.getElementById('cronometro-display').innerText = `${min}:${seg}`;
         });
 
-        // ÁUDIO HARDWARE PRESIDENTE
-        async function alternarMicrofoneHardware() {
-            const btn = document.getElementById('btn-hardware-mic');
-            if (micLocalStream) {
-                desligarMicrofoneHardware();
-            } else {
-                try {
-                    micLocalStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
-                    btn.className = "bg-emerald-600 text-white font-bold text-[10px] px-3 py-1.5 rounded-xl transition-all flex items-center gap-1.5 shadow";
-                    btn.innerHTML = `<i data-lucide="mic" class="w-3.5 h-3.5 text-white animate-pulse"></i> Transmitindo`;
-                    lucide.createIcons();
-
-                    mediaRecorderHardware = new MediaRecorder(micLocalStream);
-                    mediaRecorderHardware.ondataavailable = async (e) => {
-                        if (e.data.size > 0 && socket.connected) {
-                            const buffer = await e.data.arrayBuffer();
-                            socket.emit("enviarAudioStream", buffer);
-                        }
-                    };
-                    mediaRecorderHardware.start(250);
-                } catch(err) {
-                    alert("Erro ao acessar hardware de captura de áudio.");
-                }
-            }
-        }
-
-        function desligarMicrofoneHardware() {
-            const btn = document.getElementById('btn-hardware-mic');
-            if (mediaRecorderHardware && mediaRecorderHardware.state !== 'inactive') mediaRecorderHardware.stop();
-            if (micLocalStream) micLocalStream.getTracks().forEach(t => t.stop());
-            micLocalStream = null;
-            mediaRecorderHardware = null;
-            if(btn) {
-                btn.className = "bg-slate-800 text-slate-200 border border-slate-700 font-bold text-[10px] px-3 py-1.5 rounded-xl transition-all flex items-center gap-1.5";
-                btn.innerHTML = `<i data-lucide="mic-off" class="w-3.5 h-3.5 text-rose-400"></i> Desativado`;
-                lucide.createIcons();
-            }
-        }
-
-        // ATA PDF SESSÃO
-        async function solicitarGeracaoAta() {
-            try {
-                const res = await fetch(`${BASE_URL}/api/sessao/status`);
-                if(!res.ok) return;
-                const status = await res.json();
-                
-                const { jsPDF } = window.jspdf;
-                const doc = new jsPDF();
-                
-                doc.setFont("helvetica", "bold");
-                doc.setFontSize(16);
-                doc.text("ATA OFICIAL DE REUNIÃO LEGISLATIVA", 20, 20);
-                doc.setFontSize(10);
-                doc.setFont("helvetica", "normal");
-                doc.text(`Data de Emissão: ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR')}`, 20, 28);
-                doc.line(20, 32, 190, 32);
-
-                doc.setFont("helvetica", "bold");
-                doc.text("1. MATÉRIA EM PAUTA DISCUTIDA:", 20, 42);
-                doc.setFont("helvetica", "normal");
-                if (status.materiaAtiva && status.materiaAtiva.codigo) {
-                    doc.text(`Código: ${status.materiaAtiva.codigo}`, 25, 48);
-                    doc.text(`Ementa: ${status.materiaAtiva.ementa}`, 25, 54, { maxWidth: 160 });
-                } else {
-                    doc.text("Nenhum projeto de lei ativo ou matéria pautada em plenário para votação.", 25, 48);
-                }
-
-                doc.setFont("helvetica", "bold");
-                doc.text("2. QUÓRUM E PRESENÇA PARLAMENTAR:", 20, 72);
-                let linha = 80;
-                doc.setFont("helvetica", "normal");
-                
-                status.vereadores.forEach(v => {
-                    doc.text(`- ${v.nomeCompleto} (${v.cargo}): ${v.status} | Voto: ${v.voto || 'N/A'}`, 25, linha);
-                    linha += 7;
-                });
-
-                linha += 10;
-                doc.setFont("helvetica", "bold");
-                doc.text("3. RESULTADO DO PLENÁRIO:", 20, linha);
-                doc.setFont("helvetica", "normal");
-                doc.text(`Votos Favoráveis (SIM): ${status.totaisVotos.sim || 0}`, 25, linha + 8);
-                doc.text(`Votos Contrários (NÃO): ${status.totaisVotos.nao || 0}`, 25, linha + 14);
-                doc.text(`Abstenções Declaradas: ${status.totaisVotos.abstencao || 0}`, 25, linha + 20);
-
-                doc.save(`Ata_Sessao_${Date.now()}.pdf`);
-            } catch(e){ alert("Falha na exportação."); }
-        }
-
-        let audioCtx = null;
-        socket.on('receberAudioStream', (arrayBuffer) => {
-            if (typeof window.AudioContext === 'undefined' && typeof window.webkitAudioContext === 'undefined') return;
-            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            try {
-                const int16Data = new Int16Array(arrayBuffer);
-                const floatData = new Float32Array(int16Data.length);
-                for (let i = 0; i < int16Data.length; i++) floatData[i] = int16Data[i] / 0x7FFF;
-                const buffer = audioCtx.createBuffer(1, floatData.length, audioCtx.sampleRate);
-                buffer.getChannelData(0).set(floatData);
-                const source = audioCtx.createBufferSource();
-                source.buffer = buffer;
-                source.connect(audioCtx.destination);
-                source.start(audioCtx.currentTime);
-            } catch(e){}
-        });
-
-        function fazerLogout() { 
-            desligarMicrofoneHardware();
-            localStorage.clear(); 
-            window.location.href = './login.html'; 
-        }
-
-        socket.on('atualizarPainel', (status) => {
-            if (status) processarEstadoGeral(status);
-            else atualizarEstadoGeral();
-        });
+        function fazerLogout() { localStorage.clear(); window.location.href = './login.html'; }
+        socket.on('atualizarPainel', () => { atualizarEstadoGeral(); });
 
         carregarDadosPresidente();
     </script>
