@@ -335,12 +335,12 @@
                 name: localStorage.getItem('siscam_user_nome_urna') || localStorage.getItem('siscam_user_nome') || 'Vereador',
                 cargo: 'VEREADOR'
             });
+            // Busca o estado real atual do Plenário ao reconectar
+            sincronizarPainel();
         });
 
-        socket.on('notificacaoSessaoIniciada', (dados) => {
-            if (dados.tipo === 'abrir') mostrarToast("A SESSÃO PLENÁRIA FOI INICIADA! Confirme sua presença.", "success");
-            else if (dados.tipo === 'iniciar') mostrarToast(`MATÉRIA LANÇADA PARA VOTAÇÃO NOMINAL: ${dados.codigo}!`, "info");
-            else if (dados.tipo === 'fechar') mostrarToast("A sessão plenária foi encerrada pelo Presidente.", "warning");
+        socket.on('disconnect', () => {
+            console.warn("Aviso: Conexão instável com o servidor do plenário.");
         });
 
         async function inicializarPerfilParlamentar() {
@@ -568,28 +568,42 @@
         // CARD DE PRESENÇA ENVIANDO DADOS CORRETAMENTE PARA O PAINEL DO PRESIDENTE
         async function confirmarPresenca() {
             try {
-                await fetch(`${API_SESSAO_URL}/presenca`, {
+                const res = await fetch(`${API_SESSAO_URL}/presenca`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ vereadorId: VEREADOR_ID })
                 });
-                sincronizarPainel();
-                socket.emit('atualizarPainel'); // Notifica imediatamente a mesa diretora do presidente
-            } catch(e){ console.error("Erro ao transmitir presença:", e); }
+                
+                if (res.ok) {
+                    mostrarToast("Presença registrada localmente!", "success");
+                    // FORÇA O BACKEND A REAVISAR O PRESIDENTE IMEDIATAMENTE VIA SOCKETS
+                    socket.emit('atualizarPainel'); 
+                    sincronizarPainel();
+                }
+            } catch(e){ 
+                console.error("Erro ao transmitir presença:", e); 
+                mostrarToast("Erro ao conectar com o servidor de presença.", "warning");
+            }
         }
 
         async function registrarVoto(opcao) {
             try {
-                await fetch(`${BACKEND_URL}/api/vereadores/votar`, {
+                const res = await fetch(`${BACKEND_URL}/api/vereadores/votar`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ vereadorId: VEREADOR_ID, voto: opcao })
                 });
-                mostrarToast(`Seu voto (${opcao}) foi computado com sucesso!`, 'success');
-                document.getElementById('painel-votacao-nominal').classList.add('hidden');
-                sincronizarPainel();
-                socket.emit('atualizarPainel');
-            } catch(e) { alert("Erro ao computar voto."); }
+                
+                if (res.ok) {
+                    mostrarToast(`Seu voto (${opcao}) foi computado com sucesso!`, 'success');
+                    document.getElementById('painel-votacao-nominal').classList.add('hidden');
+                    // FORÇA A ATUALIZAÇÃO IMEDIATA DO PLACAR NO PAINEL DO PRESIDENTE E TELÃO
+                    socket.emit('atualizarPainel');
+                    sincronizarPainel();
+                }
+            } catch(e) { 
+                alert("Erro ao computar voto."); 
+            }
         }
 
         async function solicitarPalavra() {
@@ -722,14 +736,17 @@
             if(aba === 'gabinete') topoTitulo.innerText = "Meu Gabinete Virtual";
         }
 
+        // ATUALIZAÇÃO 100% REATIVA COM DADOS DIRETOS DO WEBSOCKET (REMOVENDO LAG DE POLLING HTTP)
         socket.on('atualizarPainel', (status) => {
-            if (status) processarEstadoPainel(status);
-            else sincronizarPainel();
+            if (status) {
+                processarEstadoPainel(status);
+            } else {
+                sincronizarPainel();
+            }
         });
 
         inicializarPerfilParlamentar();
         sincronizarPainel();
-        setInterval(sincronizarPainel, 5000);
         renderizerProjetosGabinete();
     </script>
 </body>

@@ -80,6 +80,7 @@
         </div>
 
         <div class="p-4 border-t border-slate-800 bg-slate-950/40 space-y-3 footer-sidebar">
+            <!-- LOGO INSTITUCIONAL DO FIM DA SIDEBAR -->
             <div class="flex items-center justify-center p-1 rounded-xl bg-slate-900/50 border border-slate-800/40">
                 <img id="logo-sidebar-fim" src="" class="max-h-10 object-contain hidden opacity-80">
             </div>
@@ -128,7 +129,7 @@
     <!-- CONTEÚDO DINÂMICO CENTRAL DO SISTEMA -->
     <div class="flex-1 flex flex-col overflow-hidden">
         
-        <!-- TOPBAR GLOBAL COM LOGO INSTITUCIONAL CONFIGURÁVEL -->
+        <!-- TOPBAR GLOBAL COM LOGO INSTITUCIONAL CONFIGURÁVEL NO TOPO SUPERIOR DIREITO -->
         <header class="bg-slate-900/40 border-b border-slate-800/60 p-4 shrink-0 flex items-center justify-between px-8 backdrop-blur-md">
             <div class="flex items-center gap-3">
                 <div class="font-mono text-xs text-slate-400">
@@ -150,7 +151,6 @@
                     <button onclick="window.open('./tela_plenario.html', '_blank')" class="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-xl font-bold text-xs transition-all shadow-md flex items-center gap-1.5">
                         <i data-lucide="monitor"></i> Abrir Telão do Plenário
                     </button>
-                    <!-- CORREÇÃO: ABRE PRESENÇA NO PAINEL DO VEREADOR -->
                     <button onclick="dispararAcaoSessao('abrir')" class="bg-emerald-600/10 hover:bg-emerald-600 text-emerald-400 hover:text-white border border-emerald-500/20 px-3 py-2 rounded-xl font-bold text-xs transition-all shadow-sm">Ativar Chamada Presença</button>
                     <button onclick="dispararAcaoSessao('limparMateria')" class="bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 px-3 py-2 rounded-xl font-bold text-xs transition-all">Limpar Matéria</button>
                     <button onclick="dispararAcaoSessao('fechar')" class="bg-rose-600/10 hover:bg-rose-600 text-rose-400 hover:text-white border border-rose-500/20 px-3 py-2 rounded-xl font-bold text-xs transition-all">Encerrar Sessão</button>
@@ -194,7 +194,6 @@
                     </div>
                 </div>
 
-                <!-- CORREÇÃO: MICROFONE LOCAL VIA WEBRTC PARA CAPTAR E JOGAR AUDIO NO TELÃO -->
                 <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex flex-col justify-between">
                     <div>
                         <span class="text-[10px] font-black uppercase tracking-wider text-slate-400 block">Controle do Microfone Central</span>
@@ -432,7 +431,7 @@
             if(!url) return alert("Insira uma URL válida.");
             localStorage.setItem('siscam_logo_comum', url);
             aplicarLogoNosComponentes();
-            alert("Identidade da logo atualizada com sucesso!");
+            alert("Identidade da logo updated com sucesso!");
         }
 
         function aplicarLogoNosComponentes() {
@@ -607,7 +606,7 @@
                 txt += `PARLAMENTARES PRESENTES: ${presentes.length > 0 ? presentes.join(', ') : 'Nenhum'}.\n`;
                 txt += `PARLAMENTARES AUSENTES: ${ausentes.length > 0 ? ausentes.join(', ') + ' (Justificadas)' : 'Nenhum'}.\n\n`;
             }
-            txt += `Havendo número regimental de vereadores presentes, o Senhor Presidente declarou aberta a sessão sob a proteção de Deus.`;
+            txt += `Havendo número regimental de vereadores presentes, o Senhor Presidente declared aberta a sessão sob a proteção de Deus.`;
             document.getElementById('preview-abertura-ata').innerText = txt;
 
             const tbodyMateria = document.getElementById('ata-tabela-materia'); tbodyMateria.innerHTML = '';
@@ -689,10 +688,19 @@
         });
 
         function fazerLogout() { desligarMicrofoneHardware(); localStorage.clear(); window.location.href = './login.html'; }
-        socket.on('atualizarPainel', () => { atualizarEstadoGeral(); });
+        
+        // INTERFACE 100% REATIVA VIA SOCKETS (SEM POLLING HTTP)
+        socket.on('atualizarPainel', (status) => { 
+            if (status) {
+                cacheStatusSessao = status;
+                processarEstadoGeral(status); 
+            } else {
+                atualizarEstadoGeral(); 
+            }
+        });
 
+        // INICIALIZAÇÃO ÚNICA DA APLICAÇÃO
         carregarDadosPresidente();
-        setInterval(atualizarEstadoGeral, 5000);
     </script>
 </body>
 </html>
