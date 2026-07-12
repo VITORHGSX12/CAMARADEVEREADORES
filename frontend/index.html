@@ -73,6 +73,9 @@
                 <button onclick="navegarAba('vereadores')" id="btn-vereadores" class="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-clarencia-sub hover:bg-white hover:text-clarencia-text rounded-xl transition-all text-left">
                     <i data-lucide="user-plus" class="w-4 h-4"></i> Cadastrar Parlamentares
                 </button>
+                <button onclick="navegarAba('parlamentares')" id="btn-parlamentares" class="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-clarencia-sub hover:bg-white hover:text-clarencia-text rounded-xl transition-all text-left">
+                    <i data-lucide="users-round" class="w-4 h-4"></i> Parlamentares
+                </button>
                 <button onclick="navegarAba('sessoes')" id="btn-sessoes" class="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-clarencia-sub hover:bg-white hover:text-clarencia-text rounded-xl transition-all text-left">
                     <i data-lucide="file-text" class="w-4 h-4"></i> Sessões & Atas
                 </button>
@@ -180,10 +183,13 @@
                         <input type="password" id="cad-password" value="123456" class="w-full border rounded-xl p-2.5 bg-slate-50 focus:outline-none focus:border-centaurea">
                     </div>
                     
-                    <!-- REINTEGRADO: Campo de Seleção de Foto Oficial -->
+                    <!-- Campo de Seleção de Foto Oficial (upload da galeria) -->
                     <div>
-                        <label class="block mb-1 text-clarencia-sub">Foto do Parlamentar (URL ou Link)</label>
-                        <input type="text" id="cad-foto" placeholder="https://linkdafoto.com/foto.jpg" class="w-full border rounded-xl p-2.5 bg-slate-50 focus:outline-none focus:border-centaurea">
+                        <label class="block mb-1 text-clarencia-sub">Foto do Parlamentar</label>
+                        <div class="flex items-center gap-3">
+                            <img id="cad-foto-preview" class="w-11 h-11 rounded-full object-cover border shrink-0 hidden">
+                            <input type="file" id="cad-foto" accept="image/*" class="w-full border rounded-xl p-2 bg-slate-50 focus:outline-none focus:border-centaurea text-xs">
+                        </div>
                     </div>
 
                     <div class="md:col-span-3 flex justify-end pt-2">
@@ -212,6 +218,64 @@
             </section>
         </div>
         
+        <!-- ABA 2.5: GERENCIAR PARLAMENTARES (quadros com foto, nome, partido) -->
+        <div id="secao-parlamentares" class="p-8 space-y-6 secao-conteudo hidden no-print">
+            <div>
+                <h3 class="font-bold text-base text-clarencia-text flex items-center gap-2">
+                    <i data-lucide="users-round" class="text-centaurea w-5 h-5"></i> Parlamentares Cadastrados
+                </h3>
+                <p class="text-xs text-clarencia-sub mt-1">Edite o login, a senha ou remova um parlamentar (ex: em caso de substituição ou falecimento).</p>
+            </div>
+            <div id="grid-parlamentares-gerenciar" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5"></div>
+        </div>
+
+        <!-- MODAL: EDITAR PARLAMENTAR -->
+        <div id="modal-editar" class="hidden fixed inset-0 bg-slate-950/50 flex items-center justify-center z-50 p-4">
+            <div class="bg-white rounded-2xl shadow-xl w-full max-w-lg p-6 space-y-4">
+                <h3 class="font-bold text-base text-clarencia-text flex items-center gap-2">
+                    <i data-lucide="pencil" class="text-centaurea w-5 h-5"></i> Editar Parlamentar
+                </h3>
+                <form id="form-editar-parlamentar" onsubmit="salvarEdicaoParlamentar(event)" class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs font-semibold">
+                    <input type="hidden" id="edit-id">
+                    <div>
+                        <label class="block mb-1 text-clarencia-sub">Nome Completo</label>
+                        <input type="text" id="edit-nomeCompleto" class="w-full border rounded-xl p-2.5 bg-slate-50 focus:outline-none focus:border-centaurea">
+                    </div>
+                    <div>
+                        <label class="block mb-1 text-clarencia-sub">Nome Eleitoral</label>
+                        <input type="text" id="edit-nomeEleitoral" class="w-full border rounded-xl p-2.5 bg-slate-50 focus:outline-none focus:border-centaurea">
+                    </div>
+                    <div>
+                        <label class="block mb-1 text-clarencia-sub">Cargo Legis.</label>
+                        <select id="edit-cargo" class="w-full border rounded-xl p-2.5 bg-slate-50 focus:outline-none focus:border-centaurea">
+                            <option value="VEREADOR">VEREADOR</option>
+                            <option value="PRESIDENTE">PRESIDENTE</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block mb-1 text-clarencia-sub">Sigla Partido</label>
+                        <input type="text" id="edit-sigla" class="w-full border rounded-xl p-2.5 bg-slate-50 focus:outline-none focus:border-centaurea">
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block mb-1 text-clarencia-sub">Partido</label>
+                        <input type="text" id="edit-partido" class="w-full border rounded-xl p-2.5 bg-slate-50 focus:outline-none focus:border-centaurea">
+                    </div>
+                    <div>
+                        <label class="block mb-1 text-clarencia-sub">Usuário de Acesso (Login)</label>
+                        <input type="text" id="edit-username" class="w-full border rounded-xl p-2.5 bg-slate-50 focus:outline-none focus:border-centaurea">
+                    </div>
+                    <div>
+                        <label class="block mb-1 text-clarencia-sub">Nova Senha</label>
+                        <input type="text" id="edit-senha" placeholder="Deixe em branco p/ manter" class="w-full border rounded-xl p-2.5 bg-slate-50 focus:outline-none focus:border-centaurea">
+                    </div>
+                    <div class="md:col-span-2 flex justify-end gap-2 pt-2">
+                        <button type="button" onclick="fecharModalEditar()" class="px-5 py-2.5 rounded-xl font-bold text-clarencia-sub border hover:bg-slate-50">Cancelar</button>
+                        <button type="submit" class="bg-centaurea hover:bg-centaurea-hover text-white px-6 py-2.5 rounded-xl font-bold transition-all shadow-md">Salvar Alterações</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
         <!-- ABA 3: SESSÕES & ATAS -->
         <div id="secao-sessoes" class="p-8 space-y-6 secao-conteudo hidden">
             <section class="bg-white border border-clarencia-border rounded-2xl p-6 shadow-sm space-y-4">
@@ -286,6 +350,7 @@
         const API_SESSAO_URL = LOCAL_HOST ? 'http://localhost:3000/api/sessao/controle' : `${BACKEND_RAILWAY}/api/sessao/controle`;
 
         let projetosMemoriaLocal = JSON.parse(localStorage.getItem('siscam_projetos_salvos')) || [];
+        let parlamentaresCache = [];
 
         function navegarAba(nomeAba) {
             document.querySelectorAll('.secao-conteudo').forEach(el => el.classList.add('hidden'));
@@ -300,11 +365,13 @@
                 if (!res.ok) throw new Error(`HTTP erro! Status: ${res.status}`);
                 
                 const dados = await res.json();
+                parlamentaresCache = dados || [];
                 document.getElementById('card-qtd-vereadores').innerText = dados.length;
-                document.getElementById('card-qtd-projetos').innerText = proyectosMemoriaLocal.length;
+                document.getElementById('card-qtd-projetos').innerText = projetosMemoriaLocal.length;
                 
                 renderizarCardsDashboard(dados);
                 renderizarTabelaGerenciamento(dados);
+                renderizarGridParlamentaresGerenciar(dados);
                 renderizarProjetos();
             } catch(e) { 
                 console.error("Erro detalhado de conexão com o backend:", e); 
@@ -359,13 +426,34 @@
             });
         }
 
+        // Converte o arquivo de imagem escolhido na galeria em base64
+        function lerArquivoComoBase64(arquivo) {
+            return new Promise((resolve, reject) => {
+                const leitor = new FileReader();
+                leitor.onload = () => resolve(leitor.result);
+                leitor.onerror = reject;
+                leitor.readAsDataURL(arquivo);
+            });
+        }
+
+        // Mostra uma prévia da foto assim que o usuário escolhe o arquivo
+        document.getElementById('cad-foto').addEventListener('change', async (e) => {
+            const arquivo = e.target.files[0];
+            const preview = document.getElementById('cad-foto-preview');
+            if (!arquivo) { preview.classList.add('hidden'); return; }
+            const base64 = await lerArquivoComoBase64(arquivo);
+            preview.src = base64;
+            preview.classList.remove('hidden');
+        });
+
         async function salvarParlamentar(event) {
             event.preventDefault();
-            
-            // Captura o link inserido ou define um avatar padrão estável
-            let fotoLink = document.getElementById('cad-foto').value.trim();
-            if(!fotoLink) {
-                fotoLink = 'https://images.unsplash.com/photo-1560250097-0b93528c311a?q=80&w=256';
+
+            // Converte a imagem escolhida (se houver) em base64; senão usa um avatar padrão
+            const arquivoFoto = document.getElementById('cad-foto').files[0];
+            let fotoBase64 = null;
+            if (arquivoFoto) {
+                fotoBase64 = await lerArquivoComoBase64(arquivoFoto);
             }
 
             const bodyData = {
@@ -377,7 +465,7 @@
                 sigla: document.getElementById('cad-sigla').value,
                 username: document.getElementById('cad-username').value,
                 password: document.getElementById('cad-password').value,
-                foto: fotoLink,
+                fotoBase64: fotoBase64,
                 dataNascimento: "1990-01-01",
                 nomeMae: "Mãe Legislativa"
             };
@@ -391,8 +479,82 @@
                 if(!res.ok) { const err = await res.json(); throw new Error(err.error || "Falha no cadastro"); }
                 alert("Parlamentar salvo no banco de dados com sucesso!");
                 document.getElementById('form-cadastrar-parlamentar').reset();
+                document.getElementById('cad-foto-preview').classList.add('hidden');
                 sincronizarDadosGerais();
             } catch(err) { alert("Erro ao salvar: " + err.message); }
+        }
+
+        function renderizarGridParlamentaresGerenciar(dados) {
+            const grid = document.getElementById('grid-parlamentares-gerenciar');
+            if(!grid) return;
+            grid.innerHTML = '';
+
+            if(!dados || dados.length === 0) {
+                grid.innerHTML = `<p class="text-xs text-clarencia-sub col-span-full py-6 text-center bg-white border border-dashed rounded-xl">Nenhum parlamentar cadastrado no banco PostgreSQL.</p>`;
+                return;
+            }
+
+            dados.forEach(p => {
+                const fotoExibicao = p.foto || 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=80';
+                grid.innerHTML += `
+                    <div class="bg-white border border-clarencia-border rounded-2xl p-5 shadow-sm flex flex-col items-center text-center gap-1.5">
+                        <img src="${fotoExibicao}" class="w-20 h-20 rounded-full object-cover border shrink-0">
+                        <p class="font-bold text-sm text-clarencia-text mt-1">${p.nomeCompleto}</p>
+                        <span class="text-[9px] px-2 py-0.5 font-bold uppercase rounded-full bg-slate-100 text-slate-600">${p.cargo}</span>
+                        <p class="text-xs text-clarencia-sub">${p.partido || 'Sem partido'} - ${p.sigla || 'N/A'}</p>
+                        <div class="flex gap-2 pt-3 w-full">
+                            <button onclick="abrirModalEditar('${p.id}')" class="flex-1 text-centaurea hover:text-white hover:bg-centaurea border border-centaurea/30 hover:border-transparent font-bold text-[10px] px-3 py-1.5 rounded-lg transition-all">Editar</button>
+                            <button onclick="deletarParlamentar('${p.id}')" class="flex-1 text-rose-600 hover:text-white hover:bg-rose-500 border border-rose-200 hover:border-transparent font-bold text-[10px] px-3 py-1.5 rounded-lg transition-all">Excluir</button>
+                        </div>
+                    </div>`;
+            });
+        }
+
+        function abrirModalEditar(id) {
+            const p = parlamentaresCache.find(x => String(x.id) === String(id));
+            if(!p) return alert("Parlamentar não encontrado na lista carregada.");
+            document.getElementById('edit-id').value = p.id;
+            document.getElementById('edit-nomeCompleto').value = p.nomeCompleto || '';
+            document.getElementById('edit-nomeEleitoral').value = p.nomeEleitoral || '';
+            document.getElementById('edit-cargo').value = p.cargo || 'VEREADOR';
+            document.getElementById('edit-partido').value = p.partido || '';
+            document.getElementById('edit-sigla').value = p.sigla || '';
+            document.getElementById('edit-username').value = p.username || '';
+            document.getElementById('edit-senha').value = '';
+            document.getElementById('modal-editar').classList.remove('hidden');
+        }
+
+        function fecharModalEditar() {
+            document.getElementById('modal-editar').classList.add('hidden');
+        }
+
+        async function salvarEdicaoParlamentar(event) {
+            event.preventDefault();
+            const id = document.getElementById('edit-id').value;
+
+            const bodyData = {
+                nomeCompleto: document.getElementById('edit-nomeCompleto').value,
+                nomeEleitoral: document.getElementById('edit-nomeEleitoral').value,
+                cargo: document.getElementById('edit-cargo').value,
+                partido: document.getElementById('edit-partido').value,
+                sigla: document.getElementById('edit-sigla').value,
+                username: document.getElementById('edit-username').value,
+                senha: document.getElementById('edit-senha').value
+            };
+
+            const urlEdit = LOCAL_HOST ? `http://localhost:3000/api/parlamentares/${id}` : `${BACKEND_RAILWAY}/api/parlamentares/${id}`;
+
+            try {
+                const res = await fetch(urlEdit, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(bodyData)
+                });
+                if(!res.ok) { const err = await res.json(); throw new Error(err.error || "Falha ao atualizar"); }
+                alert("Parlamentar atualizado com sucesso!");
+                fecharModalEditar();
+                sincronizarDadosGerais();
+            } catch(err) { alert("Erro ao atualizar: " + err.message); }
         }
 
         async function deletarParlamentar(id) {
@@ -460,7 +622,7 @@
         }
 
         function removerProjeto(id) {
-            projectsMemoriaLocal = projetosMemoriaLocal.filter(p => p.id !== id);
+            projetosMemoriaLocal = projetosMemoriaLocal.filter(p => p.id !== id);
             localStorage.setItem('siscam_projetos_salvos', JSON.stringify(projetosMemoriaLocal));
             sincronizarDadosGerais();
         }

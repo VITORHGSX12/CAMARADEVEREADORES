@@ -260,6 +260,51 @@ app.post('/api/vereadores/alterar-senha', async (req, res) => {
     }
 });
 
+// EDITAR DADOS DO PARLAMENTAR (nome, login, senha, cargo, partido, foto)
+const editarParlamentar = async (req, res) => {
+    try {
+        const idAlvo = String(req.params.id);
+        const { nomeCompleto, nomeEleitoral, cargo, partido, sigla, username, senha, fotoBase64, foto } = req.body;
+
+        const dadosUpdate = {};
+        if (nomeCompleto && nomeCompleto.trim() !== "") dadosUpdate.nomeCompleto = nomeCompleto.trim();
+        if (nomeEleitoral && nomeEleitoral.trim() !== "") dadosUpdate.nomeEleitoral = nomeEleitoral.trim();
+        if (cargo) dadosUpdate.cargo = cargo === "PRESIDENTE" ? "PRESIDENTE" : "VEREADOR";
+        if (partido !== undefined) dadosUpdate.partido = partido;
+        if (sigla !== undefined) dadosUpdate.sigla = (sigla || "").toUpperCase();
+        if (fotoBase64 || foto) dadosUpdate.foto = fotoBase64 || foto;
+        if (senha && senha.trim() !== "") dadosUpdate.senha = senha.trim();
+
+        if (username && username.trim() !== "") {
+            const usernameFinal = username.trim().toLowerCase();
+            const existeUser = await prisma.tableVereador.findFirst({
+                where: { username: usernameFinal, NOT: { id: idAlvo } }
+            });
+            if (existeUser) return res.status(400).json({ error: "Este nome de usuário já está em uso." });
+            dadosUpdate.username = usernameFinal;
+        }
+
+        if (dadosUpdate.cargo === "PRESIDENTE") {
+            await prisma.tableVereador.updateMany({
+                where: { cargo: "PRESIDENTE", NOT: { id: idAlvo } },
+                data: { cargo: "VEREADOR" }
+            });
+        }
+
+        const atualizado = await prisma.tableVereador.update({
+            where: { id: idAlvo },
+            data: dadosUpdate
+        });
+
+        await emitirAtualizacao();
+        res.json({ success: true, parlamentar: atualizado });
+    } catch (err) {
+        res.status(500).json({ error: "Erro ao atualizar: " + err.message });
+    }
+};
+app.put('/api/parlamentares/:id', editarParlamentar);
+app.put('/api/vereadores/:id', editarParlamentar);
+
 // SESSÃO CONTROLE
 app.post('/api/sessao/controle', async (req, res) => {
     const { acao, codigo, ementa } = req.body;
