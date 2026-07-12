@@ -7,6 +7,8 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <!-- INJEÇÃO DA INFRAESTRUTURA WEBRTC PARA REDES WI-FI FLUIDAS -->
+    <script src="https://cdn.jsdelivr.net/npm/livekit-client/dist/livekit-client.umd.min.js"></script>
     
     <script>
         tailwind.config = {
@@ -37,17 +39,23 @@
             animation: azulPulseVereador 1.5s infinite;
             border-color: #2563eb !important;
         }
+        
+        /* Ajustes de Sobrescrita para Tema Claro no Vereador */
+        html.light body { background-color: #f8fafc; color: #1e293b; }
+        html.light aside { background-color: #ffffff; border-color: #e2e8f0; }
+        html.light main { background-color: #f8fafc; }
+        html.light .global-aba { background-color: #f8fafc; }
     </style>
 </head>
 <body class="bg-legisDark-bg dark:bg-legisDark-bg text-slate-100 dark:text-slate-100 font-sans flex h-screen overflow-hidden transition-colors duration-200 [html.light_&]:bg-legisLight-bg [html.light_&]:text-slate-800">
 
-    <aside class="w-64 bg-slate-950 dark:bg-slate-950 border-r border-slate-800 dark:border-slate-800 flex flex-col justify-between shrink-0 [html.light_&]:bg-emerald-950 [html.light_&]:border-emerald-900">
+    <aside class="w-64 bg-slate-950 dark:bg-slate-950 border-r border-slate-800 dark:border-slate-800 flex flex-col justify-between shrink-0 [html.light_&]:bg-white [html.light_&]:border-slate-200">
         <div>
-            <div class="p-6 border-b border-slate-800 dark:border-slate-800 [html.light_&]:border-emerald-900 flex items-center gap-3">
-                <i data-lucide="gavel" class="text-blue-500 w-8 h-8 [html.light_&]:text-emerald-400"></i>
+            <div class="p-6 border-b border-slate-800 dark:border-slate-800 [html.light_&]:border-slate-200 flex items-center gap-3">
+                <i data-lucide="gavel" class="text-blue-500 w-8 h-8 [html.light_&]:text-indigo-600"></i>
                 <div>
-                    <h1 class="font-bold text-lg leading-none tracking-wide text-white">SISCAM 1.0</h1>
-                    <span class="text-xs text-slate-400 font-medium">Portal Legislativo</span>
+                    <h1 class="font-bold text-lg leading-none tracking-wide text-white [html.light_&]:text-slate-900">SISCAM 1.0</h1>
+                    <span class="text-xs text-slate-400 font-medium [html.light_&]:text-slate-500">Portal Legislativo</span>
                 </div>
             </div>
 
@@ -55,19 +63,18 @@
                 <button onclick="mudarAba('votacao')" id="btn-aba-votacao" class="w-full flex items-center gap-3 px-4 py-3 text-sm font-semibold rounded-xl bg-blue-600/10 text-blue-400 border border-blue-500/10 text-left tab-btn active">
                     <i data-lucide="vote" class="w-4 h-4"></i> Plenário Virtual
                 </button>
-                <button onclick="mudarAba('gabinete')" id="btn-aba-gabinete" class="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-400 hover:bg-slate-900 hover:text-slate-200 rounded-xl transition-all text-left [html.light_&]:text-emerald-100 tab-btn">
+                <button onclick="mudarAba('gabinete')" id="btn-aba-gabinete" class="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-400 hover:bg-slate-900 hover:text-slate-200 rounded-xl transition-all text-left [html.light_&]:text-slate-600 tab-btn">
                     <i data-lucide="briefcase" class="w-4 h-4"></i> Meu Gabinete
                 </button>
             </nav>
         </div>
 
-        <div class="p-4 border-t border-slate-800 space-y-3 [html.light_&]:border-emerald-900 flex flex-col items-center justify-center">
-            <img id="logo-sidebar-global" src="" class="max-h-12 object-contain hidden opacity-75 select-none [html.light_&]:invert">
+        <div class="p-4 border-t border-slate-800 dark:border-slate-800 [html.light_&]:border-slate-200 space-y-3 flex flex-col items-center justify-center">
+            <div class="flex items-center justify-center p-2 w-full rounded-xl bg-slate-900/50 dark:bg-slate-900/50 [html.light_&]:bg-slate-100 border border-slate-800/40 dark:border-slate-800/40 [html.light_&]:border-slate-200">
+                <img id="logo-sidebar-global" src="" class="max-h-10 object-contain hidden opacity-75 select-none">
+            </div>
             
-            <div class="w-full space-y-2">
-                <button onclick="alternarTema()" class="w-full flex items-center justify-center gap-2 bg-slate-900 text-slate-300 py-2 rounded-xl text-xs border border-slate-800 [html.light_&]:bg-emerald-900 [html.light_&]:border-emerald-800 [html.light_&]:text-emerald-100">
-                    <i data-lucide="sun-moon" class="w-4 h-4"></i> Alternar Tema
-                </button>
+            <div class="w-full">
                 <button onclick="fazerLogout()" class="w-full flex items-center justify-center gap-2 bg-rose-500/10 hover:bg-rose-500 text-rose-400 hover:text-white font-semibold py-2.5 px-4 rounded-xl border border-rose-500/10 transition-all text-sm shadow-md">
                     <i data-lucide="log-out" class="w-4 h-4"></i> Sair do Sistema
                 </button>
@@ -79,12 +86,12 @@
         
         <div class="bg-slate-950/80 dark:bg-slate-950/80 border-b border-slate-800 dark:border-slate-800 p-4 shrink-0 flex items-center justify-between px-8 [html.light_&]:bg-white [html.light_&]:border-slate-200 shadow-sm">
             <div class="flex items-center gap-4">
-                <div class="w-11 h-11 bg-slate-900 dark:bg-slate-900 rounded-xl flex items-center justify-center border border-slate-800 dark:border-slate-800 text-blue-400 [html.light_&]:bg-emerald-50 [html.light_&]:border-emerald-200 [html.light_&]:text-emerald-700">
+                <div class="w-11 h-11 bg-slate-900 dark:bg-slate-900 rounded-xl flex items-center justify-center border border-slate-800 dark:border-slate-800 text-blue-400 [html.light_&]:bg-slate-100 [html.light_&]:border-slate-200 [html.light_&]:text-slate-700">
                     <i data-lucide="gavel" class="w-5 h-5"></i>
                 </div>
                 <div>
                     <h3 class="font-black text-sm uppercase text-white [html.light_&]:text-slate-900 leading-tight">Câmara Municipal de Gonçalves Dias</h3>
-                    <p class="text-[10px] text-slate-400 [html.light_&]:text-emerald-700 font-bold uppercase tracking-widest">Terminal Eletrônico de Votação e Presença</p>
+                    <p class="text-[10px] text-slate-400 [html.light_&]:text-slate-500 font-bold uppercase tracking-widest">Terminal Eletrônico de Votação e Presença</p>
                 </div>
             </div>
             
@@ -97,7 +104,7 @@
             </div>
         </div>
 
-        <header class="bg-slate-950/40 dark:bg-slate-950/40 border-b border-slate-800/60 dark:border-slate-800/60 px-8 py-4 flex items-center justify-between sticky top-0 backdrop-blur-md z-10 shrink-0 [html.light_&]:bg-slate-100/50 [html.light_&]:border-slate-200">
+        <header class="bg-slate-950/40 dark:bg-slate-950/40 border-b border-slate-800/60 dark:border-slate-800/60 px-8 py-4 flex items-center justify-between sticky top-0 backdrop-blur-md z-10 shrink-0 [html.light_&]:bg-slate-50 [html.light_&]:border-slate-200">
             <div>
                 <h2 id="titulo-pagina-topo" class="font-bold text-xl text-white [html.light_&]:text-slate-900">Terminal do Parlamentar</h2>
                 <p id="subtitulo-sessao" class="text-xs text-slate-400 [html.light_&]:text-slate-500">Aguardando abertura dos trabalhos solenes pelo presidente...</p>
@@ -138,7 +145,7 @@
                         <p id="sessao-materia-ementa" class="text-xs text-slate-400 [html.light_&]:text-slate-500 mt-0.5">Descrição completa da ementa regulamentar lida na Ordem do Dia.</p>
                     </div>
                 </div>
-                <button onclick="window.open('./telao.html', '_blank')" class="bg-blue-600 hover:bg-blue-500 text-white font-bold py-2.5 px-5 rounded-xl text-xs transition-all flex items-center gap-2 shadow-lg shrink-0">
+                <button onclick="window.open('./tela_plenario.html', '_blank')" class="bg-blue-600 hover:bg-blue-500 text-white font-bold py-2.5 px-5 rounded-xl text-xs transition-all flex items-center gap-2 shadow-lg shrink-0">
                     <i data-lucide="tv" class="w-4 h-4"></i> Assistir no Telão Plenário
                 </button>
             </div>
@@ -192,13 +199,14 @@
                 </div>
             </div>
 
+            <!-- CARD DE CONFIRMAÇÃO DE PRESENÇA -->
             <div id="sessao-ativa-card" class="bg-slate-950/40 dark:bg-slate-950/40 border border-slate-800 dark:border-slate-800 p-8 rounded-2xl flex flex-col items-center justify-center text-center min-h-[300px] space-y-4 hidden [html.light_&]:bg-white [html.light_&]:border-slate-200 shadow-md">
                 <div class="w-14 h-14 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-2xl flex items-center justify-center">
                     <i data-lucide="play" class="w-7 h-7"></i>
                 </div>
                 <div>
                     <h3 class="font-bold text-lg text-white [html.light_&]:text-slate-900">Trabalhos Plenários Iniciados!</h3>
-                    <p class="text-sm text-slate-400 [html.light_&]:text-slate-500 max-w-sm mx-auto mt-1 mb-4">Confirme sua presença eletrônica para liberar suas cédulas de voto e ingressar no system de som do telão.</p>
+                    <p class="text-sm text-slate-400 [html.light_&]:text-slate-500 max-w-sm mx-auto mt-1 mb-4">Confirme sua presença eletrônica para liberar suas cédulas de voto e ingressar no sistema de som do telão.</p>
                     <button onclick="confirmarPresenca()" id="btn-presenca" class="bg-emerald-600 hover:bg-emerald-500 text-white font-black px-6 py-3 rounded-xl transition-all shadow-lg text-sm [html.light_&]:bg-emerald-700">
                         Confirmar Minha Presença na Sessão
                     </button>
@@ -324,7 +332,7 @@
         socket.on('connect', () => {
             socket.emit('registrarConexao', {
                 userId: VEREADOR_ID,
-                nome: localStorage.getItem('siscam_user_nome_urna') || localStorage.getItem('siscam_user_nome') || 'Vereador',
+                name: localStorage.getItem('siscam_user_nome_urna') || localStorage.getItem('siscam_user_nome') || 'Vereador',
                 cargo: 'VEREADOR'
             });
         });
@@ -358,10 +366,8 @@
             }
         }
 
-        let audioStream = null;
-        let scriptProcessor = null;
-        let micSource = null;
-        let audioContextSender = null;
+        // VARIÁVEIS DO CLIENTE WEBRTC (LIVEKIT)
+        let lkRoomVereador = null;
         let microfoneMudado = false;
 
         let bancoDeProjetos = JSON.parse(localStorage.getItem('siscam_projetos_gabinete')) || [
@@ -384,6 +390,10 @@
             const pnlMic = document.getElementById('painel-microfone');
             const pnlVoto = document.getElementById('painel-votacao-nominal');
             const pnlInfo = document.getElementById('painel-sessao-informacoes');
+
+            // SINCRONIZAÇÃO DE TEMA DINÂMICO DO SISTEMA DEFINIDO PELO PRESIDENTE
+            const temaDefinido = localStorage.getItem('siscam_tema') || 'dark';
+            document.documentElement.className = temaDefinido;
 
             const meuUser = status.vereadores.find(v => v.id === String(VEREADOR_ID));
             if (meuUser && meuUser.foto) {
@@ -555,6 +565,7 @@
             renderizerProjetosGabinete();
         }
 
+        // CARD DE PRESENÇA ENVIANDO DADOS CORRETAMENTE PARA O PAINEL DO PRESIDENTE
         async function confirmarPresenca() {
             try {
                 await fetch(`${API_SESSAO_URL}/presenca`, {
@@ -563,12 +574,13 @@
                     body: JSON.stringify({ vereadorId: VEREADOR_ID })
                 });
                 sincronizarPainel();
-            } catch(e){}
+                socket.emit('atualizarPainel'); // Notifica imediatamente a mesa diretora do presidente
+            } catch(e){ console.error("Erro ao transmitir presença:", e); }
         }
 
         async function registrarVoto(opcao) {
             try {
-                await fetch(`${BASE_URL}/api/vereadores/votar`, {
+                await fetch(`${BACKEND_URL}/api/vereadores/votar`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ vereadorId: VEREADOR_ID, voto: opcao })
@@ -576,6 +588,7 @@
                 mostrarToast(`Seu voto (${opcao}) foi computado com sucesso!`, 'success');
                 document.getElementById('painel-votacao-nominal').classList.add('hidden');
                 sincronizarPainel();
+                socket.emit('atualizarPainel');
             } catch(e) { alert("Erro ao computar voto."); }
         }
 
@@ -590,6 +603,7 @@
                 btn.className = "bg-slate-800 text-slate-500 font-bold py-2.5 px-5 rounded-xl text-sm cursor-not-allowed";
                 btn.innerText = "Aguardando Autorização da Mesa...";
                 btn.disabled = true;
+                socket.emit('atualizarPainel');
             } catch(e){}
         }
 
@@ -600,14 +614,13 @@
             const btnMic = document.getElementById('btn-toggle-mic');
 
             if (String(autorizadoId) === String(VEREADOR_ID)) {
-                microfoneMudado = false;
                 btnMic.classList.remove('hidden');
                 btnMic.classList.add('flex');
                 atualizarBotaoMic();
 
                 icone.className = "w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 flex items-center justify-center animate-pulse";
                 icone.innerHTML = `<i data-lucide="mic" class="w-5 h-5"></i>`;
-                texto.innerHTML = `<span class="text-emerald-400 font-bold uppercase tracking-wider block text-[11px]">Sua fala está ativa</span> Seu microfone está captando áudio diretamente para a TV do Plenário.`;
+                texto.innerHTML = `<span class="text-emerald-400 font-bold uppercase tracking-wider block text-[11px]">Sua fala está ativa</span> Seu microfone está captando áudio diretamente via WebRTC para o Plenário.`;
                 activarCapturaMicrofone();
             } else {
                 btnMic.classList.add('hidden');
@@ -634,14 +647,18 @@
             const icone = document.getElementById('mic-status-icone');
             const texto = document.getElementById('mic-status-texto');
 
+            if (lkRoomVereador && lkRoomVereador.localParticipant) {
+                lkRoomVereador.localParticipant.setMicrophoneEnabled(!microfoneMudado);
+            }
+
             if (microfoneMudado) {
                 icone.className = "w-12 h-12 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-400 flex items-center justify-center";
                 icone.innerHTML = `<i data-lucide="mic-off" class="w-5 h-5"></i>`;
-                texto.innerHTML = `<span class="text-amber-400 font-bold uppercase tracking-wider block text-[11px]">Microfone silenciado</span> Você continua com a palavra, mas seu áudio não está sendo enviado.`;
+                texto.innerHTML = `<span class="text-amber-400 font-bold uppercase tracking-wider block text-[11px]">Microfone silenciado</span> Você continua com a palavra, mas seu áudio foi mutado localmente.`;
             } else {
                 icone.className = "w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 flex items-center justify-center animate-pulse";
                 icone.innerHTML = `<i data-lucide="mic" class="w-5 h-5"></i>`;
-                texto.innerHTML = `<span class="text-emerald-400 font-bold uppercase tracking-wider block text-[11px]">Sua fala está ativa</span> Seu microfone está captando áudio diretamente para a TV do Plenário.`;
+                texto.innerHTML = `<span class="text-emerald-400 font-bold uppercase tracking-wider block text-[11px]">Sua fala está ativa</span> Seu microfone está captando áudio diretamente via WebRTC para o Plenário.`;
             }
             lucide.createIcons();
         }
@@ -664,55 +681,38 @@
         }
 
         async function activarCapturaMicrofone() {
-            if (audioStream) return;
+            if (lkRoomVereador && lkRoomVereador.state === 'connected') return;
             try {
-                audioStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
-                audioContextSender = new (window.AudioContext || window.webkitAudioContext)();
-                micSource = audioContextSender.createMediaStreamSource(audioStream);
+                const tokenRes = await fetch(`${BACKEND_URL}/api/webrtc/token?room=sessao_plenaria&identity=${VEREADOR_ID}`);
+                if (!tokenRes.ok) return;
+                const { token, serverUrl } = await tokenRes.json();
+
+                lkRoomVereador = new LiveKitClient.Room({
+                    adaptiveStream: true,
+                    dynacast: true
+                });
                 
-                scriptProcessor = audioContextSender.createScriptProcessor(4096, 1, 1);
-                scriptProcessor.onaudioprocess = (e) => {
-                    if (!socket.connected || microfoneMudado) return;
-                    const inputData = e.inputBuffer.getChannelData(0);
-                    const pcmData = new Int16Array(inputData.length);
-                    for (let i = 0; i < inputData.length; i++) {
-                        const s = Math.max(-1, Math.min(1, inputData[i]));
-                        pcmData[i] = s < 0 ? s * 0x8000 : s * 0x7FFF;
-                    }
-                    socket.emit('enviarAudioStream', pcmData.buffer);
-                };
-                
-                micSource.connect(scriptProcessor);
-                scriptProcessor.connect(audioContextSender.destination);
-            } catch (err) { console.error("Hardware recusado.", err); }
+                await lkRoomVereador.connect(serverUrl, token);
+                await lkRoomVereador.localParticipant.setMicrophoneEnabled(!microfoneMudado);
+
+            } catch (err) { 
+                console.error("Acesso ao hardware de áudio WebRTC recusado:", err); 
+            }
         }
 
         function desativarCapturaMicrofone() {
+            if (lkRoomVereador) {
+                lkRoomVereador.disconnect();
+                lkRoomVereador = null;
+            }
             microfoneMudado = false;
-            if (scriptProcessor) {
-                scriptProcessor.disconnect();
-                scriptProcessor.onaudioprocess = null;
-                scriptProcessor = null;
-            }
-            if (micSource) {
-                micSource.disconnect();
-                micSource = null;
-            }
-            if (audioContextSender) {
-                audioContextSender.close();
-                audioContextSender = null;
-            }
-            if (audioStream) {
-                audioStream.getTracks().forEach(track => track.stop());
-                audioStream = null;
-            }
         }
 
         function mudarAba(aba) {
             document.querySelectorAll('.global-aba').forEach(el => el.classList.add('hidden'));
             document.getElementById(`aba-${aba}`).classList.remove('hidden');
 
-            document.querySelectorAll('.tab-btn').forEach(el => el.className = "w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-400 hover:bg-slate-900 hover:text-slate-200 rounded-xl transition-all text-left [html.light_&]:text-emerald-100 tab-btn");
+            document.querySelectorAll('.tab-btn').forEach(el => el.className = "w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-400 hover:bg-slate-900 hover:text-slate-200 rounded-xl transition-all text-left [html.light_&]:text-slate-600 tab-btn");
             
             const btnAtivo = document.getElementById(`btn-aba-${aba}`);
             btnAtivo.className = "w-full flex items-center gap-3 px-4 py-3 text-sm font-semibold rounded-xl bg-blue-600/10 text-blue-400 border border-blue-500/10 text-left tab-btn active";
@@ -722,19 +722,6 @@
             if(aba === 'gabinete') topoTitulo.innerText = "Meu Gabinete Virtual";
         }
 
-        function alternarTema() {
-            const html = document.documentElement;
-            const novoTema = html.classList.contains('dark') ? 'light' : 'dark';
-            html.className = novoTema;
-            localStorage.setItem('siscam_tema', novoTema);
-        }
-
-        (function initializeTheme() {
-            document.documentElement.className = localStorage.getItem('siscam_tema') || 'dark';
-        })();
-
-        function fazerLogout() { desativarCapturaMicrofone(); localStorage.clear(); window.location.href = './login.html'; }
-
         socket.on('atualizarPainel', (status) => {
             if (status) processarEstadoPainel(status);
             else sincronizarPainel();
@@ -742,7 +729,7 @@
 
         inicializarPerfilParlamentar();
         sincronizarPainel();
-        setInterval(sincronizarPainel, 10000);
+        setInterval(sincronizarPainel, 5000);
         renderizerProjetosGabinete();
     </script>
 </body>

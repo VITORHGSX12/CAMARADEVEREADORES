@@ -7,6 +7,8 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <!-- INJEÇÃO DA INFRAESTRUTURA WEBRTC PARA REDES WI-FI FLUIDAS -->
+    <script src="https://cdn.jsdelivr.net/npm/livekit-client/dist/livekit-client.umd.min.js"></script>
     <script>
         tailwind.config = {
             theme: {
@@ -38,6 +40,9 @@
             animation: azulPulse 1.5s infinite;
             border-color: #2563eb !important;
         }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 999px; }
     </style>
 </head>
 <body class="bg-plenario-bg text-slate-800 font-sans h-screen w-screen flex flex-col overflow-hidden p-6 gap-5 transition-all duration-300">
@@ -72,7 +77,7 @@
         </div>
     </header>
 
-    <!-- CONTAINER INTEGRADO DE VOTAÇÃO EMBUTIDA (EXCLUSIVO PARA O PARLAMENTAR NO TELÃO) -->
+    <!-- CONTAINER INTEGRADO DE VOTAÇÃO EMBUTIDA (SINC COM PRESIDENTE) -->
     <section id="painel-votacao-embutido" class="bg-white border-2 border-blue-200 rounded-2xl p-4 flex flex-col md:flex-row items-center justify-between gap-4 shadow-md hidden animate-in fade-in slide-in-from-top-4">
         <div class="flex items-center gap-3">
             <div class="w-10 h-10 bg-blue-50 text-centaurea rounded-xl flex items-center justify-center border border-blue-100 shrink-0">
@@ -127,15 +132,12 @@
 
     <!-- ÁREA PRINCIPAL DO PLENÁRIO DISCORD-STYLE -->
     <main class="flex-1 flex gap-4 overflow-hidden min-h-0">
-        
         <section class="flex-1 flex flex-col gap-4 overflow-hidden">
             <!-- CARD EXCLUSIVO DA PRESIDÊNCIA -->
-            <div id="card-presidente" class="hidden rounded-2xl border border-blue-200 bg-white p-4 items-center gap-6 shadow-sm transition-all duration-300">
-            </div>
+            <div id="card-presidente" class="hidden rounded-2xl border border-blue-200 bg-white p-4 items-center gap-6 shadow-sm transition-all duration-300"></div>
 
             <!-- COMPONENTES DE PLENÁRIO DOS PARLAMENTARES -->
-            <div id="meet-grid" class="flex-1 grid grid-cols-2 md:grid-cols-4 gap-4 overflow-auto content-start pr-1">
-            </div>
+            <div id="meet-grid" class="flex-1 grid grid-cols-2 md:grid-cols-4 gap-4 overflow-auto content-start pr-1"></div>
         </section>
 
         <!-- COLUNA LATERAL - FILA DE ORADORES -->
@@ -154,7 +156,7 @@
     <footer class="bg-white border border-plenario-border rounded-xl px-6 py-3 flex items-center justify-between text-xs text-slate-500 shrink-0 shadow-sm">
         <div>SISCAM 1.0 • Painel Eletrônico em Alta Definição</div>
         <div class="flex items-center gap-2 text-emerald-600 font-bold uppercase tracking-wider text-[11px]">
-            <span class="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span> Sincronização de Áudio Geral Ativa
+            <span class="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span> Sincronização de Áudio e Dados Ativa
         </div>
     </footer>
 
@@ -176,48 +178,38 @@
         const VEREADOR_ID = localStorage.getItem('siscam_user_id'); 
         
         let audioMutadoPorSeguranca = false;
-        let ultimoOradorId = null;
         let tempoSegundos = 300; 
-        let intervaloCronometro = null;
+        let lkRoomTelao = null;
 
-        let audioCtx = null;
-        let scheduledTime = 0;
-
-        socket.on('receberAudioStream', (arrayBuffer) => {
-            if (audioMutadoPorSeguranca) return;
-            
-            if (!audioCtx) {
-                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                scheduledTime = audioCtx.currentTime;
-            }
-            
-            if (audioCtx.state === 'suspended') return;
-
+        // SISTEMA DE ESCUTA WEBRTC (LIVEKIT) COM LATÊNCIA ZERO E ADAPTAÇÃO PARA WI-FI
+        async function iniciarAudioWebRTC() {
             try {
-                const int16Data = new Int16Array(arrayBuffer);
-                const floatData = new Float32Array(int16Data.length);
-                for (let i = 0; i < int16Data.length; i++) {
-                    floatData[i] = int16Data[i] / (int16Data[i] < 0 ? 0x8000 : 0x7FFF);
-                }
-                
-                const audioBuffer = audioCtx.createBuffer(1, floatData.length, audioCtx.sampleRate);
-                audioBuffer.getChannelData(0).set(floatData);
-                
-                const source = audioCtx.createBufferSource();
-                source.buffer = audioBuffer;
-                source.connect(audioCtx.destination);
-                
-                if (scheduledTime < audioCtx.currentTime) {
-                    scheduledTime = audioCtx.currentTime + 0.05;
-                }
-                source.start(scheduledTime);
-                scheduledTime += audioBuffer.duration;
-            } catch (err) { }
-        });
+                const tokenRes = await fetch(`${BACKEND_URL}/api/webrtc/token?room=sessao_plenaria&identity=telao`);
+                if (!tokenRes.ok) return;
+                const { token, serverUrl } = await tokenRes.json();
+
+                lkRoomTelao = new LiveKitClient.Room();
+                await lkRoomTelao.connect(serverUrl, token);
+
+                // Executa o acoplamento de áudio dinâmico nativo do navegador
+                lkRoomTelao.on(LiveKitClient.RoomEvent.TrackSubscribed, (track) => {
+                    if (track.kind === 'audio') {
+                        const audioElement = track.attach();
+                        // Silencia o áudio caso o mute de segurança esteja ativo na inicialização
+                        if (audioMutadoPorSeguranca) {
+                            audioElement.muted = true;
+                        }
+                        document.body.appendChild(audioElement);
+                    }
+                });
+            } catch (e) {
+                console.error("Falha ao estabilizar malha de áudio WebRTC via Wi-Fi:", e);
+            }
+        }
 
         document.addEventListener('click', () => {
-            if (audioCtx && audioCtx.state === 'suspended') {
-                audioCtx.resume();
+            if (!lkRoomTelao) {
+                iniciarAudioWebRTC();
             }
         });
 
@@ -227,12 +219,27 @@
             const txt = document.getElementById('txt-mute-seguranca');
             audioMutadoPorSeguranca = !audioMutadoPorSeguranca;
 
+            // Altera o estado das tracks ativas do LiveKit em tempo real
+            if (lkRoomTelao) {
+                lkRoomTelao.remoteParticipants.forEach(participant => {
+                    participant.audioTracks.forEach(publication => {
+                        if (publication.track) {
+                            if (audioMutadoPorSeguranca) {
+                                publication.track.detach();
+                            } else {
+                                publication.track.attach();
+                            }
+                        }
+                    });
+                });
+            }
+
             if (audioMutadoPorSeguranca) {
-                btn.className = "bg-rose-600 hover:bg-rose-500 text-white p-2 rounded-lg border border-rose-500 transition-all flex items-center gap-2 font-bold text-xs shadow-lg animate-pulse cursor-pointer";
+                btn.className = "bg-rose-600 hover:bg-rose-50 text-white px-3 py-2 rounded-lg border border-rose-500 transition-all flex items-center gap-2 font-bold text-xs shadow-lg animate-pulse cursor-pointer";
                 icone.setAttribute('data-lucide', 'volume-x');
                 txt.innerText = "ÁUDIO CORTADO";
             } else {
-                btn.className = "bg-white hover:bg-slate-100 text-slate-700 p-2 rounded-lg border border-plenario-border transition-all flex items-center gap-2 font-bold text-xs shadow-sm cursor-pointer";
+                btn.className = "bg-white hover:bg-slate-100 text-slate-700 px-3 py-2 rounded-lg border border-plenario-border transition-all flex items-center gap-2 font-bold text-xs shadow-sm cursor-pointer";
                 icone.setAttribute('data-lucide', 'volume-2');
                 txt.innerText = "Áudio Ativo";
             }
@@ -257,22 +264,16 @@
         async function carregarDadosTelao() {
             try {
                 const resposta = await fetch(`${BACKEND_URL}/api/sessao/status`);
-                if (!resposta.ok) throw new Error(`Erro HTTP: ${resposta.status}`);
+                if (!resposta.ok) throw new Error();
                 const status = await resposta.json();
                 processarDadosTelao(status);
             } catch(e) { 
-                console.error("Erro de comunicação:", e);
-                grid.innerHTML = `
-                    <div class="col-span-full flex flex-col items-center justify-center text-rose-600 font-bold text-xs border-2 border-dashed border-rose-200 rounded-2xl p-8 bg-white w-full">
-                        <i data-lucide="alert-circle" class="w-6 h-6 mb-2 text-rose-500"></i>
-                        <p>Aguardando resposta estável do servidor central...</p>
-                    </div>`;
-                lucide.createIcons();
+                console.error("Erro de comunicação com o SISCAM:", e);
             }
         }
 
         async function registrarVotoTelao(opcao) {
-            if (!VEREADOR_ID) return alert("Erro: ID de parlamentar não identificado localmente.");
+            if (!VEREADOR_ID) return alert("Erro: ID do parlamentar não localizado.");
             try {
                 const res = await fetch(`${BACKEND_URL}/api/vereadores/votar`, {
                     method: 'POST',
@@ -289,12 +290,13 @@
         function processarDadosTelao(status) {
             const pnlVoto = document.getElementById('painel-votacao-embutido');
             const bannerOrador = document.getElementById('banner-orador-ativo');
+            const microfoneId = status.microfoneAutorizadoId || status.microfoneAuthorizedId;
             
-            if (status.sessaoAtiva && status.materiaAtiva?.codigo) {
+            if (status.materiaAtiva?.codigo) {
                 document.getElementById('pauta-telao-sub').innerText = `ORDEM DO DIA: ${status.materiaAtiva.codigo} — ${status.materiaAtiva.ementa}`;
                 
-                const eu = status.vereadores?.find(v => v.id === String(VEREADOR_ID) && v.cargo === 'VEREADOR');
-                if (eu && eu.status === 'Presente' && (eu.voto === 'Pendente' || eu.voto === 'Aguardando')) {
+                const eu = status.vereadores?.find(v => String(v.id) === String(VEREADOR_ID));
+                if (eu && eu.status === 'Presente' && (!eu.voto || eu.voto === 'Pendente' || eu.voto === 'Aguardando')) {
                     pnlVoto.classList.remove('hidden');
                     document.getElementById('voto-embutido-titulo').innerText = `CÉDULA ATIVA: ${status.materiaAtiva.codigo}`;
                     document.getElementById('voto-embutido-ementa').innerText = status.materiaAtiva.ementa;
@@ -312,34 +314,35 @@
                 document.getElementById('total-abstencao').querySelector('div:nth-child(2)').innerText = status.totaisVotos.abstencao || 0;
             }
 
-            // Oculta por padrão o banner superior do cronômetro se ninguém estiver autorizado
-            if (!status.microfoneAutorizadoId) {
+            if (!microfoneId) {
                 bannerOrador.classList.add('hidden');
             }
 
             const filaContainer = document.getElementById('lista-pedidos-fala');
             const totalFilaTxt = document.getElementById('total-pedidos-fala');
             if (filaContainer) {
-                const inscritos = status.vereadores?.filter(v => v.pedidoFala && String(v.id) !== String(status.microfoneAutorizadoId)) || [];
-                totalFilaTxt.innerText = `${inscritos.length} pedidos`;
+                const filaIds = status.filaOradores || [];
+                totalFilaTxt.innerText = `${filaIds.length} pedidos`;
                 
-                if (inscritos.length === 0) {
-                    filaContainer.innerHTML = `<div class="text-slate-400 text-xs italic">Nenhuma solicitação de fala activa.</div>`;
+                if (filaIds.length === 0) {
+                    filaContainer.innerHTML = `<div class="text-slate-400 text-xs italic">Nenhuma solicitação de fala ativa.</div>`;
                 } else {
                     filaContainer.innerHTML = '';
-                    inscritos.forEach(v => {
-                        filaContainer.insertAdjacentHTML('beforeend', `
-                            <div class="bg-slate-50 border border-plenario-border p-2.5 rounded-xl flex items-center justify-between">
-                                <span class="font-bold text-xs text-slate-900 uppercase">${v.nomeEleitoral || v.nomeCompleto}</span>
-                                <span class="text-[9px] font-mono bg-blue-100 text-centaurea px-1.5 py-0.5 rounded font-bold">${v.sigla || 'S/P'}</span>
-                            </div>
-                        `);
+                    filaIds.forEach((idFila) => {
+                        const v = status.vereadores?.find(u => String(u.id) === String(idFila));
+                        if(v) {
+                            filaContainer.insertAdjacentHTML('beforeend', `
+                                <div class="bg-slate-50 border border-plenario-border p-2.5 rounded-xl flex items-center justify-between">
+                                    <span class="font-bold text-xs text-slate-900 uppercase">${v.nomeEleitoral || v.nomeCompleto}</span>
+                                    <span class="text-[9px] font-mono bg-blue-100 text-centaurea px-1.5 py-0.5 rounded font-bold">${v.sigla || v.partido || 'S/P'}</span>
+                                </div>
+                            `);
+                        }
                     });
                 }
             }
             
-            const listaVereadores = status.vereadores || [];
-            renderizarPainelDiscord(listaVereadores, status.microfoneAutorizadoId);
+            renderizarPainelDiscord(status.vereadores || [], microfoneId);
         }
 
         socket.on('cronometroTick', (data) => {
@@ -354,24 +357,20 @@
             cardPresidente.innerHTML = '';
             cardPresidente.classList.add('hidden');
 
-            if (!vereadores || mapCount(vereadores) === 0) {
-                grid.innerHTML = `
-                    <div class="col-span-full flex flex-col items-center justify-center text-slate-400 font-medium text-xs border-2 border-dashed border-plenario-border rounded-2xl p-8 bg-white w-full">
-                        <p>Nenhum parlamentar registrado em plenário virtual.</p>
-                    </div>`;
+            if (!vereadores || vereadores.length === 0) {
+                grid.innerHTML = `<div class="col-span-full text-center text-slate-400 text-xs p-8">Nenhum parlamentar em plenário.</div>`;
                 return;
             }
 
-            const presidente = vereadores.find(p => p.cargo === 'PRESIDENTE');
-            const listaVereadores = vereadores.filter(p => p.cargo !== 'PRESIDENTE' && p.cargo !== 'SUPERADMIN');
+            const presidente = vereadores.find(p => p.cargo === 'PRESIDENTE' || String(p.cargo).toUpperCase() === 'PRESIDENTE');
+            const listaVereadores = vereadores.filter(p => p.cargo !== 'PRESIDENTE' && String(p.cargo).toUpperCase() !== 'PRESIDENTE' && p.cargo !== 'SUPERADMIN');
 
             if (presidente) {
                 cardPresidente.classList.remove('hidden');
                 cardPresidente.classList.add('flex');
                 
                 const nomePres = presidente.nomeEleitoral || presidente.nomeCompleto;
-                const siglaPres = presidente.sigla || 'MESA';
-                
+                const siglaPres = presidente.sigla || presidente.partido || 'MESA';
                 const estaComAPalavra = microfoneAutorizadoId && String(presidente.id) === String(microfoneAutorizadoId);
                 let badgeStatus = `<span class="text-slate-400 font-mono text-[10px] font-bold uppercase bg-slate-100 px-2.5 py-1 rounded-lg border border-slate-200">Conectado</span>`;
                 
@@ -379,14 +378,14 @@
                     badgeStatus = `<span class="text-white font-mono text-[10px] font-black uppercase tracking-wider bg-blue-600 px-2.5 py-1 rounded-lg flex items-center gap-1 animate-bounce"><i data-lucide="mic" class="w-3 h-3"></i> No uso da palavra</span>`;
                     document.getElementById('banner-orador-ativo').classList.remove('hidden');
                     document.getElementById('txt-nome-orador').innerText = nomePres.toUpperCase();
-                    document.getElementById('txt-partido-orador').innerText = `PRESIDENTE DA CÂMARA — ${siglaPres}`;
+                    document.getElementById('txt-partido-orador').innerText = `PRESIDENTE DA MESA — ${siglaPres}`;
                 } else if (presidente.voto && presidente.voto !== "Aguardando" && presidente.voto !== "Pendente") {
                     badgeStatus = `<span class="text-blue-600 font-mono text-[10px] font-bold uppercase tracking-wider bg-blue-50 px-2.5 py-1 rounded-lg border border-blue-100">Cédula: ${presidente.voto}</span>`;
                 }
 
                 cardPresidente.innerHTML = `
                     <div class="relative w-20 h-20 rounded-2xl border-4 overflow-hidden bg-slate-100 shadow-sm shrink-0 transition-all duration-300 ${estaComAPalavra ? 'speaking-pulse' : 'border-blue-500'}">
-                        <img src="${presidente.foto || 'https://via.placeholder.com/150'}" alt="${nomePres}" class="w-full h-full object-cover">
+                        <img src="${presidente.foto || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=80'}" alt="${nomePres}" class="w-full h-full object-cover">
                     </div>
                     <div class="flex-1 flex flex-col justify-center">
                         <div class="flex items-center gap-2">
@@ -394,9 +393,7 @@
                             <span class="bg-blue-600 text-white font-mono font-bold text-[10px] px-1.5 py-0.5 rounded">${siglaPres}</span>
                         </div>
                         <p class="text-[11px] text-slate-400 font-bold uppercase mt-0.5">Presidente da Câmara Municipal</p>
-                        <div class="mt-2 flex items-center gap-2">
-                            ${badgeStatus}
-                        </div>
+                        <div class="mt-2 flex items-center gap-2">${badgeStatus}</div>
                     </div>
                 `;
             }
@@ -404,18 +401,17 @@
             listaVereadores.forEach(p => {
                 const card = document.createElement('div');
                 const estaComAPalavra = microfoneAutorizadoId && String(p.id) === String(microfoneAutorizadoId);
-                
                 const nomeVer = p.nomeEleitoral || p.nomeCompleto;
-                const siglaVer = p.sigla || 'S/P';
+                const siglaVer = p.sigla || p.partido || 'S/P';
 
                 if (estaComAPalavra) {
                     document.getElementById('banner-orador-ativo').classList.remove('hidden');
                     document.getElementById('txt-nome-orador').innerText = nomeVer.toUpperCase();
-                    document.getElementById('txt-partido-orador').innerText = `${p.partido || 'MUNICIPAL'} — ${siglaVer}`;
+                    document.getElementById('txt-partido-orador').innerText = `${p.partido || 'PARLAMENTAR'} — ${siglaVer}`;
                 }
                 
                 let estiloCardVoto = "bg-white border-plenario-border text-slate-800 shadow-sm"; 
-                let badgeVotoText = `<span class="text-slate-400 font-mono text-[9px] font-bold uppercase">Conectado</span>`;
+                let badgeVotoText = `<span class="text-slate-400 font-mono text-[9px] font-bold uppercase">${p.status}</span>`;
 
                 if (p.voto === 'SIM') {
                     estiloCardVoto = "bg-white border-emerald-500 text-slate-900 border-2 shadow-md";
@@ -429,7 +425,6 @@
                 }
 
                 let estiloImagemDestaque = "border-slate-200 scale-100 transition-all duration-300";
-                
                 if (microfoneAutorizadoId) {
                     if (estaComAPalavra) {
                         estiloCardVoto = "bg-blue-50 border-blue-600 shadow-md scale-[1.01] z-10 border-2";
@@ -442,17 +437,16 @@
                 }
 
                 card.className = `relative rounded-2xl overflow-hidden flex flex-col justify-between p-4 border ${estiloCardVoto}`;
-                
                 card.innerHTML = `
                     <div class="absolute top-3 right-3 bg-slate-50 px-2 py-0.5 border border-plenario-border rounded-lg shadow-sm">
                         ${badgeVotoText}
                     </div>
                     <div class="flex-1 flex flex-col items-center justify-center pt-3 pb-2">
-                        <div class="w-20 h-20 rounded-full border-4 overflow-hidden bg-slate-100 shadow-inner relative ${estiloImagemDestaque}">
-                            <img src="${p.foto || 'https://via.placeholder.com/150'}" alt="${nomeVer}" class="w-full h-full object-cover">
+                        <div class="w-16 h-16 rounded-full border-4 overflow-hidden bg-slate-100 shadow-inner relative ${estiloImagemDestaque}">
+                            <img src="${p.foto || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=80'}" alt="${nomeVer}" class="w-full h-full object-cover">
                         </div>
                     </div>
-                    <div class="bg-slate-50 border border-slate-200 p-2.5 rounded-xl flex items-center justify-between mt-1 shadow-inner">
+                    <div class="bg-slate-50 border border-slate-200 p-2 rounded-xl flex items-center justify-between mt-1 shadow-inner">
                         <div class="truncate mr-2">
                             <h3 class="font-extrabold text-xs text-slate-900 tracking-wide truncate ${estaComAPalavra ? 'text-blue-600' : ''}">${nomeVer}</h3>
                             <span class="text-[9px] text-slate-400 font-bold block truncate uppercase">${p.partido || 'MUNICIPAL'}</span>
@@ -467,15 +461,13 @@
             lucide.createIcons();
         }
 
-        function mapCount(arr) { return Array.isArray(arr) ? arr.length : 0; }
-
         socket.on('atualizarPainel', (status) => {
             if (status) processarDadosTelao(status);
             else carregarDadosTelao();
         });
         
         carregarDadosTelao();
-        setInterval(carregarDadosTelao, 10000);
+        setInterval(carregarDadosTelao, 5000);
     </script>
 </body>
 </html>
